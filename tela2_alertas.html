@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EcoWatch Brasil - Matriz de Alertas e Incidentes</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Geist', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace']
+          },
+          colors: {
+            surface: '#090d16',
+            'surface-dim': '#090d16',
+            'surface-darker': '#0a0e17',
+            'surface-panel': '#0e1422',
+            'surface-card': '#131b2c',
+            'surface-card-hover': '#1a243a',
+            border: '#1e293b',
+            'border-subtle': 'rgba(148, 163, 184, 0.08)',
+            primary: '#38bdf8',
+            nominal: '#10b981',
+            warning: '#f59e0b',
+            critical: '#ef4444'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #090d16;
+      color: #f1f5f9;
+      font-family: 'Geist', sans-serif;
+      overflow-x: hidden;
+      margin: 0;
+      padding: 0;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: #090d16;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #1e293b;
+      border-radius: 3px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      background: #334155;
+    }
+  </style>
+</head>
+<body class="bg-surface text-slate-100 min-h-screen flex flex-col font-sans selection:bg-sky-500/30 selection:text-sky-200">
+
+  <!-- ZONE 1: TOP BAR (56px, identical to main dashboard) -->
+  <header class="h-14 bg-surface-panel border-b border-border flex items-center justify-between px-6 shrink-0 z-30">
+    <!-- Left: Brand and Department -->
+    <div class="flex items-center space-x-3">
+      <div class="flex items-center space-x-2">
+        <span class="text-white font-semibold text-[18px] tracking-tight">EcoWatch</span>
+      </div>
+      <div class="h-4 w-[1px] bg-slate-700"></div>
+      <span class="text-[13px] text-slate-400 font-normal">Centro de Operações Ambientais</span>
+    </div>
+
+    <!-- Center: Navigation Tabs -->
+    <nav class="flex items-center space-x-8 text-[13px] font-medium">
+      <a href="#" class="flex items-center space-x-2 text-slate-400 hover:text-slate-200 transition-colors py-4">
+        <i data-lucide="map" class="w-4 h-4"></i>
+        <span>Mapa</span>
+      </a>
+      <a href="#" class="flex items-center space-x-2 text-primary border-b-2 border-primary py-4 px-0.5">
+        <i data-lucide="alert-triangle" class="w-4 h-4 text-primary"></i>
+        <span>Alertas</span>
+      </a>
+      <a href="#" class="flex items-center space-x-2 text-slate-400 hover:text-slate-200 transition-colors py-4">
+        <i data-lucide="trending-up" class="w-4 h-4"></i>
+        <span>Previsões</span>
+      </a>
+    </nav>
+
+    <!-- Right: Status Badge & System Controls -->
+    <div class="flex items-center space-x-4">
+      <div class="flex items-center space-x-2 bg-surface-card border border-border px-3 py-1 rounded-[4px] text-[12px] font-mono">
+        <span class="w-2 h-2 rounded-full bg-nominal animate-pulse"></span>
+        <span class="text-slate-300">10 cidades online</span>
+      </div>
+
+      <button class="relative p-1.5 text-slate-400 hover:text-slate-200 hover:bg-surface-card rounded-[4px] border border-transparent hover:border-border transition-colors">
+        <i data-lucide="bell" class="w-4 h-4"></i>
+        <span class="absolute -top-0.5 -right-0.5 w-4 h-4 bg-critical text-white text-[10px] font-mono font-bold flex items-center justify-center rounded-full border border-surface-panel">
+          3
+        </span>
+      </button>
+
+      <div class="flex items-center space-x-1.5 pl-2 border-l border-border text-[11px] font-mono text-slate-400">
+        <span>INPE-GOES16</span>
+        <span class="w-1.5 h-1.5 rounded-full bg-nominal"></span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ZONE 2: FILTER BAR (48px height) -->
+  <section class="h-12 bg-surface-panel border-b border-border flex items-center justify-between px-6 shrink-0 z-20">
+    <!-- Left group: Filter Chips -->
+    <div class="flex items-center space-x-2 overflow-x-auto py-1 no-scrollbar">
+      <button class="px-3 py-1 bg-surface-card border border-primary text-primary rounded-[4px] text-[12px] font-medium whitespace-nowrap transition-colors">
+        Todos
+      </button>
+      <button class="px-3 py-1 bg-surface-card border border-border text-slate-300 hover:border-slate-600 hover:text-white rounded-[4px] text-[12px] font-medium whitespace-nowrap transition-colors">
+        Enchente
+      </button>
+      <button class="px-3 py-1 bg-surface-card border border-border text-slate-300 hover:border-slate-600 hover:text-white rounded-[4px] text-[12px] font-medium whitespace-nowrap transition-colors">
+        Incêndio
+      </button>
+      <button class="px-3 py-1 bg-surface-card border border-border text-slate-300 hover:border-slate-600 hover:text-white rounded-[4px] text-[12px] font-medium whitespace-nowrap transition-colors">
+        Qualidade do Ar
+      </button>
+      <button class="px-3 py-1 bg-surface-card border border-border text-slate-300 hover:border-slate-600 hover:text-white rounded-[4px] text-[12px] font-medium whitespace-nowrap transition-colors">
+        Calor Extremo
+      </button>
+      <button class="px-3 py-1 bg-surface-card border border-border text-slate-300 hover:border-slate-600 hover:text-white rounded-[4px] text-[12px] font-medium whitespace-nowrap transition-colors">
+        Chuva Extrema
+      </button>
+      <button class="px-3 py-1 bg-surface-card border border-border text-slate-300 hover:border-slate-600 hover:text-white rounded-[4px] text-[12px] font-medium whitespace-nowrap transition-colors">
+        Seca
+      </button>
+      <button class="px-3 py-1 bg-surface-card border border-border text-slate-300 hover:border-slate-600 hover:text-white rounded-[4px] text-[12px] font-medium whitespace-nowrap transition-colors">
+        Dengue
+      </button>
+      <button class="px-3 py-1 bg-surface-card border border-border text-slate-300 hover:border-slate-600 hover:text-white rounded-[4px] text-[12px] font-medium whitespace-nowrap transition-colors">
+        Enxurrada
+      </button>
+    </div>
+
+    <!-- Right group: Search & Dropdown -->
+    <div class="flex items-center space-x-3 shrink-0 ml-4">
+      <div class="relative w-60">
+        <i data-lucide="search" class="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500"></i>
+        <input 
+          type="text" 
+          placeholder="Buscar por cidade..." 
+          class="w-full bg-surface border border-border rounded-[4px] pl-8 pr-3 py-1.5 text-[13px] text-slate-200 placeholder:text-slate-500 placeholder:font-sans focus:outline-none focus:border-primary font-sans transition-colors"
+        >
+      </div>
+
+      <div class="relative">
+        <select class="appearance-none bg-surface border border-border rounded-[4px] pl-3 pr-8 py-1.5 text-[13px] text-slate-200 focus:outline-none focus:border-primary font-sans cursor-pointer">
+          <option value="">Todas as cidades</option>
+          <option value="manaus">Manaus - AM</option>
+          <option value="saopaulo">São Paulo - SP</option>
+          <option value="brasilia">Brasília - DF</option>
+          <option value="fortaleza">Fortaleza - CE</option>
+          <option value="riodejaneiro">Rio de Janeiro - RJ</option>
+          <option value="curitiba">Curitiba - PR</option>
+          <option value="salvador">Salvador - BA</option>
+        </select>
+        <i data-lucide="chevron-down" class="w-3.5 h-3.5 absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none"></i>
+      </div>
+    </div>
+  </section>
+
+  <!-- ZONE 3: DATA TABLE (fills remaining space) -->
+  <main class="flex-1 bg-surface flex flex-col justify-between overflow-hidden">
+    <div class="overflow-x-auto overflow-y-auto custom-scrollbar flex-1">
+      <table class="w-full text-left border-collapse">
+        <!-- Table Header -->
+        <thead class="sticky top-0 z-10 bg-surface-panel border-b border-border">
+          <tr class="h-10 text-[11px] font-medium uppercase tracking-wider text-slate-400">
+            <th class="w-28 px-6 text-center font-medium">Severidade</th>
+            <th class="w-72 px-4 font-medium">Tipo de Alerta</th>
+            <th class="w-36 px-4 font-medium">Cidade</th>
+            <th class="w-16 px-4 font-medium">UF</th>
+            <th class="px-4 font-medium">Mensagem</th>
+            <th class="w-48 px-6 text-right font-medium">Data/Hora (UTC)</th>
+          </tr>
+        </thead>
+
+        <!-- Table Data Rows -->
+        <tbody class="divide-y divide-[rgba(148,163,184,0.06)] text-[13px]">
+          <!-- Row 1: Manaus Enchente (Critical) -->
+          <tr class="h-[44px] bg-surface hover:bg-surface-card transition-colors">
+            <td class="px-6 text-center">
+              <div class="flex items-center justify-center space-x-2">
+                <span class="w-[6px] h-[6px] rounded-full bg-critical inline-block shadow-[0_0_6px_#ef4444]"></span>
+                <span class="font-mono text-[11px] text-critical font-medium">CRÍTICO</span>
+              </div>
+            </td>
+            <td class="px-4 font-normal text-slate-100">
+              Enchente - Cota de Alerta do Rio
+            </td>
+            <td class="px-4 font-medium text-slate-200">
+              Manaus
+            </td>
+            <td class="px-4 text-slate-400 font-mono text-[12px]">
+              AM
+            </td>
+            <td class="px-4 text-slate-300 truncate max-w-xl" title="Nivel do rio em 28.12m (cota de alerta: 28.0m). Evite margem do rio.">
+              Nivel do rio em 28.12m (cota de alerta: 28.0m). Evite margem do rio.
+            </td>
+            <td class="px-6 text-right font-mono text-[11px] text-slate-500">
+              2026-09-19 02:45
+            </td>
+          </tr>
+
+          <!-- Row 2: Manaus Incêndio (Critical) -->
+          <tr class="h-[44px] bg-surface-darker hover:bg-surface-card transition-colors">
+            <td class="px-6 text-center">
+              <div class="flex items-center justify-center space-x-2">
+                <span class="w-[6px] h-[6px] rounded-full bg-critical inline-block shadow-[0_0_6px_#ef4444]"></span>
+                <span class="font-mono text-[11px] text-critical font-medium">CRÍTICO</span>
+              </div>
+            </td>
+            <td class="px-4 font-normal text-slate-100">
+              Incendio Florestal Detectado
+            </td>
+            <td class="px-4 font-medium text-slate-200">
+              Manaus
+            </td>
+            <td class="px-4 text-slate-400 font-mono text-[12px]">
+              AM
+            </td>
+            <td class="px-4 text-slate-300 truncate max-w-xl" title="3 focos de incendio detectados via satelite Terra/Aqua MODIS">
+              3 focos de incendio detectados via satelite Terra/Aqua MODIS
+            </td>
+            <td class="px-6 text-right font-mono text-[11px] text-slate-500">
+              2026-09-19 02:30
+            </td>
+          </tr>
+
+          <!-- Row 3: São Paulo Qualidade do Ar (Critical) -->
+          <tr class="h-[44px] bg-surface hover:bg-surface-card transition-colors">
+            <td class="px-6 text-center">
+              <div class="flex items-center justify-center space-x-2">
+                <span class="w-[6px] h-[6px] rounded-full bg-critical inline-block shadow-[0_0_6px_#ef4444]"></span>
+                <span class="font-mono text-[11px] text-critical font-medium">CRÍTICO</span>
+              </div>
+            </td>
+            <td class="px-4 font-normal text-slate-100">
+              Qualidade do Ar Ruim
+            </td>
+            <td class="px-4 font-medium text-slate-200">
+              Sao Paulo
+            </td>
+            <td class="px-4 text-slate-400 font-mono text-[12px]">
+              SP
+            </td>
+            <td class="px-4 text-slate-300 truncate max-w-xl" title="PM2.5 em 42.1 ug/m3, acima do padrao CONAMA de 25 ug/m3">
+              PM2.5 em 42.1 ug/m3, acima do padrao CONAMA de 25 ug/m3
+            </td>
+            <td class="px-6 text-right font-mono text-[11px] text-slate-400">
+              2026-09-19 02:15
+            </td>
+          </tr>
+
+          <!-- Row 4: Brasília Risco Incêndio (Warning) -->
+          <tr class="h-[44px] bg-surface-darker hover:bg-surface-card transition-colors">
+            <td class="px-6 text-center">
+              <div class="flex items-center justify-center space-x-2">
+                <span class="w-[6px] h-[6px] rounded-full bg-warning inline-block"></span>
+                <span class="font-mono text-[11px] text-warning font-medium">ALERTA</span>
+              </div>
+            </td>
+            <td class="px-4 font-normal text-slate-100">
+              Risco Critico de Incendio
+            </td>
+            <td class="px-4 font-medium text-slate-200">
+              Brasilia
+            </td>
+            <td class="px-4 text-slate-400 font-mono text-[12px]">
+              DF
+            </td>
+            <td class="px-4 text-slate-300 truncate max-w-xl" title="Umidade relativa em 12%, temperatura 38.2C, risco de incendio elevado">
+              Umidade relativa em 12%, temperatura 38.2C, risco de incendio elevado
+            </td>
+            <td class="px-6 text-right font-mono text-[11px] text-slate-400">
+              2026-09-19 02:00
+            </td>
+          </tr>
+
+          <!-- Row 5: Fortaleza Seca (Warning) -->
+          <tr class="h-[44px] bg-surface hover:bg-surface-card transition-colors">
+            <td class="px-6 text-center">
+              <div class="flex items-center justify-center space-x-2">
+                <span class="w-[6px] h-[6px] rounded-full bg-warning inline-block"></span>
+                <span class="font-mono text-[11px] text-warning font-medium">ALERTA</span>
+              </div>
+            </td>
+            <td class="px-4 font-normal text-slate-100">
+              Risco de Seca
+            </td>
+            <td class="px-4 font-medium text-slate-200">
+              Fortaleza
+            </td>
+            <td class="px-4 text-slate-400 font-mono text-[12px]">
+              CE
+            </td>
+            <td class="px-4 text-slate-300 truncate max-w-xl" title="Precipitacao acumulada 0.0mm nos ultimos 15 dias, umidade 22%">
+              Precipitacao acumulada 0.0mm nos ultimos 15 dias, umidade 22%
+            </td>
+            <td class="px-6 text-right font-mono text-[11px] text-slate-400">
+              2026-09-19 01:45
+            </td>
+          </tr>
+
+          <!-- Row 6: Rio de Janeiro Dengue (Warning) -->
+          <tr class="h-[44px] bg-surface-darker hover:bg-surface-card transition-colors">
+            <td class="px-6 text-center">
+              <div class="flex items-center justify-center space-x-2">
+                <span class="w-[6px] h-[6px] rounded-full bg-warning inline-block"></span>
+                <span class="font-mono text-[11px] text-warning font-medium">ALERTA</span>
+              </div>
+            </td>
+            <td class="px-4 font-normal text-slate-100">
+              Risco de Surto de Dengue
+            </td>
+            <td class="px-4 font-medium text-slate-200">
+              Rio de Janeiro
+            </td>
+            <td class="px-4 text-slate-400 font-mono text-[12px]">
+              RJ
+            </td>
+            <td class="px-4 text-slate-300 truncate max-w-xl" title="Temperatura 31.8C com precipitacao 45.2mm e umidade 89%">
+              Temperatura 31.8C com precipitacao 45.2mm e umidade 89%
+            </td>
+            <td class="px-6 text-right font-mono text-[11px] text-slate-400">
+              2026-09-19 01:30
+            </td>
+          </tr>
+
+          <!-- Row 7: Curitiba Calor Extremo (Warning) -->
+          <tr class="h-[44px] bg-surface hover:bg-surface-card transition-colors">
+            <td class="px-6 text-center">
+              <div class="flex items-center justify-center space-x-2">
+                <span class="w-[6px] h-[6px] rounded-full bg-warning inline-block"></span>
+                <span class="font-mono text-[11px] text-warning font-medium">ALERTA</span>
+              </div>
+            </td>
+            <td class="px-4 font-normal text-slate-100">
+              Calor Extremo
+            </td>
+            <td class="px-4 font-medium text-slate-200">
+              Curitiba
+            </td>
+            <td class="px-4 text-slate-400 font-mono text-[12px]">
+              PR
+            </td>
+            <td class="px-4 text-slate-300 truncate max-w-xl" title="Temperatura registrada de 39.1C, acima do limiar de 38C">
+              Temperatura registrada de 39.1C, acima do limiar de 38C
+            </td>
+            <td class="px-6 text-right font-mono text-[11px] text-slate-400">
+              2026-09-19 01:15
+            </td>
+          </tr>
+
+          <!-- Row 8: Salvador Chuva Extrema (Nominal / Monitoramento) -->
+          <tr class="h-[44px] bg-surface-darker hover:bg-surface-card transition-colors">
+            <td class="px-6 text-center">
+              <div class="flex items-center justify-center space-x-2">
+                <span class="w-[6px] h-[6px] rounded-full bg-nominal inline-block"></span>
+                <span class="font-mono text-[11px] text-nominal font-medium">ATENÇÃO</span>
+              </div>
+            </td>
+            <td class="px-4 font-normal text-slate-100">
+              Chuva Extrema
+            </td>
+            <td class="px-4 font-medium text-slate-200">
+              Salvador
+            </td>
+            <td class="px-4 text-slate-400 font-mono text-[12px]">
+              BA
+            </td>
+            <td class="px-4 text-slate-300 truncate max-w-xl" title="Precipitacao de 52.3mm/h registrada, risco de alagamentos">
+              Precipitacao de 52.3mm/h registrada, risco de alagamentos
+            </td>
+            <td class="px-6 text-right font-mono text-[11px] text-slate-400">
+              2026-09-18 23:00
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Below the table: Pagination Bar (40px) -->
+    <div class="h-10 bg-surface-panel border-t border-border flex items-center justify-between px-6 shrink-0 z-20">
+      <div class="text-[12px] text-slate-400 font-sans">
+        Mostrando <span class="text-slate-200 font-medium">1-8</span> de <span class="text-slate-200 font-medium">24</span> alertas
+      </div>
+
+      <div class="flex items-center space-x-1.5">
+        <button class="w-7 h-7 flex items-center justify-center rounded-[4px] bg-surface-card border border-primary text-primary text-[12px] font-mono font-medium">
+          1
+        </button>
+        <button class="w-7 h-7 flex items-center justify-center rounded-[4px] bg-surface-card border border-border text-slate-400 hover:text-slate-200 hover:border-slate-600 text-[12px] font-mono transition-colors">
+          2
+        </button>
+        <button class="w-7 h-7 flex items-center justify-center rounded-[4px] bg-surface-card border border-border text-slate-400 hover:text-slate-200 hover:border-slate-600 text-[12px] font-mono transition-colors">
+          3
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- ZONE 4: BOTTOM STATUS BAR -->
+  <footer class="h-8 bg-surface-dim border-t border-border flex items-center justify-between px-6 text-[11px] font-mono text-slate-500 shrink-0 z-20">
+    <div class="flex items-center space-x-2">
+      <span class="inline-block w-1.5 h-1.5 rounded-full bg-nominal"></span>
+      <span>Última sincronização: 2026-09-19 03:00 UTC</span>
+    </div>
+    <div class="text-slate-400">
+      Fontes: <span class="text-slate-300">NASA POWER / Open-Meteo / INPE / ANA / CEMADEN</span>
+    </div>
+  </footer>
+
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+  </script>
+</body>
+</html>

@@ -1,0 +1,64 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    background-color: #090d16;
+    color: #f1f5f9;
+  }
+}
+
+/* Scrollbar técnica e discreta */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #090d16;
+}
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Ajustes visuais técnicos para Leaflet */
+.leaflet-container {
+  background-color: #090d16 !important;
+  outline: none;
+}
+
+.leaflet-tooltip {
+  background: #131b2c !important;
+  border: 1px solid #1e293b !important;
+  color: #f1f5f9 !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.7) !important;
+  border-radius: 4px !important;
+  padding: 8px !important;
+}
+
+.leaflet-tooltip-top:before {
+  border-top-color: #1e293b !important;
+}
+
+.leaflet-tooltip-bottom:before {
+  border-bottom-color: #1e293b !important;
+}
+
+/* Remove atribuição azul padrão do Leaflet */
+.leaflet-control-attribution {
+  background: rgba(9, 13, 22, 0.8) !important;
+  color: #64748b !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  font-size: 10px !important;
+  padding: 2px 6px !important;
+  border-top-left-radius: 4px;
+}
+
+.leaflet-control-attribution a {
+  color: #94a3b8 !important;
+  text-decoration: none !important;
+}
