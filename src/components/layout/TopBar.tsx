@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
-import { Map, AlertTriangle, TrendingUp, RefreshCw, Bell, Radio } from 'lucide-react';
+import { Map, AlertTriangle, TrendingUp, RefreshCw, Bell, Radio, MapPin } from 'lucide-react';
 import { triggerManualSync } from '../../services/api';
+import { CityInfo } from '../../types';
+import { MONITORED_CITIES } from '../../data/mockData';
 
 export type ActiveTab = 'map' | 'alerts' | 'forecast';
 
@@ -9,13 +11,17 @@ interface TopBarProps {
   onTabChange: (tab: ActiveTab) => void;
   onOpenLanding?: () => void;
   unreadAlertsCount?: number;
+  selectedCity?: CityInfo;
+  onSelectCity?: (city: CityInfo) => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
   activeTab,
   onTabChange,
   onOpenLanding,
-  unreadAlertsCount = 3
+  unreadAlertsCount = 3,
+  selectedCity,
+  onSelectCity
 }) => {
   const [syncing, setSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
@@ -32,11 +38,20 @@ export const TopBar: React.FC<TopBarProps> = ({
     }
   };
 
+  const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const city = MONITORED_CITIES.find(c => c.slug === e.target.value);
+    if (city && onSelectCity) {
+      onSelectCity(city);
+      // Garante que a aba do mapa fique ativa ao selecionar cidade
+      if (activeTab !== 'map') onTabChange('map');
+    }
+  };
+
   return (
     <header className="h-14 bg-surface-panel border-b border-border-subtle px-4 flex items-center justify-between z-30 shrink-0 select-none">
-      {/* Esquerda: Logo e Identificador */}
+      {/* ── Esquerda: Logo ── */}
       <div className="flex items-center gap-2 sm:gap-3">
-        <button 
+        <button
           onClick={onOpenLanding}
           className="flex items-center gap-2 hover:opacity-85 transition-opacity text-left cursor-pointer"
           title="Ver Apresentação Técnica / Manifesto"
@@ -52,7 +67,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         </span>
       </div>
 
-      {/* Centro: Navegação entre as 3 Abas + Sobre */}
+      {/* ── Centro: Navegação ── */}
       <nav className="flex items-center gap-0.5 sm:gap-1 bg-surface-base/80 p-1 rounded-md border border-border-subtle">
         <button
           onClick={() => onTabChange('map')}
@@ -106,14 +121,40 @@ export const TopBar: React.FC<TopBarProps> = ({
         )}
       </nav>
 
-      {/* Direita: Status dos Nós e Ações */}
-      <div className="flex items-center gap-1.5 sm:gap-3">
+      {/* ── Direita: Seletor de Cidade + Status + Ações ── */}
+      <div className="flex items-center gap-1.5 sm:gap-2">
+
+        {/* Seletor de Cidade */}
+        {selectedCity && onSelectCity && (
+          <div className="hidden sm:flex items-center gap-1.5 bg-surface-card border border-border-subtle rounded px-2 py-1 text-xs font-mono">
+            <MapPin className="w-3 h-3 text-hydro shrink-0" />
+            <select
+              value={selectedCity.slug}
+              onChange={handleCityChange}
+              className="bg-transparent text-zinc-200 cursor-pointer outline-none text-xs font-mono max-w-[130px] truncate"
+              title="Selecionar capital monitorada"
+            >
+              {MONITORED_CITIES.map(city => (
+                <option
+                  key={city.slug}
+                  value={city.slug}
+                  className="bg-surface-panel text-zinc-200"
+                >
+                  {city.nome} — {city.estado}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Status de sync */}
         {syncStatus && (
           <span className="text-[11px] font-mono text-hydro bg-hydro/10 px-2 py-0.5 rounded border border-hydro/20 hidden md:inline-block">
             {syncStatus}
           </span>
         )}
 
+        {/* Botão de sincronização */}
         <button
           onClick={handleSync}
           disabled={syncing}
@@ -123,12 +164,17 @@ export const TopBar: React.FC<TopBarProps> = ({
           <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin text-hydro' : ''}`} />
         </button>
 
-        <div className="flex items-center gap-1.5 px-2 py-1 rounded border border-border-subtle bg-surface-card" title="10 capitais com telemetria ativa">
+        {/* Indicador de nós ativos */}
+        <div
+          className="flex items-center gap-1.5 px-2 py-1 rounded border border-border-subtle bg-surface-card"
+          title="10 capitais com telemetria ativa"
+        >
           <span className="w-2 h-2 rounded-full bg-nominal animate-ping" />
           <span className="text-[11px] font-mono text-zinc-300 hidden md:inline-block">10 capitais</span>
         </div>
 
-        <button 
+        {/* Sino de alertas */}
+        <button
           onClick={() => onTabChange('alerts')}
           className="relative p-1.5 rounded border border-border-subtle bg-surface-card text-zinc-400 hover:text-zinc-200"
           title="Central de Alertas"

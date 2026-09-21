@@ -69,6 +69,8 @@ export const App: React.FC = () => {
         onTabChange={setActiveTab} 
         onOpenLanding={() => setCurrentView('landing')}
         unreadAlertsCount={3}
+        selectedCity={selectedCity}
+        onSelectCity={handleSelectCity}
       />
 
       {/* Conteúdo Principal (de acordo com a aba ativa) */}
