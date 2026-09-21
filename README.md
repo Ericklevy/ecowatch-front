@@ -3,7 +3,6 @@
 > **Observatório Ambiental Operacional** — Monitoramento geoespacial e telemetria ambiental em tempo real para 10 capitais brasileiras.
 
 [![Deploy](https://img.shields.io/badge/deploy-vercel-black?logo=vercel)](https://ecowatchbrasil.live)
-[![GitHub Pages](https://img.shields.io/badge/github-pages-222?logo=github)](https://ericklevy.github.io/ecowatch-front/)
 [![React](https://img.shields.io/badge/react-18-61dafb?logo=react)](https://react.dev)
 [![TypeScript](https://img.shields.io/badge/typescript-5.6-3178c6?logo=typescript)](https://typescriptlang.org)
 [![Tailwind CSS](https://img.shields.io/badge/tailwind-3.4-38bdf8?logo=tailwindcss)](https://tailwindcss.com)
@@ -15,8 +14,7 @@
 
 | Ambiente | URL |
 |---|---|
-| **Produção (Domínio Próprio)** | [https://ecowatchbrasil.live](https://ecowatchbrasil.live) |
-| **GitHub Pages** | [https://ericklevy.github.io/ecowatch-front](https://ericklevy.github.io/ecowatch-front) |
+| **Produção** | [https://ecowatchbrasil.live](https://ecowatchbrasil.live) |
 
 ---
 
@@ -188,7 +186,7 @@ Os arquivos são gerados na pasta `dist/` prontos para qualquer servidor estáti
 
 - 🌍 **Site ao Vivo:** [ecowatchbrasil.live](https://ecowatchbrasil.live)
 - ⚙️ **Backend (Microsserviços Java):** [github.com/Ericklevy/ecowatch-brasil](https://github.com/Ericklevy/ecowatch-brasil)
-- 🎨 **Design System no Stitch:** Projeto `EcoWatch Brasil - Frontend` (ID: `11908236725091041433`)
+- 🎨 **Design System no Stitch:** Projeto `EcoWatch Brasil - Frontend`
 
 ---
 
