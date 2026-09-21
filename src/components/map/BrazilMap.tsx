@@ -183,24 +183,24 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
         {showRivers && (
           <WMSTileLayer
             url="https://geoserver.snirh.gov.br/geo/ows"
-            layers="snirh:snirh_bacias_hidrograficas_ottocodificadas_nivel_5"
+            layers="snirh:snirh_bacias_hidrograficas_ottocodificadas_nivel_2"
             format="image/png"
             transparent={true}
             version="1.3.0"
-            opacity={0.55}
+            opacity={0.6}
             attribution='&copy; <a href="https://www.snirh.gov.br/">ANA/SNIRH</a>'
           />
         )}
 
-        {/* ── WMS: Focos de Queimadas Ativos (INPE BDQueimadas) ── */}
+        {/* ── WMS: Focos de Queimadas Ativos (INPE BDQueimadas — últimas 24h) ── */}
         {showFires && (
           <WMSTileLayer
-            url="https://queimadas.dgi.inpe.br/queimadas/geoserver/ows"
-            layers="bdq:focos_bd_referencia"
+            url="https://queimadas.dgi.inpe.br/queimadas/geoserver/wms"
+            layers="queimadas:focos_24h"
             format="image/png"
             transparent={true}
-            version="1.3.0"
-            opacity={0.8}
+            version="1.1.1"
+            opacity={0.85}
             attribution='&copy; <a href="https://queimadas.dgi.inpe.br/">INPE BDQueimadas</a>'
           />
         )}
