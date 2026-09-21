@@ -121,6 +121,11 @@ export const App: React.FC = () => {
                 reading={currentReading}
                 alerts={cityAlerts}
                 onClose={() => setIsDrawerOpen(false)}
+                onDataRefreshed={(newReading, newAlerts) => {
+                  setReadings(prev => ({ ...prev, [selectedCity.slug]: newReading }));
+                  setCityAlerts(newAlerts);
+                  setLastUpdate(new Date());
+                }}
               />
             )}
           </div>
