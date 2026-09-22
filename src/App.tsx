@@ -10,8 +10,6 @@ import { MONITORED_CITIES, MOCK_WEATHER_READINGS, MOCK_ALERTS } from './data/moc
 import { CityInfo, WeatherReading, AlertDTO } from './types';
 import { fetchCityWeather, fetchCityDashboard } from './services/api';
 
-const ALERT_SERVICE_URL = 'http://localhost:8081';
-
 export const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<'landing' | 'console'>('landing');
   const [activeTab, setActiveTab] = useState<ActiveTab>('map');
@@ -41,13 +39,13 @@ export const App: React.FC = () => {
         }
       }
 
-      // Fallback: tenta um ping direto no health endpoint
+      // Fallback: verifica se o read-model-service (Swagger/Dashboard) está respondendo
       if (!anyOnline) {
         try {
-          const ping = await fetch(`${ALERT_SERVICE_URL}/actuator/health`, {
-            signal: AbortSignal.timeout(1000)
-          });
-          if (ping.ok) anyOnline = true;
+          const dashboard = await fetchCityDashboard('brasilia');
+          if (dashboard && dashboard.alertas && dashboard.alertas.length > 0) {
+            anyOnline = true;
+          }
         } catch {
           // Offline
         }

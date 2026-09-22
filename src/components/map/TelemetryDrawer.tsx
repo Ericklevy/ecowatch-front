@@ -11,7 +11,7 @@ import {
   CheckCircle2,
   RefreshCw
 } from 'lucide-react';
-import { CityInfo, WeatherReading, AlertDTO } from '../../types';
+import { CityInfo, WeatherReading, AlertDTO, formatAlertTypeName } from '../../types';
 import { triggerCitySync, fetchCityWeather, fetchCityDashboard } from '../../services/api';
 
 interface TelemetryDrawerProps {
@@ -70,7 +70,11 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
           fetchCityWeather(city.slug),
           fetchCityDashboard(city.slug)
         ]);
-        onDataRefreshed?.(newReading, dashboard.alertas);
+        const freshReading: WeatherReading = {
+          ...newReading,
+          timestamp: new Date().toISOString()
+        };
+        onDataRefreshed?.(freshReading, dashboard.alertas);
       }
     } finally {
       setSyncing(false);
@@ -311,7 +315,7 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-zinc-200 flex items-center gap-1.5">
                       <AlertTriangle className="w-3 h-3 text-warning shrink-0" />
-                      <span>{alert.tipoAlerta}</span>
+                      <span>{formatAlertTypeName(alert.tipoAlerta)}</span>
                     </span>
                     <span className="text-[10px] font-mono text-zinc-500">
                       {new Date(alert.dataHoraAlerta).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })} UTC

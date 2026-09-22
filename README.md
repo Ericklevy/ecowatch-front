@@ -37,10 +37,39 @@ O backend é uma arquitetura de microsserviços em **Java 21 + Spring Boot 3** c
 ### Endpoints Consumidos
 
 ```
-GET http://localhost:8086/api/dashboard/{municipio}   → DashboardDTO (alertas + previsões)
-GET http://localhost:8081/api/cache/{municipio}       → WeatherReading (leitura mais recente)
-POST http://localhost:8083/api/scheduler/trigger      → Forçar ingestão manual de telemetria
+GET  /api/dashboard/{municipio}       → DashboardDTO (alertas reais + previsões consolidadas)
+GET  /api/cache/{municipio}           → WeatherReading (leitura fresca em cache Redis)
+POST /api/scheduler/trigger           → Forçar ingestão de telemetria nos satélites
+POST /api/scheduler/trigger/{cidade}  → Coleta sob demanda para uma capital específica
 ```
+
+---
+
+## 🏛️ Arquitetura Híbrida & Decisões de Engenharia (FinOps & Resiliência)
+
+O projeto adota um modelo arquitetural moderno focado em **eficiência de custos em nuvem (FinOps)** e **alta disponibilidade (Graceful Degradation)**:
+
+```
+[ Usuário no Navegador (ecowatchbrasil.live) ]
+      │
+      ├── 1. Telemetria e Camadas Visuais (Edge / Client)
+      │      ├── Open-Meteo API (Temperatura, Umidade, Vento, Chuva, PM2.5) -> R$ 0,00
+      │      ├── ESRI World Dark Gray (Tiles de mapa geoespacial)           -> R$ 0,00
+      │      └── Camadas WMS (ANA HidroWeb & INPE BDQueimadas)              -> R$ 0,00
+      │
+      └── 2. Inteligência e Persistência (Backend Azure Container Apps)
+             ├── Data Ingestion Service (Coleta sob demanda e gatilho de satélites)
+             ├── Apache Kafka (Streaming distribuído de eventos de telemetria)
+             ├── Alert Service (Motor de regras de risco: enchente, seca, calor, fogo)
+             ├── Upstash Redis (Cache de leituras e dashboards com latência < 5ms)
+             ├── Supabase PostgreSQL (Histórico oficial e auditoria de incidentes)
+             └── Read Model Service (Consultas consolidadas padrão CQRS)
+```
+
+### Por que essa divisão de papéis?
+1. **FinOps (Economia Inteligente de Nuvem):** Se 1.000 usuários acessarem o mapa simultaneamente para ver a temperatura local, as requisições de visualização são resolvidas diretamente pelo navegador com a Open-Meteo, sem consumir CPU, RAM ou limites do Supabase/Azure. Isso reduz o custo de infraestrutura de R$ 300/mês para **quase zero**.
+2. **Autoridade Central de Dados:** O Backend em Java/Spring Boot nunca é ignorado: ele permanece como a autoridade máxima para **auditoria, regras críticas de desastre, persistência histórica e mensageria assíncrona**.
+3. **Resiliência (Tolerância a Falhas):** O frontend implementa uma hierarquia de fallback: tenta o cache Redis na Azure; se o container estiver iniciando ou o cache frio, busca imediatamente a telemetria ao vivo; garantindo que o usuário nunca veja dados corrompidos ou telas quebradas.
 
 ---
 

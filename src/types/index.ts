@@ -51,3 +51,21 @@ export interface CityInfo {
   postoAna?: string;
   status: 'nominal' | 'warning' | 'critical';
 }
+
+export const ALERT_TYPE_LABELS: Record<string, string> = {
+  RIVER_FLOOD: 'Inundação / Enchente',
+  FOREST_FIRE: 'Incêndio Florestal',
+  CRITICAL_FIRE_RISK: 'Risco de Incêndio',
+  POOR_AIR_QUALITY: 'Qualidade do Ar Crítica',
+  EXTREME_HEAT: 'Calor Extremo',
+  EXTREME_RAIN: 'Chuva Extrema',
+  FLASH_FLOOD: 'Enxurrada / Deslizamento',
+  DROUGHT_RISK: 'Risco de Seca / Estiagem',
+  DENGUE_OUTBREAK_RISK: 'Risco de Surto de Dengue',
+  FIRE_NEAR_URBAN_AREA: 'Incêndio em Área Urbana'
+};
+
+export const formatAlertTypeName = (tipoAlerta: string): string => {
+  if (!tipoAlerta) return '';
+  return ALERT_TYPE_LABELS[tipoAlerta] || tipoAlerta.replace(/_/g, ' ');
+};

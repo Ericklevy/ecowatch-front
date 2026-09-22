@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Search, Filter, CheckCircle2 } from 'lucide-react';
 import { MOCK_ALERTS, MONITORED_CITIES } from '../../data/mockData';
+import { formatAlertTypeName } from '../../types';
 
 const ALERT_CATEGORIES = [
   { key: 'ALL', label: 'Todos os Alertas' },
@@ -27,7 +28,8 @@ export const AlertsView: React.FC = () => {
       const matchSearch = searchQuery === '' || 
         alert.municipio.toLowerCase().includes(searchQuery.toLowerCase()) ||
         alert.mensagem.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        alert.tipoAlerta.toLowerCase().includes(searchQuery.toLowerCase());
+        alert.tipoAlerta.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        formatAlertTypeName(alert.tipoAlerta).toLowerCase().includes(searchQuery.toLowerCase());
 
       return matchCategory && matchCity && matchSearch;
     });
@@ -134,7 +136,7 @@ export const AlertsView: React.FC = () => {
                       {getSeverityBadge(alert.tipoAlerta)}
                     </td>
                     <td className="py-3 px-4 font-semibold text-zinc-200 whitespace-nowrap">
-                      {alert.tipoAlerta}
+                      {formatAlertTypeName(alert.tipoAlerta)}
                     </td>
                     <td className="py-3 px-4 text-zinc-200 font-medium whitespace-nowrap">
                       {alert.municipio}
