@@ -108,16 +108,69 @@ export const ForecastView: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabela Comparativa de 10 Cidades */}
+      {/* Matriz Comparativa das 27 Capitais */}
       <div className="border border-border-subtle rounded-md bg-surface-panel overflow-hidden shadow-xl">
         <div className="p-3.5 border-b border-border-subtle bg-surface-dim/70 flex items-center justify-between">
           <span className="text-xs font-mono font-semibold text-zinc-300 uppercase tracking-wider">
-            Matriz Comparativa das 10 Capitais Monitoradas (D+1)
+            Matriz Comparativa das 27 Capitais Monitoradas (D+1)
           </span>
-          <span className="text-[11px] font-mono text-zinc-500">Clique na linha para ver os 3 dias</span>
+          <span className="text-[11px] font-mono text-zinc-500">Toque para ver os 3 dias</span>
         </div>
 
-        <div className="overflow-x-auto">
+        {/* Visualização Mobile: Cards Verticais */}
+        <div className="md:hidden divide-y divide-border-subtle/50">
+          {MONITORED_CITIES.map(city => {
+            const forecasts = MOCK_FORECASTS[city.slug] || [];
+            const nextDay = forecasts[0];
+            if (!nextDay) return null;
+            const isSelected = selectedCitySlug === city.slug;
+
+            return (
+              <div
+                key={city.slug}
+                onClick={() => setSelectedCitySlug(isSelected ? null : city.slug)}
+                className={`p-3.5 space-y-2.5 transition-colors cursor-pointer ${
+                  isSelected ? 'bg-hydro/10 border-l-4 border-l-hydro' : 'hover:bg-surface-hover/50'
+                }`}
+              >
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="font-bold text-sm text-white">{city.nome}</span>
+                    <span className="text-xs font-mono text-zinc-400 ml-1.5">({city.estado})</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono font-semibold text-zinc-200">
+                      {nextDay.temperaturaPrevista.toFixed(1)}°C
+                    </span>
+                    <ChevronRight className={`w-4 h-4 text-zinc-500 transition-transform ${isSelected ? 'rotate-90 text-hydro' : ''}`} />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 text-xs font-mono bg-surface-dim/60 p-2.5 rounded border border-border-subtle/50">
+                  <div>
+                    <div className="text-[10px] text-zinc-400 uppercase">Chuva Prevista</div>
+                    <div className="font-bold text-hydro">{nextDay.precipitacaoPrevista.toFixed(1)} mm</div>
+                  </div>
+                  <div>
+                    <div className="text-[10px] text-zinc-400 uppercase">Umidade</div>
+                    <div className="font-semibold text-zinc-200">{Math.round(nextDay.umidadePrevista)}%</div>
+                  </div>
+                  <div className="pt-1.5 border-t border-border-subtle/40">
+                    <div className="text-[10px] text-zinc-400 uppercase mb-1">Risco Fogo</div>
+                    {getScoreBadge(nextDay.riscoIncendio)}
+                  </div>
+                  <div className="pt-1.5 border-t border-border-subtle/40">
+                    <div className="text-[10px] text-zinc-400 uppercase mb-1">Risco Dengue</div>
+                    {getScoreBadge(nextDay.riscoDengue)}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Visualização Desktop: Tabela Completa */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-border-subtle bg-surface-dim/40 text-[11px] font-mono text-zinc-400 uppercase tracking-wider">

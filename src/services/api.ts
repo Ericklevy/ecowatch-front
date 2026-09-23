@@ -18,7 +18,10 @@ export async function fetchCityWeather(citySlug: string): Promise<WeatherReading
   }
 
   // 2. Busca direto da Open-Meteo ao vivo (mesma fonte oficial que o backend consome)
-  const city = MONITORED_CITIES.find(c => c.slug.toLowerCase() === citySlug.toLowerCase());
+  const city = MONITORED_CITIES.find(c => 
+    c.slug.toLowerCase() === citySlug.toLowerCase() || 
+    c.nome.toLowerCase() === citySlug.toLowerCase()
+  );
   if (city) {
     try {
       const [weatherRes, aqRes] = await Promise.all([
@@ -35,7 +38,7 @@ export async function fetchCityWeather(citySlug: string): Promise<WeatherReading
         const aqData = aqRes && aqRes.ok ? await aqRes.json() : null;
         const current = data.current || {};
         const aqCurrent = aqData?.current || {};
-        const baseMock = MOCK_WEATHER_READINGS[citySlug] || MOCK_WEATHER_READINGS['manaus'];
+        const baseMock = MOCK_WEATHER_READINGS[city.slug] || MOCK_WEATHER_READINGS[citySlug] || MOCK_WEATHER_READINGS['manaus'];
 
         return {
           municipio: city.nome,
@@ -77,6 +80,17 @@ export async function fetchCityDashboard(citySlug: string): Promise<DashboardDTO
 }
 
 export async function fetchAllAlerts(): Promise<AlertDTO[]> {
+  if (READ_MODEL_URL) {
+    try {
+      const res = await fetch(`${READ_MODEL_URL}/api/dashboard/alerts/all`, {
+        signal: AbortSignal.timeout(3000)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (Array.isArray(data) && data.length > 0) return data;
+      }
+    } catch { /* fallback */ }
+  }
   return MOCK_ALERTS;
 }
 

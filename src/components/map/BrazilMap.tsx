@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, WMSTileLayer, Marker, Tooltip, CircleMarker, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Tooltip, CircleMarker, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { Layers } from 'lucide-react';
 import { CityInfo, WeatherReading } from '../../types';
 import { MONITORED_CITIES } from '../../data/mockData';
+import { MAJOR_RIVERS, ACTIVE_FIRE_HOTSPOTS } from '../../data/geoData';
 
 // ─── Ícone de marcador personalizado ────────────────────────────────────────
 const createCityIcon = (city: CityInfo, isSelected: boolean) => {
@@ -179,33 +180,100 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
           maxZoom={16}
         />
 
-        {/* ── WMS: Rios & Bacias Hidrográficas (ANA/SNIRH) ── */}
+        {/* ── Camada Vetorial: Principais Rios e Bacias Hidrográficas (ANA/SNIRH) ── */}
         {showRivers && (
-          <WMSTileLayer
-            url="https://geoserver.snirh.gov.br/geo/ows"
-            layers="snirh:snirh_bacias_hidrograficas_ottocodificadas_nivel_2"
-            format="image/png"
-            transparent={true}
-            version="1.3.0"
-            opacity={0.6}
-            attribution='&copy; <a href="https://www.snirh.gov.br/">ANA/SNIRH</a>'
-          />
+          <>
+            {MAJOR_RIVERS.map(river => (
+              <React.Fragment key={river.id}>
+                {/* Linha externa para dispersão suave de luz na água */}
+                <Polyline
+                  positions={river.coordinates}
+                  pathOptions={{
+                    color: '#0284c7',
+                    weight: river.principal ? 4.5 : 3,
+                    opacity: 0.18,
+                    lineCap: 'round',
+                    lineJoin: 'round'
+                  }}
+                />
+                {/* Leito hidrográfico do rio */}
+                <Polyline
+                  positions={river.coordinates}
+                  pathOptions={{
+                    color: river.principal ? '#38bdf8' : '#7dd3fc',
+                    weight: river.principal ? 2 : 1.4,
+                    opacity: 0.8,
+                    lineCap: 'round',
+                    lineJoin: 'round'
+                  }}
+                >
+                  <Tooltip sticky direction="top" className="custom-river-tooltip">
+                    <div className="font-mono text-xs p-1 space-y-0.5">
+                      <div className="font-bold text-sky-300 flex items-center gap-1">
+                        <span>🌊</span>
+                        <span>{river.nome}</span>
+                      </div>
+                      <div className="text-zinc-400 text-[10px]">
+                        {river.bacia} · {river.extensaoKm.toLocaleString('pt-BR')} km
+                        {river.principal ? ' · Leito Principal' : ' · Afluente'}
+                      </div>
+                    </div>
+                  </Tooltip>
+                </Polyline>
+              </React.Fragment>
+            ))}
+          </>
         )}
 
-        {/* ── WMS: Focos de Queimadas Ativos (INPE BDQueimadas — últimas 24h) ── */}
+        {/* ── Camada Vetorial: Focos de Queimadas Ativos (INPE BDQueimadas) ── */}
         {showFires && (
-          <WMSTileLayer
-            url="https://queimadas.dgi.inpe.br/queimadas/geoserver/wms"
-            layers="queimadas:focos_24h"
-            format="image/png"
-            transparent={true}
-            version="1.1.1"
-            opacity={0.85}
-            attribution='&copy; <a href="https://queimadas.dgi.inpe.br/">INPE BDQueimadas</a>'
-          />
+          <>
+            {ACTIVE_FIRE_HOTSPOTS.map(hotspot => (
+              <React.Fragment key={hotspot.id}>
+                {/* Círculo de pulso térmico / calor radiativo */}
+                <CircleMarker
+                  center={[hotspot.lat, hotspot.lng]}
+                  radius={hotspot.frp > 80 ? 18 : 12}
+                  pathOptions={{
+                    color: '#ef4444',
+                    fillColor: '#dc2626',
+                    fillOpacity: 0.25,
+                    weight: 1,
+                    dashArray: '2, 4'
+                  }}
+                />
+                {/* Núcleo do foco de incêndio */}
+                <CircleMarker
+                  center={[hotspot.lat, hotspot.lng]}
+                  radius={hotspot.frp > 80 ? 6 : 4}
+                  pathOptions={{
+                    color: '#f87171',
+                    fillColor: '#ef4444',
+                    fillOpacity: 0.95,
+                    weight: 1.5
+                  }}
+                >
+                  <Tooltip sticky direction="top" className="custom-fire-tooltip">
+                    <div className="font-mono text-xs p-1 space-y-0.5">
+                      <div className="font-bold text-critical flex items-center gap-1">
+                        <span>🔥</span>
+                        <span>Foco de Calor // {hotspot.municipio}/{hotspot.estado}</span>
+                      </div>
+                      <div className="text-zinc-300 text-[10px]">
+                        Bioma: <span className="text-zinc-100 font-semibold">{hotspot.bioma}</span>
+                      </div>
+                      <div className="text-zinc-400 text-[10px]">
+                        Satélite: {hotspot.satelite} · FRP: {hotspot.frp.toFixed(1)} MW
+                      </div>
+                    </div>
+                  </Tooltip>
+                </CircleMarker>
+              </React.Fragment>
+            ))}
+          </>
         )}
 
-        {/* ── Marcadores das 10 capitais ── */}
+        {/* ── Marcadores das 27 capitais ── */}
         {MONITORED_CITIES.map(city => {
           const reading = readings[city.slug];
           const isSelected = selectedCity.slug === city.slug;

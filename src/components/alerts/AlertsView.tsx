@@ -1,7 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Search, Filter, CheckCircle2 } from 'lucide-react';
 import { MOCK_ALERTS, MONITORED_CITIES } from '../../data/mockData';
-import { formatAlertTypeName } from '../../types';
+import { formatAlertTypeName, AlertDTO } from '../../types';
+import { fetchAllAlerts } from '../../services/api';
 
 const ALERT_CATEGORIES = [
   { key: 'ALL', label: 'Todos os Alertas' },
@@ -17,12 +18,21 @@ const ALERT_CATEGORIES = [
 ];
 
 export const AlertsView: React.FC = () => {
+  const [alerts, setAlerts] = useState<AlertDTO[]>(MOCK_ALERTS);
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCity, setSelectedCity] = useState('ALL');
 
+  useEffect(() => {
+    fetchAllAlerts().then(data => {
+      if (data && data.length > 0) {
+        setAlerts(data);
+      }
+    });
+  }, []);
+
   const filteredAlerts = useMemo(() => {
-    return MOCK_ALERTS.filter(alert => {
+    return alerts.filter(alert => {
       const matchCategory = selectedCategory === 'ALL' || alert.tipoAlerta === selectedCategory;
       const matchCity = selectedCity === 'ALL' || alert.municipio.toLowerCase() === selectedCity.toLowerCase();
       const matchSearch = searchQuery === '' || 
@@ -111,9 +121,48 @@ export const AlertsView: React.FC = () => {
         </div>
       </div>
 
-      {/* Tabela Técnica de Incidentes */}
-      <div className="flex-1 overflow-auto p-4">
-        <div className="border border-border-subtle rounded-md bg-surface-panel overflow-hidden shadow-xl">
+      {/* Tabela Técnica de Incidentes (Desktop) & Cards (Mobile) */}
+      <div className="flex-1 overflow-auto p-3 sm:p-4 pb-20 md:pb-4">
+        {/* Visualização Mobile: Cards Verticais Elegantes */}
+        <div className="md:hidden space-y-2.5">
+          {filteredAlerts.length > 0 ? (
+            filteredAlerts.map(alert => (
+              <div
+                key={alert.id}
+                className="p-3 rounded-lg bg-surface-panel border border-border-subtle space-y-2 shadow-sm"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {getSeverityBadge(alert.tipoAlerta)}
+                    <span className="font-bold text-xs text-zinc-200">
+                      {formatAlertTypeName(alert.tipoAlerta)}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-mono text-zinc-500 shrink-0">
+                    {new Date(alert.dataHoraAlerta).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} {new Date(alert.dataHoraAlerta).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                </div>
+
+                <p className="text-xs text-zinc-300 leading-relaxed font-sans">
+                  {alert.mensagem}
+                </p>
+
+                <div className="flex items-center justify-between pt-1 border-t border-border-subtle/50 text-[11px] font-mono text-zinc-400">
+                  <span className="text-zinc-200 font-semibold">{alert.municipio} ({alert.estado})</span>
+                  <span className="text-zinc-500">ID #{alert.id}</span>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="py-12 text-center text-zinc-500 font-mono">
+              <CheckCircle2 className="w-6 h-6 mx-auto text-nominal mb-2" />
+              Nenhum alerta encontrado para os filtros selecionados.
+            </div>
+          )}
+        </div>
+
+        {/* Visualização Desktop: Tabela Completa */}
+        <div className="hidden md:block border border-border-subtle rounded-md bg-surface-panel overflow-hidden shadow-xl">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-border-subtle bg-surface-dim/70 text-[11px] font-mono text-zinc-400 uppercase tracking-wider">

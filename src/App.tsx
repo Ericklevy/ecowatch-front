@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { TopBar, ActiveTab } from './components/layout/TopBar';
 import { StatusBar } from './components/layout/StatusBar';
+import { Map, AlertTriangle, TrendingUp, FileText } from 'lucide-react';
 import { BrazilMap } from './components/map/BrazilMap';
 import { TelemetryDrawer } from './components/map/TelemetryDrawer';
 import { AlertsView } from './components/alerts/AlertsView';
 import { ForecastView } from './components/forecast/ForecastView';
+import { ReportsView } from './components/reports/ReportsView';
 import { LandingPage } from './components/landing/LandingPage';
 import { MONITORED_CITIES, MOCK_WEATHER_READINGS, MOCK_ALERTS } from './data/mockData';
 import { CityInfo, WeatherReading, AlertDTO } from './types';
@@ -26,18 +28,20 @@ export const App: React.FC = () => {
       let anyOnline = false;
       const updatedReadings: Record<string, WeatherReading> = { ...MOCK_WEATHER_READINGS };
 
-      for (const city of MONITORED_CITIES) {
-        try {
-          const reading = await fetchCityWeather(city.slug);
-          // Se a leitura voltou do backend real (não é idêntica ao mock), conta como online
+      const results = await Promise.allSettled(
+        MONITORED_CITIES.map(city => fetchCityWeather(city.slug))
+      );
+
+      results.forEach((res, index) => {
+        const city = MONITORED_CITIES[index];
+        if (res.status === 'fulfilled' && res.value) {
+          const reading = res.value;
           if (reading.timestamp !== MOCK_WEATHER_READINGS[city.slug]?.timestamp) {
             anyOnline = true;
           }
           updatedReadings[city.slug] = reading;
-        } catch {
-          // Mantém mock
         }
-      }
+      });
 
       // Fallback: verifica se o read-model-service (Swagger/Dashboard) está respondendo
       if (!anyOnline) {
@@ -130,10 +134,61 @@ export const App: React.FC = () => {
         )}
         {activeTab === 'alerts' && <AlertsView />}
         {activeTab === 'forecast' && <ForecastView />}
+        {activeTab === 'reports' && <ReportsView />}
       </main>
 
-      {/* Rodapé de Status */}
-      <StatusBar isBackendOnline={isBackendOnline} lastUpdate={lastUpdate} />
+      {/* ── Barra de Navegação Inferior (Mobile Bottom Navigation) ── */}
+      <nav className="md:hidden h-14 bg-surface-panel/95 backdrop-blur border-t border-border-subtle flex items-center justify-around px-2 z-30 shrink-0 select-none">
+        <button
+          onClick={() => setActiveTab('map')}
+          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-colors cursor-pointer ${
+            activeTab === 'map' ? 'text-hydro font-bold' : 'text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <Map className="w-4 h-4" />
+          <span className="text-[10px] font-mono">Mapa</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('alerts')}
+          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-colors relative cursor-pointer ${
+            activeTab === 'alerts' ? 'text-hydro font-bold' : 'text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <div className="relative">
+            <AlertTriangle className="w-4 h-4" />
+            <span className="absolute -top-1 -right-2 w-3.5 h-3.5 rounded-full bg-critical text-[9px] text-white flex items-center justify-center font-bold font-mono">
+              3
+            </span>
+          </div>
+          <span className="text-[10px] font-mono">Alertas</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('forecast')}
+          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-colors cursor-pointer ${
+            activeTab === 'forecast' ? 'text-hydro font-bold' : 'text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <TrendingUp className="w-4 h-4" />
+          <span className="text-[10px] font-mono">Previsões</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('reports')}
+          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-colors cursor-pointer ${
+            activeTab === 'reports' ? 'text-hydro font-bold' : 'text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <FileText className="w-4 h-4" />
+          <span className="text-[10px] font-mono">Relatórios</span>
+        </button>
+      </nav>
+
+      {/* Rodapé de Status (Desktop) */}
+      <div className="hidden md:block shrink-0">
+        <StatusBar isBackendOnline={isBackendOnline} lastUpdate={lastUpdate} />
+      </div>
     </div>
   );
 };

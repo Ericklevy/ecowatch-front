@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Map, AlertTriangle, TrendingUp, RefreshCw, Bell, Radio, MapPin } from 'lucide-react';
+import { Map, AlertTriangle, TrendingUp, FileText, RefreshCw, Bell, Radio, MapPin } from 'lucide-react';
 import { triggerManualSync } from '../../services/api';
 import { CityInfo } from '../../types';
 import { MONITORED_CITIES } from '../../data/mockData';
 
-export type ActiveTab = 'map' | 'alerts' | 'forecast';
+export type ActiveTab = 'map' | 'alerts' | 'forecast' | 'reports';
 
 interface TopBarProps {
   activeTab: ActiveTab;
@@ -59,38 +59,46 @@ export const TopBar: React.FC<TopBarProps> = ({
           <div className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-hydro/10 border border-hydro/30 flex items-center justify-center text-hydro shrink-0">
             <Radio className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-hydro animate-pulse" />
           </div>
-          <span className="font-semibold text-base sm:text-lg tracking-tight text-white">EcoWatch</span>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-sm sm:text-base font-mono tracking-wider text-zinc-100">
+                EcoWatch
+              </span>
+              <span className="hidden md:inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-hydro/10 text-hydro border border-hydro/20">
+                v1.0
+              </span>
+            </div>
+            <p className="text-[10px] text-zinc-500 font-mono hidden sm:block">
+              Centro de Operações Ambientais
+            </p>
+          </div>
         </button>
-        <div className="h-4 w-px bg-border-subtle hidden sm:block" />
-        <span className="text-xs font-mono text-zinc-400 hidden lg:inline-block">
-          Centro de Operações Ambientais
-        </span>
       </div>
 
-      {/* ── Centro: Navegação ── */}
-      <nav className="flex items-center gap-0.5 sm:gap-1 bg-surface-base/80 p-1 rounded-md border border-border-subtle">
+      {/* ── Centro: Navegação de Abas (Visível em Telas Médias e Grandes) ── */}
+      <nav className="hidden md:flex items-center gap-1 bg-surface-base border border-border-subtle rounded-md p-1">
         <button
           onClick={() => onTabChange('map')}
-          className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded text-xs font-medium transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all ${
             activeTab === 'map'
               ? 'bg-hydro/15 text-hydro border border-hydro/30 shadow-sm'
               : 'text-zinc-400 hover:text-zinc-200 hover:bg-surface-card'
           }`}
         >
           <Map className="w-3.5 h-3.5" />
-          <span className="hidden xs:inline sm:inline">Mapa</span>
+          <span>Mapa</span>
         </button>
 
         <button
           onClick={() => onTabChange('alerts')}
-          className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded text-xs font-medium transition-all relative ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all relative ${
             activeTab === 'alerts'
               ? 'bg-hydro/15 text-hydro border border-hydro/30 shadow-sm'
               : 'text-zinc-400 hover:text-zinc-200 hover:bg-surface-card'
           }`}
         >
           <AlertTriangle className="w-3.5 h-3.5" />
-          <span className="hidden xs:inline sm:inline">Alertas</span>
+          <span>Alertas</span>
           {unreadAlertsCount > 0 && (
             <span className="w-4 h-4 rounded-full bg-critical text-[10px] text-white flex items-center justify-center font-mono font-bold leading-none">
               {unreadAlertsCount}
@@ -100,20 +108,32 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         <button
           onClick={() => onTabChange('forecast')}
-          className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded text-xs font-medium transition-all ${
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all ${
             activeTab === 'forecast'
               ? 'bg-hydro/15 text-hydro border border-hydro/30 shadow-sm'
               : 'text-zinc-400 hover:text-zinc-200 hover:bg-surface-card'
           }`}
         >
           <TrendingUp className="w-3.5 h-3.5" />
-          <span className="hidden xs:inline sm:inline">Previsões</span>
+          <span>Previsões</span>
+        </button>
+
+        <button
+          onClick={() => onTabChange('reports')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all ${
+            activeTab === 'reports'
+              ? 'bg-hydro/15 text-hydro border border-hydro/30 shadow-sm'
+              : 'text-zinc-400 hover:text-zinc-200 hover:bg-surface-card'
+          }`}
+        >
+          <FileText className="w-3.5 h-3.5" />
+          <span>Relatórios</span>
         </button>
 
         {onOpenLanding && (
           <button
             onClick={onOpenLanding}
-            className="px-2 py-1.5 rounded text-xs font-mono text-zinc-400 hover:text-zinc-200 hover:bg-surface-card transition-colors hidden sm:inline-block ml-1 border-l border-border-subtle pl-2.5"
+            className="px-2 py-1.5 rounded text-xs font-mono text-zinc-400 hover:text-zinc-200 hover:bg-surface-card transition-colors ml-1 border-l border-border-subtle pl-2.5"
             title="Apresentação e Arquitetura do Sistema"
           >
             Sobre
@@ -124,14 +144,14 @@ export const TopBar: React.FC<TopBarProps> = ({
       {/* ── Direita: Seletor de Cidade + Status + Ações ── */}
       <div className="flex items-center gap-1.5 sm:gap-2">
 
-        {/* Seletor de Cidade */}
+        {/* Seletor de Cidade (Acessível no Mobile e Desktop) */}
         {selectedCity && onSelectCity && (
-          <div className="hidden sm:flex items-center gap-1.5 bg-surface-card border border-border-subtle rounded px-2 py-1 text-xs font-mono">
+          <div className="flex items-center gap-1 sm:gap-1.5 bg-surface-card border border-border-subtle rounded px-1.5 sm:px-2 py-1 text-xs font-mono">
             <MapPin className="w-3 h-3 text-hydro shrink-0" />
             <select
               value={selectedCity.slug}
               onChange={handleCityChange}
-              className="bg-transparent text-zinc-200 cursor-pointer outline-none text-xs font-mono max-w-[130px] truncate"
+              className="bg-transparent text-zinc-200 cursor-pointer outline-none text-xs font-mono max-w-[105px] sm:max-w-[130px] truncate"
               title="Selecionar capital monitorada"
             >
               {MONITORED_CITIES.map(city => (
@@ -140,7 +160,7 @@ export const TopBar: React.FC<TopBarProps> = ({
                   value={city.slug}
                   className="bg-surface-panel text-zinc-200"
                 >
-                  {city.nome} — {city.estado}
+                  {city.nome} ({city.estado})
                 </option>
               ))}
             </select>
