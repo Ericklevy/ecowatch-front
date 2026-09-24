@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Marker, Tooltip, CircleMarker, Polyline, useMa
 import L from 'leaflet';
 import { Layers } from 'lucide-react';
 import { CityInfo, WeatherReading } from '../../types';
-import { MONITORED_CITIES } from '../../data/mockData';
+import { MONITORED_CITIES, MOCK_FORECASTS } from '../../data/mockData';
 import { MAJOR_RIVERS, ACTIVE_FIRE_HOTSPOTS } from '../../data/geoData';
 
 // ─── Ícone de marcador personalizado ────────────────────────────────────────
@@ -34,6 +34,32 @@ const createCityIcon = (city: CityInfo, isSelected: boolean) => {
     iconSize: [24, 24],
     iconAnchor: [12, 12]
   });
+};
+
+// ─── Metadados e Cores para Risco Epidemiológico de Dengue ───────────────────
+const getDengueMeta = (score: number) => {
+  if (score >= 70) {
+    return { color: '#e11d48', stroke: '#fb7185', label: 'Crítico (Alto Risco de Surto)', radius: 34, fillOpacity: 0.35 };
+  }
+  if (score >= 45) {
+    return { color: '#f59e0b', stroke: '#fbbf24', label: 'Atenção (Condições Favoráveis)', radius: 24, fillOpacity: 0.24 };
+  }
+  return { color: '#10b981', stroke: '#34d399', label: 'Baixo / Moderado', radius: 16, fillOpacity: 0.12 };
+};
+
+const getCityDengueScore = (citySlug: string, reading?: WeatherReading): number => {
+  const forecast = MOCK_FORECASTS[citySlug]?.[0];
+  if (forecast && typeof forecast.riscoDengue === 'number') {
+    return forecast.riscoDengue;
+  }
+  if (reading) {
+    let s = 20;
+    if (reading.temperatura >= 24 && reading.temperatura <= 33) s += 35;
+    if (reading.umidade > 70) s += 30;
+    if (reading.precipitacao > 10) s += 15;
+    return Math.min(s, 100);
+  }
+  return 25;
 };
 
 // ─── Componente interno para animação flyTo ──────────────────────────────────
@@ -80,6 +106,7 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
   const [showRivers, setShowRivers] = useState(true);
   const [showFires, setShowFires] = useState(true);
   const [showAirQuality, setShowAirQuality] = useState(false);
+  const [showDengueRisk, setShowDengueRisk] = useState(true);
   const [isLayersOpen, setIsLayersOpen] = useState(false);
 
   return (
@@ -97,7 +124,7 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
         </button>
 
         {/* Painel de Controles */}
-        <div className={`${isLayersOpen ? 'block' : 'hidden'} sm:block mt-1 sm:mt-0 bg-surface-panel/95 backdrop-blur border border-border-subtle p-3 rounded-md shadow-xl text-xs w-52`}>
+        <div className={`${isLayersOpen ? 'block' : 'hidden'} sm:block mt-1 sm:mt-0 bg-surface-panel/95 backdrop-blur border border-border-subtle p-3 rounded-md shadow-xl text-xs w-56`}>
           <div className="flex items-center gap-1.5 font-mono text-zinc-300 font-semibold mb-2.5 pb-1.5 border-b border-border-subtle">
             <Layers className="w-3.5 h-3.5 text-hydro" />
             <span className="uppercase tracking-wider">Camadas de Dados</span>
@@ -132,6 +159,20 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
               />
             </label>
 
+            {/* Risco Epidemiológico de Dengue */}
+            <label className="flex items-center justify-between text-zinc-300 cursor-pointer hover:text-white">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-rose-500 animate-pulse" />
+                <span>Risco Dengue (Vetores)</span>
+              </span>
+              <input
+                type="checkbox"
+                checked={showDengueRisk}
+                onChange={e => setShowDengueRisk(e.target.checked)}
+                className="accent-rose-500 cursor-pointer rounded"
+              />
+            </label>
+
             {/* Qualidade do Ar — dados do backend */}
             <label className="flex items-center justify-between text-zinc-300 cursor-pointer hover:text-white">
               <span className="flex items-center gap-1.5">
@@ -149,7 +190,7 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
 
           <div className="mt-3 pt-2 border-t border-border-subtle/80 flex items-center justify-between text-[10px] font-mono text-zinc-500">
             <span>ESRI Dark Gray Canvas</span>
-            <span className="text-hydro">10 nós GPS</span>
+            <span className="text-hydro">{MONITORED_CITIES.length} nós GPS</span>
           </div>
         </div>
       </div>
@@ -277,9 +318,26 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
         {MONITORED_CITIES.map(city => {
           const reading = readings[city.slug];
           const isSelected = selectedCity.slug === city.slug;
+          const dengueScore = getCityDengueScore(city.slug, reading);
+          const dengueMeta = getDengueMeta(dengueScore);
 
           return (
             <React.Fragment key={city.slug}>
+              {/* Círculo de Risco Epidemiológico de Dengue (Mapa de Calor Térmico) */}
+              {showDengueRisk && (
+                <CircleMarker
+                  center={[city.lat, city.lng]}
+                  radius={dengueMeta.radius}
+                  pathOptions={{
+                    color: dengueMeta.stroke,
+                    fillColor: dengueMeta.color,
+                    fillOpacity: dengueMeta.fillOpacity,
+                    weight: dengueScore >= 70 ? 2 : 1,
+                    dashArray: dengueScore >= 70 ? '3, 5' : undefined
+                  }}
+                />
+              )}
+
               {/* Círculo de Qualidade do Ar (PM2.5) */}
               {showAirQuality && reading && (
                 <CircleMarker
@@ -325,6 +383,12 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
                         <div>Temp: {reading.temperatura.toFixed(1)}°C · Chuva: {reading.precipitacao.toFixed(1)}mm</div>
                         {city.rioNome && (
                           <div>{city.rioNome}: {reading.nivelRio.toFixed(2)}m</div>
+                        )}
+                        {showDengueRisk && (
+                          <div className="flex items-center justify-between pt-0.5" style={{ color: dengueMeta.stroke }}>
+                            <span>🦟 Risco Dengue:</span>
+                            <span className="font-bold">{dengueScore}/100 ({dengueMeta.label.split(' ')[0]})</span>
+                          </div>
                         )}
                         {showAirQuality && (
                           <div style={{ color: pm25Color(reading.pm25) }}>

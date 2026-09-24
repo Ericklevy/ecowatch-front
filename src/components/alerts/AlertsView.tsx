@@ -95,7 +95,7 @@ export const AlertsView: React.FC = () => {
               onChange={e => setSelectedCity(e.target.value)}
               className="bg-surface-base border border-border-subtle rounded py-1.5 px-3 text-xs font-mono text-zinc-200 focus:outline-none focus:border-hydro cursor-pointer"
             >
-              <option value="ALL">Todas as 10 Capitais</option>
+              <option value="ALL">Todas as {MONITORED_CITIES.length} Capitais</option>
               {MONITORED_CITIES.map(c => (
                 <option key={c.slug} value={c.nome}>{c.nome} ({c.estado})</option>
               ))}

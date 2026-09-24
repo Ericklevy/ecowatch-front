@@ -65,7 +65,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
         </h1>
 
         <p className="mt-6 text-base md:text-lg text-zinc-400 max-w-3xl leading-relaxed font-sans">
-          Uma plataforma de observabilidade ecológica que conecta fontes de satélite, dados pluviométricos e estações fluviométricas da ANA, CEMADEN e INPE em 10 capitais estratégicas, avaliando riscos de inundações, incêndios e qualidade do ar.
+          Uma plataforma de observabilidade ecológica que conecta fontes de satélite, dados pluviométricos e estações fluviométricas da ANA, CEMADEN e INPE em todas as 27 capitais brasileiras (26 estados + DF), avaliando riscos de inundações, incêndios e qualidade do ar.
         </p>
 
         {/* Ações do Hero */}
@@ -160,7 +160,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onEnter }) => {
               <MapPin className="w-4 h-4 text-hydro" />
               <span>Rede de Capitais Monitoradas (5 Biomas Brasileiros)</span>
             </div>
-            <span className="text-xs font-mono text-zinc-500">10 postos estratégicos</span>
+            <span className="text-xs font-mono text-zinc-500">{MONITORED_CITIES.length} capitais monitoradas</span>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs font-mono">

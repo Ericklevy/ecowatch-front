@@ -187,10 +187,12 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Indicador de nós ativos */}
         <div
           className="flex items-center gap-1.5 px-2 py-1 rounded border border-border-subtle bg-surface-card"
-          title="10 capitais com telemetria ativa"
+          title={`${MONITORED_CITIES.length} capitais com telemetria ativa`}
         >
           <span className="w-2 h-2 rounded-full bg-nominal animate-ping" />
-          <span className="text-[11px] font-mono text-zinc-300 hidden md:inline-block">10 capitais</span>
+          <span className="text-[11px] font-mono text-zinc-300 hidden md:inline-block">
+            {MONITORED_CITIES.length} capitais
+          </span>
         </div>
 
         {/* Sino de alertas */}
