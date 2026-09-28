@@ -102,12 +102,24 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
     : null;
 
   return (
-    <aside className="fixed inset-x-0 bottom-0 max-h-[85vh] md:max-h-full md:static md:w-[420px] md:h-full bg-surface-panel/95 backdrop-blur border-t md:border-t-0 md:border-l border-border-subtle flex flex-col z-[1001] md:z-20 overflow-y-auto shadow-2xl rounded-t-2xl md:rounded-none">
-      {/* Puxador celular */}
-      <div className="w-10 h-1 bg-zinc-600 rounded-full mx-auto my-2 md:hidden shrink-0" />
+    <>
+      {/* Backdrop no mobile para fechar gaveta ao tocar fora */}
+      <div 
+        className="fixed inset-0 bg-black/60 backdrop-blur-xs z-35 md:hidden animate-fade-in"
+        onClick={onClose}
+        aria-hidden="true"
+      />
 
-      {/* Cabeçalho */}
-      <div className="p-4 border-b border-border-subtle flex items-start justify-between gap-3 bg-surface-dim/50 sticky top-0 z-10">
+      <aside className="fixed inset-x-0 bottom-14 max-h-[75vh] md:max-h-full md:bottom-0 md:static md:w-[420px] md:h-full bg-surface-panel/98 backdrop-blur border-t md:border-t-0 md:border-l border-border-subtle flex flex-col z-40 md:z-20 overflow-y-auto shadow-2xl rounded-t-2xl md:rounded-none">
+        {/* Puxador celular */}
+        <div 
+          onClick={onClose}
+          className="w-12 h-1.5 bg-zinc-500/80 hover:bg-zinc-400 rounded-full mx-auto my-2.5 md:hidden shrink-0 cursor-pointer active:scale-95 transition-all" 
+          title="Toque para fechar"
+        />
+
+        {/* Cabeçalho */}
+        <div className="p-4 border-b border-border-subtle flex items-start justify-between gap-3 bg-surface-dim/70 sticky top-0 z-10 backdrop-blur">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h2 className="text-xl font-bold tracking-tight text-white font-sans">{city.nome}</h2>
@@ -345,5 +357,6 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
         </button>
       </div>
     </aside>
-  );
+  </>
+);
 };

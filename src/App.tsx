@@ -16,7 +16,8 @@ export const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<'landing' | 'console'>('landing');
   const [activeTab, setActiveTab] = useState<ActiveTab>('map');
   const [selectedCity, setSelectedCity] = useState<CityInfo>(MONITORED_CITIES[0]); // Padrão: Manaus
-  const [isDrawerOpen, setIsDrawerOpen] = useState(true);
+  // Inicia aberto apenas em telas médias/grandes (desktop). No celular inicia fechado para deixar a tela limpa.
+  const [isDrawerOpen, setIsDrawerOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
   const [readings, setReadings] = useState<Record<string, WeatherReading>>(MOCK_WEATHER_READINGS);
   const [cityAlerts, setCityAlerts] = useState<AlertDTO[]>([]);
   const [isBackendOnline, setIsBackendOnline] = useState(false);
@@ -138,50 +139,56 @@ export const App: React.FC = () => {
       </main>
 
       {/* ── Barra de Navegação Inferior (Mobile Bottom Navigation) ── */}
-      <nav className="md:hidden h-14 bg-surface-panel/95 backdrop-blur border-t border-border-subtle flex items-center justify-around px-2 z-30 shrink-0 select-none">
+      <nav className="md:hidden h-16 bg-surface-panel/98 backdrop-blur border-t border-border-subtle flex items-center justify-around px-2 z-50 shrink-0 select-none shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
         <button
           onClick={() => setActiveTab('map')}
-          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-colors cursor-pointer ${
+          className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 transition-all cursor-pointer ${
             activeTab === 'map' ? 'text-hydro font-bold' : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
-          <Map className="w-4 h-4" />
-          <span className="text-[10px] font-mono">Mapa</span>
+          <div className={`p-1.5 rounded-xl transition-all ${activeTab === 'map' ? 'bg-hydro/20 text-hydro shadow-sm' : ''}`}>
+            <Map className="w-5 h-5" />
+          </div>
+          <span className="text-[11px] font-mono">Mapa</span>
         </button>
 
         <button
           onClick={() => setActiveTab('alerts')}
-          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-colors relative cursor-pointer ${
+          className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 transition-all relative cursor-pointer ${
             activeTab === 'alerts' ? 'text-hydro font-bold' : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
-          <div className="relative">
-            <AlertTriangle className="w-4 h-4" />
-            <span className="absolute -top-1 -right-2 w-3.5 h-3.5 rounded-full bg-critical text-[9px] text-white flex items-center justify-center font-bold font-mono">
+          <div className={`p-1.5 rounded-xl transition-all relative ${activeTab === 'alerts' ? 'bg-hydro/20 text-hydro shadow-sm' : ''}`}>
+            <AlertTriangle className="w-5 h-5" />
+            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-critical text-[10px] text-white flex items-center justify-center font-bold font-mono">
               3
             </span>
           </div>
-          <span className="text-[10px] font-mono">Alertas</span>
+          <span className="text-[11px] font-mono">Alertas</span>
         </button>
 
         <button
           onClick={() => setActiveTab('forecast')}
-          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-colors cursor-pointer ${
+          className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 transition-all cursor-pointer ${
             activeTab === 'forecast' ? 'text-hydro font-bold' : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
-          <TrendingUp className="w-4 h-4" />
-          <span className="text-[10px] font-mono">Previsões</span>
+          <div className={`p-1.5 rounded-xl transition-all ${activeTab === 'forecast' ? 'bg-hydro/20 text-hydro shadow-sm' : ''}`}>
+            <TrendingUp className="w-5 h-5" />
+          </div>
+          <span className="text-[11px] font-mono">Previsões</span>
         </button>
 
         <button
           onClick={() => setActiveTab('reports')}
-          className={`flex flex-col items-center justify-center gap-1 flex-1 py-1 transition-colors cursor-pointer ${
+          className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 transition-all cursor-pointer ${
             activeTab === 'reports' ? 'text-hydro font-bold' : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
-          <FileText className="w-4 h-4" />
-          <span className="text-[10px] font-mono">Relatórios</span>
+          <div className={`p-1.5 rounded-xl transition-all ${activeTab === 'reports' ? 'bg-hydro/20 text-hydro shadow-sm' : ''}`}>
+            <FileText className="w-5 h-5" />
+          </div>
+          <span className="text-[11px] font-mono">Relatórios</span>
         </button>
       </nav>
 

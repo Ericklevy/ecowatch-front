@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Map, AlertTriangle, TrendingUp, FileText, RefreshCw, Bell, Radio, MapPin } from 'lucide-react';
+import { Map, AlertTriangle, TrendingUp, FileText, RefreshCw, Bell, Radio, MapPin, Menu, X, ChevronRight } from 'lucide-react';
 import { triggerManualSync } from '../../services/api';
 import { CityInfo } from '../../types';
 import { MONITORED_CITIES } from '../../data/mockData';
@@ -25,6 +25,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 }) => {
   const [syncing, setSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleSync = async () => {
     setSyncing(true);
@@ -48,16 +49,27 @@ export const TopBar: React.FC<TopBarProps> = ({
   };
 
   return (
-    <header className="h-14 bg-surface-panel border-b border-border-subtle px-4 flex items-center justify-between z-30 shrink-0 select-none">
-      {/* ── Esquerda: Logo ── */}
-      <div className="flex items-center gap-2 sm:gap-3">
-        <button
-          onClick={onOpenLanding}
-          className="flex items-center gap-2 hover:opacity-85 transition-opacity text-left cursor-pointer"
-          title="Ver Apresentação Técnica / Manifesto"
-        >
-          <div className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-hydro/10 border border-hydro/30 flex items-center justify-center text-hydro shrink-0">
-            <Radio className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-hydro animate-pulse" />
+    <>
+      <header className="h-14 bg-surface-panel border-b border-border-subtle px-3 sm:px-4 flex items-center justify-between z-30 shrink-0 select-none relative">
+        {/* ── Esquerda: Hamburger Menu (Mobile) + Logo ── */}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Botão de Menu Hambúrguer (Mobile) */}
+          <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="md:hidden p-1.5 rounded-lg bg-surface-card border border-border-subtle text-zinc-300 hover:text-white active:scale-95 transition-transform"
+            aria-label="Abrir menu de navegação"
+            title="Menu de Páginas"
+          >
+            {isMobileMenuOpen ? <X className="w-4 h-4 text-hydro" /> : <Menu className="w-4 h-4" />}
+          </button>
+
+          <button
+            onClick={onOpenLanding}
+            className="flex items-center gap-2 hover:opacity-85 transition-opacity text-left cursor-pointer"
+            title="Ver Apresentação Técnica / Manifesto"
+          >
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-hydro/10 border border-hydro/30 flex items-center justify-center text-hydro shrink-0">
+              <Radio className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-hydro animate-pulse" />
           </div>
           <div>
             <div className="flex items-center gap-2">
@@ -208,5 +220,103 @@ export const TopBar: React.FC<TopBarProps> = ({
         </button>
       </div>
     </header>
+
+    {/* ── Menu Suspenso de Navegação Mobile ── */}
+    {isMobileMenuOpen && (
+      <div className="md:hidden fixed inset-x-0 top-14 bg-surface-panel/98 backdrop-blur border-b border-border-subtle z-50 p-4 shadow-2xl animate-fade-in space-y-3">
+        <div className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider font-semibold">
+          Navegação do Centro de Operações
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <button
+            onClick={() => { onTabChange('map'); setIsMobileMenuOpen(false); }}
+            className={`flex items-center gap-2.5 p-3 rounded-lg border text-left transition-all ${
+              activeTab === 'map'
+                ? 'bg-hydro/15 text-hydro border-hydro/40 font-bold'
+                : 'bg-surface-card border-border-subtle text-zinc-300 hover:text-white'
+            }`}
+          >
+            <Map className="w-4 h-4 text-hydro" />
+            <div>
+              <div className="text-xs font-mono">Mapa</div>
+              <div className="text-[10px] text-zinc-400">Ao vivo</div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => { onTabChange('alerts'); setIsMobileMenuOpen(false); }}
+            className={`flex items-center gap-2.5 p-3 rounded-lg border text-left transition-all relative ${
+              activeTab === 'alerts'
+                ? 'bg-hydro/15 text-hydro border-hydro/40 font-bold'
+                : 'bg-surface-card border-border-subtle text-zinc-300 hover:text-white'
+            }`}
+          >
+            <AlertTriangle className="w-4 h-4 text-critical" />
+            <div>
+              <div className="text-xs font-mono">Alertas</div>
+              <div className="text-[10px] text-zinc-400">3 ativos</div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => { onTabChange('forecast'); setIsMobileMenuOpen(false); }}
+            className={`flex items-center gap-2.5 p-3 rounded-lg border text-left transition-all ${
+              activeTab === 'forecast'
+                ? 'bg-hydro/15 text-hydro border-hydro/40 font-bold'
+                : 'bg-surface-card border-border-subtle text-zinc-300 hover:text-white'
+            }`}
+          >
+            <TrendingUp className="w-4 h-4 text-hydro" />
+            <div>
+              <div className="text-xs font-mono">Previsões</div>
+              <div className="text-[10px] text-zinc-400">D+3 riscos</div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => { onTabChange('reports'); setIsMobileMenuOpen(false); }}
+            className={`flex items-center gap-2.5 p-3 rounded-lg border text-left transition-all ${
+              activeTab === 'reports'
+                ? 'bg-hydro/15 text-hydro border-hydro/40 font-bold'
+                : 'bg-surface-card border-border-subtle text-zinc-300 hover:text-white'
+            }`}
+          >
+            <FileText className="w-4 h-4 text-hydro" />
+            <div>
+              <div className="text-xs font-mono">Relatórios</div>
+              <div className="text-[10px] text-zinc-400">PDF & CSV</div>
+            </div>
+          </button>
+        </div>
+
+        {onOpenLanding && (
+          <button
+            onClick={() => { onOpenLanding(); setIsMobileMenuOpen(false); }}
+            className="w-full flex items-center justify-between p-2.5 rounded-lg bg-surface-card/60 border border-border-subtle text-xs font-mono text-zinc-300 hover:text-white"
+          >
+            <span>Apresentação & Arquitetura (Sobre)</span>
+            <ChevronRight className="w-4 h-4 text-zinc-500" />
+          </button>
+        )}
+
+        {/* Sincronização e status */}
+        <div className="pt-2 border-t border-border-subtle/80 flex items-center justify-between">
+          <button
+            onClick={handleSync}
+            disabled={syncing}
+            className="flex items-center gap-2 px-3 py-1.5 rounded bg-surface-card border border-border-subtle text-xs font-mono text-zinc-300 active:scale-95"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-hydro ${syncing ? 'animate-spin' : ''}`} />
+            <span>{syncing ? 'Sincronizando...' : 'Atualizar Telemetria'}</span>
+          </button>
+          <span className="text-[10px] font-mono text-nominal flex items-center gap-1.5">
+            <span className="w-2 h-2 rounded-full bg-nominal animate-ping" />
+            27 capitais ativas
+          </span>
+        </div>
+      </div>
+    )}
+  </>
   );
 };

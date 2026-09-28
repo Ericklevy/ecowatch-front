@@ -103,31 +103,47 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
   onSelectCity,
   readings
 }) => {
-  const [showRivers, setShowRivers] = useState(true);
-  const [showFires, setShowFires] = useState(true);
+  const [showRivers, setShowRivers] = useState(false);
+  const [showFires, setShowFires] = useState(false);
   const [showAirQuality, setShowAirQuality] = useState(false);
-  const [showDengueRisk, setShowDengueRisk] = useState(true);
+  const [showDengueRisk, setShowDengueRisk] = useState(false);
   const [isLayersOpen, setIsLayersOpen] = useState(false);
+
+  const activeLayersCount = (showRivers ? 1 : 0) + (showFires ? 1 : 0) + (showDengueRisk ? 1 : 0) + (showAirQuality ? 1 : 0);
 
   return (
     <div className="relative w-full h-full flex-1 overflow-hidden bg-surface-base">
 
       {/* ── Painel Flutuante de Camadas (Top Left) ── */}
       <div className="absolute top-3 left-3 z-[1000] select-none">
-        {/* Botão toggle mobile */}
+        {/* Botão toggle mobile com badge de camadas ativas */}
         <button
           onClick={() => setIsLayersOpen(!isLayersOpen)}
-          className="sm:hidden flex items-center gap-1.5 px-2.5 py-1.5 rounded bg-surface-panel/95 border border-border-subtle text-xs font-mono text-zinc-300 shadow-xl"
+          className="sm:hidden flex items-center gap-1.5 px-3 py-2 rounded-lg bg-surface-panel/95 backdrop-blur border border-border-subtle text-xs font-mono text-zinc-200 shadow-2xl active:scale-95 transition-transform"
         >
-          <Layers className="w-3.5 h-3.5 text-hydro" />
-          <span>Camadas</span>
+          <Layers className="w-4 h-4 text-hydro" />
+          <span className="font-semibold">Camadas</span>
+          {activeLayersCount > 0 && (
+            <span className="ml-0.5 px-1.5 py-0.2 rounded-full bg-hydro text-[10px] font-bold text-black font-mono">
+              {activeLayersCount}
+            </span>
+          )}
         </button>
 
         {/* Painel de Controles */}
-        <div className={`${isLayersOpen ? 'block' : 'hidden'} sm:block mt-1 sm:mt-0 bg-surface-panel/95 backdrop-blur border border-border-subtle p-3 rounded-md shadow-xl text-xs w-56`}>
-          <div className="flex items-center gap-1.5 font-mono text-zinc-300 font-semibold mb-2.5 pb-1.5 border-b border-border-subtle">
-            <Layers className="w-3.5 h-3.5 text-hydro" />
-            <span className="uppercase tracking-wider">Camadas de Dados</span>
+        <div className={`${isLayersOpen ? 'block' : 'hidden'} sm:block mt-2 sm:mt-0 bg-surface-panel/95 backdrop-blur border border-border-subtle p-3.5 rounded-xl shadow-2xl text-xs w-60 animate-fade-in`}>
+          <div className="flex items-center justify-between font-mono text-zinc-300 font-semibold mb-2.5 pb-1.5 border-b border-border-subtle">
+            <div className="flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-hydro" />
+              <span className="uppercase tracking-wider">Camadas de Dados</span>
+            </div>
+            {/* Botão de fechar no mobile */}
+            <button
+              onClick={() => setIsLayersOpen(false)}
+              className="sm:hidden text-zinc-400 hover:text-white p-1"
+            >
+              ✕
+            </button>
           </div>
 
           <div className="space-y-2 font-mono">
