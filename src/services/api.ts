@@ -63,7 +63,7 @@ export async function fetchCityWeather(citySlug: string): Promise<WeatherReading
 export async function fetchCityDashboard(citySlug: string): Promise<DashboardDTO> {
   try {
     const res = await fetch(`${READ_MODEL_URL}/api/dashboard/${citySlug}`, {
-      signal: AbortSignal.timeout(1500)
+      signal: AbortSignal.timeout(6000)
     });
     if (res.ok) return await res.json();
   } catch { /* fallback */ }
@@ -83,7 +83,7 @@ export async function fetchAllAlerts(): Promise<AlertDTO[]> {
   if (READ_MODEL_URL) {
     try {
       const res = await fetch(`${READ_MODEL_URL}/api/dashboard/alerts/all`, {
-        signal: AbortSignal.timeout(3000)
+        signal: AbortSignal.timeout(8000)
       });
       if (res.ok) {
         const data = await res.json();

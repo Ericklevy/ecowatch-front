@@ -32,7 +32,7 @@ export const ForecastView: React.FC = () => {
   const selectedCityName = selectedCitySlug ? MONITORED_CITIES.find(c => c.slug === selectedCitySlug)?.nome : null;
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-surface-base overflow-y-auto p-4 md:p-6 space-y-6">
+    <div className="flex-1 flex flex-col h-full bg-surface-base overflow-y-auto p-4 md:p-6 pb-24 md:pb-6 space-y-6">
       {/* Cabeçalho */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-border-subtle pb-4">
         <div>

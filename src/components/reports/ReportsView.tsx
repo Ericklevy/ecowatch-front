@@ -157,7 +157,7 @@ export const ReportsView: React.FC = () => {
       </div>
 
       {/* ── Documento do Relatório (Layout Timbrado Operacional) ── */}
-      <div className="p-4 sm:p-6 max-w-5xl mx-auto w-full space-y-6">
+      <div className="p-4 sm:p-6 max-w-5xl mx-auto w-full space-y-6 pb-24 md:pb-6">
         
         {/* Cabeçalho Institucional do Boletim */}
         <div className="p-5 rounded-lg bg-surface-panel border border-border-subtle space-y-4 print:border-black print:bg-white print:text-black">
