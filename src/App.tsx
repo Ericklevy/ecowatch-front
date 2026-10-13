@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { TopBar, ActiveTab } from './components/layout/TopBar';
 import { StatusBar } from './components/layout/StatusBar';
-import { Map, AlertTriangle, TrendingUp, FileText } from 'lucide-react';
+import { Map, AlertTriangle, TrendingUp, FileText, Newspaper, Info } from 'lucide-react';
 import { BrazilMap } from './components/map/BrazilMap';
 import { TelemetryDrawer } from './components/map/TelemetryDrawer';
 import { AlertsView } from './components/alerts/AlertsView';
 import { ForecastView } from './components/forecast/ForecastView';
 import { ReportsView } from './components/reports/ReportsView';
+import { NewsView } from './components/news/NewsView';
+import { AboutView } from './components/about/AboutView';
 import { LandingPage } from './components/landing/LandingPage';
 import { MONITORED_CITIES, MOCK_WEATHER_READINGS, MOCK_ALERTS } from './data/mockData';
 import { CityInfo, WeatherReading, AlertDTO } from './types';
@@ -147,20 +149,22 @@ export const App: React.FC = () => {
         {activeTab === 'alerts' && <AlertsView />}
         {activeTab === 'forecast' && <ForecastView />}
         {activeTab === 'reports' && <ReportsView />}
+        {activeTab === 'news' && <NewsView />}
+        {activeTab === 'about' && <AboutView />}
       </main>
 
       {/* ── Barra de Navegação Inferior (Mobile Bottom Navigation) ── */}
-      <nav className="md:hidden h-16 bg-surface-panel/98 backdrop-blur border-t border-border-subtle flex items-center justify-around px-2 z-50 shrink-0 select-none shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
+      <nav className="md:hidden h-16 bg-surface-panel/98 backdrop-blur border-t border-border-subtle flex items-center justify-around px-1 z-50 shrink-0 select-none shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
         <button
           onClick={() => setActiveTab('map')}
           className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 transition-all cursor-pointer ${
             activeTab === 'map' ? 'text-hydro font-bold' : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
-          <div className={`p-1.5 rounded-xl transition-all ${activeTab === 'map' ? 'bg-hydro/20 text-hydro shadow-sm' : ''}`}>
-            <Map className="w-5 h-5" />
+          <div className={`p-1 rounded-xl transition-all ${activeTab === 'map' ? 'bg-hydro/20 text-hydro shadow-sm' : ''}`}>
+            <Map className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
-          <span className="text-[11px] font-mono">Mapa</span>
+          <span className="text-[10px] font-mono">Mapa</span>
         </button>
 
         <button
@@ -169,13 +173,13 @@ export const App: React.FC = () => {
             activeTab === 'alerts' ? 'text-hydro font-bold' : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
-          <div className={`p-1.5 rounded-xl transition-all relative ${activeTab === 'alerts' ? 'bg-hydro/20 text-hydro shadow-sm' : ''}`}>
-            <AlertTriangle className="w-5 h-5" />
-            <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-critical text-[10px] text-white flex items-center justify-center font-bold font-mono">
+          <div className={`p-1 rounded-xl transition-all relative ${activeTab === 'alerts' ? 'bg-hydro/20 text-hydro shadow-sm' : ''}`}>
+            <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5" />
+            <span className="absolute -top-1 -right-1.5 w-3.5 h-3.5 rounded-full bg-critical text-[9px] text-white flex items-center justify-center font-bold font-mono">
               {unreadAlertsCount}
             </span>
           </div>
-          <span className="text-[11px] font-mono">Alertas</span>
+          <span className="text-[10px] font-mono">Alertas</span>
         </button>
 
         <button
@@ -184,10 +188,10 @@ export const App: React.FC = () => {
             activeTab === 'forecast' ? 'text-hydro font-bold' : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
-          <div className={`p-1.5 rounded-xl transition-all ${activeTab === 'forecast' ? 'bg-hydro/20 text-hydro shadow-sm' : ''}`}>
-            <TrendingUp className="w-5 h-5" />
+          <div className={`p-1 rounded-xl transition-all ${activeTab === 'forecast' ? 'bg-hydro/20 text-hydro shadow-sm' : ''}`}>
+            <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
-          <span className="text-[11px] font-mono">Previsões</span>
+          <span className="text-[10px] font-mono">Previsão</span>
         </button>
 
         <button
@@ -196,10 +200,34 @@ export const App: React.FC = () => {
             activeTab === 'reports' ? 'text-hydro font-bold' : 'text-zinc-400 hover:text-zinc-200'
           }`}
         >
-          <div className={`p-1.5 rounded-xl transition-all ${activeTab === 'reports' ? 'bg-hydro/20 text-hydro shadow-sm' : ''}`}>
-            <FileText className="w-5 h-5" />
+          <div className={`p-1 rounded-xl transition-all ${activeTab === 'reports' ? 'bg-hydro/20 text-hydro shadow-sm' : ''}`}>
+            <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
-          <span className="text-[11px] font-mono">Relatórios</span>
+          <span className="text-[10px] font-mono">Relatórios</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('news')}
+          className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 transition-all cursor-pointer ${
+            activeTab === 'news' ? 'text-hydro font-bold' : 'text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <div className={`p-1 rounded-xl transition-all ${activeTab === 'news' ? 'bg-hydro/20 text-hydro shadow-sm' : ''}`}>
+            <Newspaper className="w-4 h-4 sm:w-5 sm:h-5" />
+          </div>
+          <span className="text-[10px] font-mono">Notícias</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('about')}
+          className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 transition-all cursor-pointer ${
+            activeTab === 'about' ? 'text-hydro font-bold' : 'text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <div className={`p-1 rounded-xl transition-all ${activeTab === 'about' ? 'bg-hydro/20 text-hydro shadow-sm' : ''}`}>
+            <Info className="w-4 h-4 sm:w-5 sm:h-5" />
+          </div>
+          <span className="text-[10px] font-mono">Sobre</span>
         </button>
       </nav>
 

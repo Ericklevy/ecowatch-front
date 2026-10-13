@@ -69,3 +69,16 @@ export const formatAlertTypeName = (tipoAlerta: string): string => {
   if (!tipoAlerta) return '';
   return ALERT_TYPE_LABELS[tipoAlerta] || tipoAlerta.replace(/_/g, ' ');
 };
+
+export interface NewsItem {
+  id: string;
+  titulo: string;
+  resumo: string;
+  fonte: string;
+  url: string;
+  dataHora: string;
+  categoria: 'FIRE' | 'FLOOD' | 'RAIN' | 'DENGUE' | 'GENERAL';
+  municipio?: string;
+  estado?: string;
+}
+

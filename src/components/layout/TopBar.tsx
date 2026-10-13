@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Map, AlertTriangle, TrendingUp, FileText, RefreshCw, Bell, Radio, MapPin, Menu, X, ChevronRight } from 'lucide-react';
+import { Map, AlertTriangle, TrendingUp, FileText, RefreshCw, Bell, Radio, MapPin, Menu, X, ChevronRight, Newspaper, Info } from 'lucide-react';
 import { triggerManualSync } from '../../services/api';
 import { CityInfo } from '../../types';
 import { MONITORED_CITIES } from '../../data/mockData';
 
-export type ActiveTab = 'map' | 'alerts' | 'forecast' | 'reports';
+export type ActiveTab = 'map' | 'alerts' | 'forecast' | 'reports' | 'news' | 'about';
 
 interface TopBarProps {
   activeTab: ActiveTab;
@@ -142,15 +142,29 @@ export const TopBar: React.FC<TopBarProps> = ({
           <span>Relatórios</span>
         </button>
 
-        {onOpenLanding && (
-          <button
-            onClick={onOpenLanding}
-            className="px-2 py-1.5 rounded text-xs font-mono text-zinc-400 hover:text-zinc-200 hover:bg-surface-card transition-colors ml-1 border-l border-border-subtle pl-2.5"
-            title="Apresentação e Arquitetura do Sistema"
-          >
-            Sobre
-          </button>
-        )}
+        <button
+          onClick={() => onTabChange('news')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all ${
+            activeTab === 'news'
+              ? 'bg-hydro/15 text-hydro border border-hydro/30 shadow-sm'
+              : 'text-zinc-400 hover:text-zinc-200 hover:bg-surface-card'
+          }`}
+        >
+          <Newspaper className="w-3.5 h-3.5" />
+          <span>Notícias</span>
+        </button>
+
+        <button
+          onClick={() => onTabChange('about')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all ${
+            activeTab === 'about'
+              ? 'bg-hydro/15 text-hydro border border-hydro/30 shadow-sm'
+              : 'text-zinc-400 hover:text-zinc-200 hover:bg-surface-card'
+          }`}
+        >
+          <Info className="w-3.5 h-3.5" />
+          <span>Sobre</span>
+        </button>
       </nav>
 
       {/* ── Direita: Seletor de Cidade + Status + Ações ── */}
@@ -288,6 +302,36 @@ export const TopBar: React.FC<TopBarProps> = ({
               <div className="text-[10px] text-zinc-400">PDF & CSV</div>
             </div>
           </button>
+
+          <button
+            onClick={() => { onTabChange('news'); setIsMobileMenuOpen(false); }}
+            className={`flex items-center gap-2.5 p-3 rounded-lg border text-left transition-all ${
+              activeTab === 'news'
+                ? 'bg-hydro/15 text-hydro border-hydro/40 font-bold'
+                : 'bg-surface-card border-border-subtle text-zinc-300 hover:text-white'
+            }`}
+          >
+            <Newspaper className="w-4 h-4 text-hydro" />
+            <div>
+              <div className="text-xs font-mono">Notícias</div>
+              <div className="text-[10px] text-zinc-400">Tempo real</div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => { onTabChange('about'); setIsMobileMenuOpen(false); }}
+            className={`flex items-center gap-2.5 p-3 rounded-lg border text-left transition-all ${
+              activeTab === 'about'
+                ? 'bg-hydro/15 text-hydro border-hydro/40 font-bold'
+                : 'bg-surface-card border-border-subtle text-zinc-300 hover:text-white'
+            }`}
+          >
+            <Info className="w-4 h-4 text-hydro" />
+            <div>
+              <div className="text-xs font-mono">Sobre</div>
+              <div className="text-[10px] text-zinc-400">Projeto & Autoria</div>
+            </div>
+          </button>
         </div>
 
         {onOpenLanding && (
@@ -295,7 +339,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             onClick={() => { onOpenLanding(); setIsMobileMenuOpen(false); }}
             className="w-full flex items-center justify-between p-2.5 rounded-lg bg-surface-card/60 border border-border-subtle text-xs font-mono text-zinc-300 hover:text-white"
           >
-            <span>Apresentação & Arquitetura (Sobre)</span>
+            <span>Ver Manifesto Inicial (Landing Page)</span>
             <ChevronRight className="w-4 h-4 text-zinc-500" />
           </button>
         )}

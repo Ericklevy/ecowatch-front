@@ -1,10 +1,53 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Flame, Bug, CloudRain, Calendar, TrendingUp, ChevronRight } from 'lucide-react';
 import { MONITORED_CITIES, MOCK_FORECASTS } from '../../data/mockData';
 import { PrevisaoDTO } from '../../types';
 
 export const ForecastView: React.FC = () => {
   const [selectedCitySlug, setSelectedCitySlug] = useState<string | null>(null);
+
+  // ── Gera datas dinâmicas para o mês atual (Outubro de 2026 em diante) ──
+  const dynamicForecasts = useMemo(() => {
+    const today = new Date();
+    const result: Record<string, PrevisaoDTO[]> = {};
+
+    MONITORED_CITIES.forEach(city => {
+      const base = MOCK_FORECASTS[city.slug] || [
+        { municipio: city.nome, dataPrevisao: '', temperaturaPrevista: 30, precipitacaoPrevista: 0, umidadePrevista: 45, riscoIncendio: 40, riscoDengue: 30 },
+        { municipio: city.nome, dataPrevisao: '', temperaturaPrevista: 31, precipitacaoPrevista: 0, umidadePrevista: 42, riscoIncendio: 45, riscoDengue: 30 },
+        { municipio: city.nome, dataPrevisao: '', temperaturaPrevista: 30.5, precipitacaoPrevista: 0, umidadePrevista: 43, riscoIncendio: 42, riscoDengue: 30 }
+      ];
+
+      result[city.slug] = base.map((item, idx) => {
+        const targetDate = new Date(today);
+        targetDate.setDate(targetDate.getDate() + (idx + 1));
+        const yyyy = targetDate.getFullYear();
+        const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+        const dd = String(targetDate.getDate()).padStart(2, '0');
+        const iso = `${yyyy}-${mm}-${dd}`;
+
+        return {
+          ...item,
+          dataPrevisao: iso
+        };
+      });
+    });
+
+    return result;
+  }, []);
+
+  // Janela Preditiva no cabeçalho
+  const predictionWindow = useMemo(() => {
+    const today = new Date();
+    const d1 = new Date(today);
+    d1.setDate(d1.getDate() + 1);
+    const d3 = new Date(today);
+    d3.setDate(d3.getDate() + 3);
+
+    const mName = d1.toLocaleDateString('pt-BR', { month: 'long' });
+    const capitalizedMonth = mName.charAt(0).toUpperCase() + mName.slice(1);
+    return `Janela Preditiva: ${d1.getDate()} a ${d3.getDate()} de ${capitalizedMonth} de ${d1.getFullYear()}`;
+  }, []);
 
   const getScoreBadge = (score: number) => {
     if (score >= 61) {
@@ -28,7 +71,7 @@ export const ForecastView: React.FC = () => {
     );
   };
 
-  const selectedCityForecasts: PrevisaoDTO[] = selectedCitySlug ? MOCK_FORECASTS[selectedCitySlug] || [] : [];
+  const selectedCityForecasts: PrevisaoDTO[] = selectedCitySlug ? dynamicForecasts[selectedCitySlug] || [] : [];
   const selectedCityName = selectedCitySlug ? MONITORED_CITIES.find(c => c.slug === selectedCitySlug)?.nome : null;
 
   return (
@@ -47,7 +90,7 @@ export const ForecastView: React.FC = () => {
 
         <div className="flex items-center gap-2 text-xs font-mono text-hydro bg-hydro/10 px-3 py-1.5 rounded border border-hydro/20">
           <Calendar className="w-3.5 h-3.5" />
-          <span>Janela Preditiva: 20 a 22 de Setembro</span>
+          <span>{predictionWindow}</span>
         </div>
       </div>
 
@@ -67,7 +110,7 @@ export const ForecastView: React.FC = () => {
             <span className="text-xs font-mono text-zinc-400">/100 (Score Crítico)</span>
           </div>
           <p className="text-[11px] font-mono text-zinc-400 mt-2 border-t border-border-subtle pt-2">
-            Umidade crítica de 12% · Chuva 0.0mm · Temp 38.2°C
+            Umidade crítica de 12% · Chuva 0.0mm · Temp 38.2°C · Alerta no Gama e Cerrado
           </p>
         </div>
 
@@ -120,7 +163,7 @@ export const ForecastView: React.FC = () => {
         {/* Visualização Mobile: Cards Verticais */}
         <div className="md:hidden divide-y divide-border-subtle/50">
           {MONITORED_CITIES.map(city => {
-            const forecasts = MOCK_FORECASTS[city.slug] || [];
+            const forecasts = dynamicForecasts[city.slug] || [];
             const nextDay = forecasts[0];
             if (!nextDay) return null;
             const isSelected = selectedCitySlug === city.slug;
@@ -186,7 +229,7 @@ export const ForecastView: React.FC = () => {
             </thead>
             <tbody className="divide-y divide-border-subtle/50 text-xs font-mono">
               {MONITORED_CITIES.map(city => {
-                const forecasts = MOCK_FORECASTS[city.slug] || [];
+                const forecasts = dynamicForecasts[city.slug] || [];
                 const nextDay = forecasts[0];
 
                 if (!nextDay) return null;
