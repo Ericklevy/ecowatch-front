@@ -255,7 +255,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             <AlertTriangle className="w-4 h-4 text-critical" />
             <div>
               <div className="text-xs font-mono">Alertas</div>
-              <div className="text-[10px] text-zinc-400">3 ativos</div>
+              <div className="text-[10px] text-zinc-400">{unreadAlertsCount} ativos</div>
             </div>
           </button>
 

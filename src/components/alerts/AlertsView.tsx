@@ -216,7 +216,7 @@ export const AlertsView: React.FC = () => {
 
       {/* Paginação e Status */}
       <div className="p-3 border-t border-border-subtle bg-surface-dim flex items-center justify-between text-xs font-mono text-zinc-500 shrink-0">
-        <span>Mostrando {filteredAlerts.length} de {MOCK_ALERTS.length} alertas registrados</span>
+        <span>Mostrando {filteredAlerts.length} de {alerts.length} alertas registrados</span>
         <div className="flex items-center gap-1">
           <span className="px-2 py-0.5 rounded bg-surface-card border border-border-subtle text-zinc-300">Pág 1 de 1</span>
         </div>

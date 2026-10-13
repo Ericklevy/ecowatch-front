@@ -1,7 +1,7 @@
 import { WeatherReading, AlertDTO, PrevisaoDTO, DashboardDTO } from '../types';
 import { MOCK_WEATHER_READINGS, MOCK_ALERTS, MOCK_FORECASTS, MONITORED_CITIES } from '../data/mockData';
 
-// ── Endpoints do Backend (via variáveis de ambiente — nunca hardcoded) ───
+// ── Endpoints do Backend (injetados via variáveis de ambiente da Vercel/.env) ──
 const READ_MODEL_URL        = import.meta.env.VITE_READ_MODEL_URL        || '';
 const ALERT_SERVICE_URL     = import.meta.env.VITE_ALERT_SERVICE_URL     || '';
 const INGESTION_SERVICE_URL = import.meta.env.VITE_INGESTION_SERVICE_URL || '';

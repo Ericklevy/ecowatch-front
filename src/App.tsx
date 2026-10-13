@@ -10,7 +10,7 @@ import { ReportsView } from './components/reports/ReportsView';
 import { LandingPage } from './components/landing/LandingPage';
 import { MONITORED_CITIES, MOCK_WEATHER_READINGS, MOCK_ALERTS } from './data/mockData';
 import { CityInfo, WeatherReading, AlertDTO } from './types';
-import { fetchCityWeather, fetchCityDashboard } from './services/api';
+import { fetchCityWeather, fetchCityDashboard, fetchAllAlerts } from './services/api';
 
 export const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<'landing' | 'console'>('landing');
@@ -20,6 +20,7 @@ export const App: React.FC = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
   const [readings, setReadings] = useState<Record<string, WeatherReading>>(MOCK_WEATHER_READINGS);
   const [cityAlerts, setCityAlerts] = useState<AlertDTO[]>([]);
+  const [unreadAlertsCount, setUnreadAlertsCount] = useState<number>(3);
   const [isBackendOnline, setIsBackendOnline] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
@@ -54,6 +55,16 @@ export const App: React.FC = () => {
         } catch {
           // Offline
         }
+      }
+
+      // Busca todos os alertas para atualizar contador global
+      try {
+        const allAlerts = await fetchAllAlerts();
+        if (allAlerts && allAlerts.length > 0) {
+          setUnreadAlertsCount(allAlerts.length);
+        }
+      } catch {
+        // Fallback mantém valor anterior
       }
 
       setReadings(updatedReadings);
@@ -104,7 +115,7 @@ export const App: React.FC = () => {
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onOpenLanding={() => setCurrentView('landing')}
-        unreadAlertsCount={3}
+        unreadAlertsCount={unreadAlertsCount}
         selectedCity={selectedCity}
         onSelectCity={handleSelectCity}
       />
@@ -161,7 +172,7 @@ export const App: React.FC = () => {
           <div className={`p-1.5 rounded-xl transition-all relative ${activeTab === 'alerts' ? 'bg-hydro/20 text-hydro shadow-sm' : ''}`}>
             <AlertTriangle className="w-5 h-5" />
             <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-critical text-[10px] text-white flex items-center justify-center font-bold font-mono">
-              3
+              {unreadAlertsCount}
             </span>
           </div>
           <span className="text-[11px] font-mono">Alertas</span>
