@@ -2,6 +2,17 @@ const getRecentTimestamp = (): string => new Date().toISOString();
 
 import { CityInfo, WeatherReading, AlertDTO, PrevisaoDTO } from '../types';
 
+export const ALL_BRAZIL_CITY: CityInfo = {
+  nome: 'Todos os Estados',
+  slug: 'all',
+  estado: 'BR',
+  regiao: 'Nacional',
+  bioma: 'Brasil (5 Biomas)',
+  lat: -14.235,
+  lng: -51.9253,
+  status: 'nominal'
+};
+
 export const MONITORED_CITIES: CityInfo[] = [
   // ── Centro-Oeste ──────────────────────────────────────────────────────────
   {

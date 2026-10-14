@@ -78,10 +78,17 @@ const MapController: React.FC<MapControllerProps> = ({ selectedCity }) => {
 
   useEffect(() => {
     if (prevCityRef.current !== selectedCity.slug) {
-      map.flyTo([selectedCity.lat, selectedCity.lng], 7, {
-        animate: true,
-        duration: 1.2
-      });
+      if (selectedCity.slug === 'all') {
+        map.flyTo([-14.235, -51.9253], 4.2, {
+          animate: true,
+          duration: 1.2
+        });
+      } else {
+        map.flyTo([selectedCity.lat, selectedCity.lng], 7, {
+          animate: true,
+          duration: 1.2
+        });
+      }
       prevCityRef.current = selectedCity.slug;
     }
   }, [selectedCity, map]);

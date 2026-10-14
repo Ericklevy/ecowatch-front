@@ -41,7 +41,7 @@ export interface CityInfo {
   nome: string;
   slug: string;
   estado: string;
-  regiao: 'Norte' | 'Nordeste' | 'Centro-Oeste' | 'Sudeste' | 'Sul';
+  regiao: 'Norte' | 'Nordeste' | 'Centro-Oeste' | 'Sudeste' | 'Sul' | 'Nacional';
   bioma: string;
   lat: number;
   lng: number;

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Map, AlertTriangle, TrendingUp, FileText, RefreshCw, Bell, Radio, MapPin, Menu, X, ChevronRight, Newspaper, Info, BookOpen, Search } from 'lucide-react';
 import { triggerManualSync } from '../../services/api';
 import { CityInfo } from '../../types';
-import { MONITORED_CITIES } from '../../data/mockData';
+import { MONITORED_CITIES, ALL_BRAZIL_CITY } from '../../data/mockData';
 
 export type ActiveTab = 'map' | 'alerts' | 'forecast' | 'reports' | 'news' | 'about' | 'glossary';
 
@@ -42,6 +42,11 @@ export const TopBar: React.FC<TopBarProps> = ({
   };
 
   const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    if (e.target.value === 'all') {
+      if (onSelectCity) onSelectCity(ALL_BRAZIL_CITY);
+      if (activeTab !== 'map') onTabChange('map');
+      return;
+    }
     const city = MONITORED_CITIES.find(c => c.slug === e.target.value);
     if (city && onSelectCity) {
       onSelectCity(city);
@@ -207,8 +212,11 @@ export const TopBar: React.FC<TopBarProps> = ({
               value={selectedCity.slug}
               onChange={handleCityChange}
               className="bg-transparent text-zinc-200 cursor-pointer outline-none text-xs font-mono max-w-[105px] sm:max-w-[130px] truncate"
-              title="Selecionar capital monitorada"
+              title="Selecionar capital monitorada ou visão nacional"
             >
+              <option value="all" className="bg-surface-panel text-hydro font-bold">
+                🇧🇷 Todos os Estados (BR)
+              </option>
               {MONITORED_CITIES.map(city => (
                 <option
                   key={city.slug}

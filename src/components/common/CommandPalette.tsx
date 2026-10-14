@@ -16,7 +16,7 @@ import {
   ShieldAlert
 } from 'lucide-react';
 import { ActiveTab } from '../layout/TopBar';
-import { MONITORED_CITIES } from '../../data/mockData';
+import { MONITORED_CITIES, ALL_BRAZIL_CITY } from '../../data/mockData';
 import { CityInfo } from '../../types';
 
 interface CommandPaletteProps {
@@ -138,7 +138,19 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       icon: Printer,
       action: () => { onClose(); setTimeout(() => window.print(), 200); }
     },
-    // ── Capitais Monitoradas ──
+    // ── Visão Nacional & Capitais Monitoradas ──
+    {
+      id: 'city-all',
+      group: 'Visão Geográfica',
+      title: '🇧🇷 Todos os Estados (Visão Geral Brasil)',
+      subtitle: 'Panorama nacional consolidado de 5 biomas e 27 capitais',
+      icon: MapPin,
+      action: () => {
+        if (onSelectCity) onSelectCity(ALL_BRAZIL_CITY);
+        onTabChange('map');
+        onClose();
+      }
+    },
     ...MONITORED_CITIES.map(city => ({
       id: `city-${city.slug}`,
       group: 'Capitais Monitoradas',

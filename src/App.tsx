@@ -100,6 +100,20 @@ export const App: React.FC = () => {
   // ── Ao selecionar cidade, busca alertas dela ──────────────────────────────
   useEffect(() => {
     async function loadCityDetails() {
+      if (selectedCity.slug === 'all') {
+        try {
+          const all = await fetchAllAlerts();
+          if (all && all.length > 0) {
+            setCityAlerts(all);
+            return;
+          }
+        } catch {
+          // fallback
+        }
+        setCityAlerts(MOCK_ALERTS);
+        return;
+      }
+
       try {
         const dashboard = await fetchCityDashboard(selectedCity.slug);
         setCityAlerts(dashboard.alertas);
@@ -115,7 +129,11 @@ export const App: React.FC = () => {
 
   const handleSelectCity = (city: CityInfo) => {
     setSelectedCity(city);
-    setIsDrawerOpen(true);
+    if (city.slug === 'all') {
+      setIsDrawerOpen(false);
+    } else {
+      setIsDrawerOpen(true);
+    }
   };
 
   // ── Landing page ──────────────────────────────────────────────────────────
