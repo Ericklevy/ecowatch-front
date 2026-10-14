@@ -101,7 +101,7 @@ export const ForecastView: React.FC = () => {
           <div className="flex items-center justify-between text-xs font-mono text-zinc-400 mb-2">
             <span className="uppercase font-semibold text-critical flex items-center gap-1.5">
               <Flame className="w-4 h-4" />
-              <span>Maior Risco de Incêndio</span>
+              <span>Maior Chance de Fogo na Vegetação</span>
             </span>
           </div>
           <div className="text-xl font-bold font-sans text-white">Brasília (DF)</div>
@@ -110,7 +110,7 @@ export const ForecastView: React.FC = () => {
             <span className="text-xs font-mono text-zinc-400">/100 (Score Crítico)</span>
           </div>
           <p className="text-[11px] font-mono text-zinc-400 mt-2 border-t border-border-subtle pt-2">
-            Umidade crítica de 12% · Chuva 0.0mm · Temp 38.2°C · Alerta no Gama e Cerrado
+            Projeção por ar seco (12%), calor (38°C) e estiagem no Cerrado · Facilita faíscas
           </p>
         </div>
 
@@ -199,7 +199,7 @@ export const ForecastView: React.FC = () => {
                     <div className="font-semibold text-zinc-200">{Math.round(nextDay.umidadePrevista)}%</div>
                   </div>
                   <div className="pt-1.5 border-t border-border-subtle/40">
-                    <div className="text-[10px] text-zinc-400 uppercase mb-1">Risco Fogo</div>
+                    <div className="text-[10px] text-zinc-400 uppercase mb-1">Chance Fogo</div>
                     {getScoreBadge(nextDay.riscoIncendio)}
                   </div>
                   <div className="pt-1.5 border-t border-border-subtle/40">
@@ -222,7 +222,7 @@ export const ForecastView: React.FC = () => {
                 <th className="py-2.5 px-4 font-semibold">Temp. Prevista</th>
                 <th className="py-2.5 px-4 font-semibold">Chuva Prevista</th>
                 <th className="py-2.5 px-4 font-semibold">Umidade</th>
-                <th className="py-2.5 px-4 font-semibold">Risco Incêndio</th>
+                <th className="py-2.5 px-4 font-semibold">Chance de Fogo (Vegetação)</th>
                 <th className="py-2.5 px-4 font-semibold">Risco Dengue</th>
                 <th className="py-2.5 px-4 font-semibold text-right">Ação</th>
               </tr>

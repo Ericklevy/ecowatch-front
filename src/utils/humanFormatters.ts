@@ -117,19 +117,19 @@ export const humanizeRiverLevel = (
 export const humanizeFireRisk = (score: number): { label: string; explanation: string } => {
   if (score >= 80) {
     return {
-      label: `Risco Crítico de Incêndio (${score}/100)`,
-      explanation: 'Vegetação seca como palha e umidade do ar crítica. Qualquer fagulha ou ponta de cigarro vira incêndio florestal incontrolável.'
+      label: `Chance Crítica de Fogo na Vegetação (${score}/100)`,
+      explanation: 'Condições meteorológicas extremas (tempo seco e calor intenso). A vegetação vira combustível fácil e qualquer faísca acidental pode iniciar queimadas.'
     };
   }
   if (score >= 50) {
     return {
-      label: `Risco Moderado de Incêndio (${score}/100)`,
-      explanation: 'Clima quente e pouca chuva. Atenção redobrada perto de matas e rodovias.'
+      label: `Chance Moderada de Propagação (${score}/100)`,
+      explanation: 'Tempo quente e solo com baixa umidade. Requer cuidado preventivo nas proximidades de matas e pastos.'
     };
   }
   return {
-    label: `Risco Baixo de Incêndio (${score}/100)`,
-    explanation: 'Solo úmido ou chuva recente diminuem bastante o perigo de queimadas.'
+    label: `Baixa Propensão a Queimadas (${score}/100)`,
+    explanation: 'Solo úmido ou chuva recente minimizam a probabilidade de fogo se espalhar.'
   };
 };
 

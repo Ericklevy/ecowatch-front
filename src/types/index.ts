@@ -53,16 +53,16 @@ export interface CityInfo {
 }
 
 export const ALERT_TYPE_LABELS: Record<string, string> = {
-  RIVER_FLOOD: 'Inundação / Enchente',
-  FOREST_FIRE: 'Incêndio Florestal',
-  CRITICAL_FIRE_RISK: 'Risco de Incêndio',
+  RIVER_FLOOD: 'Inundação / Enchente (ANA)',
+  FOREST_FIRE: 'Foco de Queimada Detectado (Satélite)',
+  CRITICAL_FIRE_RISK: 'Chance Alta de Fogo na Vegetação',
   POOR_AIR_QUALITY: 'Qualidade do Ar Crítica',
   EXTREME_HEAT: 'Calor Extremo',
   EXTREME_RAIN: 'Chuva Extrema',
-  FLASH_FLOOD: 'Enxurrada / Deslizamento',
+  FLASH_FLOOD: 'Enxurrada / Deslizamento (CEMADEN)',
   DROUGHT_RISK: 'Risco de Seca / Estiagem',
   DENGUE_OUTBREAK_RISK: 'Risco de Surto de Dengue',
-  FIRE_NEAR_URBAN_AREA: 'Incêndio em Área Urbana'
+  FIRE_NEAR_URBAN_AREA: 'Foco de Calor Próximo a Área Urbana'
 };
 
 export const formatAlertTypeName = (tipoAlerta: string): string => {

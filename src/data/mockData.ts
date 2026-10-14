@@ -762,7 +762,7 @@ export const MOCK_ALERTS: AlertDTO[] = [
     municipio: 'Cuiabá',
     estado: 'MT',
     tipoAlerta: 'FOREST_FIRE',
-    mensagem: 'INCÊNDIO FLORESTAL ATIVO em Cuiabá/MT: 11 pontos de queimada detectados por satélite no Pantanal e cerrado. Calor de 41°C acelera propagação do fogo.',
+    mensagem: 'FOCO ATIVO DE QUEIMADA DETECTADO POR SATÉLITE em Cuiabá/MT: Sensores orbitais do INPE registraram 11 pontos térmicos no Pantanal/Cerrado. Calor de 41°C acelera propagação de fagulhas.',
     dataHoraAlerta: getTodayAlertTime(2)
   },
   {
@@ -778,7 +778,7 @@ export const MOCK_ALERTS: AlertDTO[] = [
     municipio: 'Brasília',
     estado: 'DF',
     tipoAlerta: 'CRITICAL_FIRE_RISK',
-    mensagem: 'RISCO CRÍTICO DE INCÊNDIO em Brasília/DF: Umidade em 12% (nível de emergência) e temperatura de 38.2°C no Cerrado. Alerta para queimadas no Gama e Parque Nacional.',
+    mensagem: 'CHANCE CRÍTICA DE FOGO NA VEGETAÇÃO em Brasília/DF: Umidade do ar em 12% e calor de 38.2°C deixam a vegetação vulnerável. Alerta preventivo contra queima acidental no Gama e Parque Nacional.',
     dataHoraAlerta: getTodayAlertTime(4)
   },
   {

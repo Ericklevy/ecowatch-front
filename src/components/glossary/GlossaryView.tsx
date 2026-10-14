@@ -73,17 +73,17 @@ const GLOSSARY_TERMS: GlossaryTerm[] = [
   {
     id: 'focos-calor',
     category: 'fogo',
-    title: 'Focos de Calor e Risco de Incêndio (0 a 100)',
-    technicalTerm: 'Índice de Risco: 88/100 · 14 focos ativos detectados',
+    title: 'Focos de Calor (Satélite) vs. Chance de Fogo (Previsão)',
+    technicalTerm: 'Focos de Calor: 14 ativos · Chance de Fogo: 88/100',
     simpleExplanation:
-      'Um cálculo diário feito por satélites do INPE e da NASA que cruza três fatores: quantos dias a cidade está sem chover, quão quente está a tarde e quão baixa está a umidade do ar.',
+      'É fundamental saber a diferença: "Foco de Calor" é uma anomalia térmica real detectada no solo por sensores infravermelhos de satélites (INPE/NASA). Já a "Chance de Fogo" (0 a 100) é uma projeção meteorológica baseada em estiagem prolongada, calor e ar seco — ela indica a facilidade para a vegetação queimar, e NÃO que o município já está em chamas.',
     practicalExample:
-      'Um risco de 90/100 significa que a vegetação está seca feito palha de milho. Uma simples bituca de cigarro jogada pela janela do carro ou uma faísca de escapamento pode iniciar um incêndio que destrói hectares de mata e cobre cidades como Brasília ou Cuiabá de fumaça densa.',
+      'Se a Chance de Fogo estiver em 90/100, significa que o capim está seco feito palha de milho. Uma simples bituca de cigarro jogada no acostamento pode virar um incêndio florestal em minutos. Por isso a Defesa Civil emite o alerta preventivo antes que o fogo comece.',
     scale: [
-      { range: '0 a 30', meaning: 'Risco Baixo — Solo úmido ou chuva recente; baixa chance de fogo.', severity: 'low' },
-      { range: '31 a 60', meaning: 'Risco Médio / Atenção — Vegetação perdendo umidade; cuidado perto de matas.', severity: 'medium' },
-      { range: '61 a 80', meaning: 'Risco Alto — Qualquer queimada de lixo pode fugir do controle dos bombeiros.', severity: 'high' },
-      { range: '81 a 100', meaning: 'Risco Crítico / Alerta Vermelho — Proibição total de qualquer queima; perigo extremo de grandes incêndios florestais.', severity: 'critical' }
+      { range: '0 a 30', meaning: 'Baixa Propensão — Solo úmido ou chuva recente; baixa chance de fogo.', severity: 'low' },
+      { range: '31 a 60', meaning: 'Atenção / Chance Média — Vegetação perdendo umidade; cuidado perto de matas.', severity: 'medium' },
+      { range: '61 a 80', meaning: 'Risco Elevado — O tempo seco facilita que pequenas queimadas fujam do controle.', severity: 'high' },
+      { range: '81 a 100', meaning: 'Condições Críticas (Alerta Vermelho) — Proibição total de qualquer queima; facilidade máxima de propagação de incêndios.', severity: 'critical' }
     ]
   },
   {

@@ -8,8 +8,8 @@ import { normalizeCityName } from '../../utils/humanFormatters';
 const ALERT_CATEGORIES = [
   { key: 'ALL', label: 'Todos os Alertas' },
   { key: 'RIVER_FLOOD', label: 'Enchentes (ANA)' },
-  { key: 'FOREST_FIRE', label: 'Incêndio Florestal (INPE)' },
-  { key: 'CRITICAL_FIRE_RISK', label: 'Risco de Incêndio' },
+  { key: 'FOREST_FIRE', label: 'Focos de Calor (INPE/NASA)' },
+  { key: 'CRITICAL_FIRE_RISK', label: 'Chance Alta de Fogo' },
   { key: 'POOR_AIR_QUALITY', label: 'Qualidade do Ar' },
   { key: 'EXTREME_HEAT', label: 'Calor Extremo' },
   { key: 'EXTREME_RAIN', label: 'Chuva Extrema' },
