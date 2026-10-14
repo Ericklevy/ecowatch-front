@@ -1,12 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Tooltip, CircleMarker, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Tooltip, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { Layers, Compass } from 'lucide-react';
 import { CityInfo, WeatherReading } from '../../types';
 import { MONITORED_CITIES, MOCK_FORECASTS, ALL_BRAZIL_CITY } from '../../data/mockData';
-import { MAJOR_RIVERS, ACTIVE_FIRE_HOTSPOTS } from '../../data/geoData';
+import { MAJOR_RIVERS, ACTIVE_FIRE_HOTSPOTS, FireHotspot } from '../../data/geoData';
 
-// ─── Ícone de marcador personalizado ────────────────────────────────────────
+// ─── Ícone de marcador personalizado para Capitais (Radar Satelital) ──────────
 const createCityIcon = (city: CityInfo, isSelected: boolean) => {
   let colorClass = 'bg-nominal border-nominal';
   let pingClass = 'bg-nominal/50';
@@ -38,6 +38,75 @@ const createCityIcon = (city: CityInfo, isSelected: boolean) => {
     className: 'custom-city-marker',
     iconSize: [32, 32],
     iconAnchor: [16, 16]
+  });
+};
+
+// ─── Ícone Diferenciado: Foco de Queimada Ativo (Chama Térmica 🔥) ─────────────
+const createFireMarkerIcon = (hotspot: FireHotspot) => {
+  const isHighPower = hotspot.frp > 80;
+  const html = `
+    <div class="relative flex items-center justify-center -translate-x-1/2 -translate-y-1/2 cursor-pointer group select-none">
+      <!-- Pulso térmico suave no solo -->
+      <span class="absolute w-7 h-7 rounded-full bg-red-600/35 animate-ping pointer-events-none"></span>
+      <!-- Pin térmico com chama em gradiente de fogo -->
+      <div class="relative flex items-center justify-center w-6 h-6 rounded-lg bg-gradient-to-t from-red-600 via-orange-500 to-amber-300 border border-amber-200/90 shadow-[0_0_14px_rgba(239,68,68,0.9)] group-hover:scale-125 transition-transform duration-200">
+        <span class="text-xs leading-none drop-shadow">🔥</span>
+      </div>
+      ${isHighPower ? `<span class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-amber-300 border border-red-700 animate-pulse"></span>` : ''}
+    </div>
+  `;
+  return L.divIcon({
+    html,
+    className: 'custom-fire-marker',
+    iconSize: [28, 28],
+    iconAnchor: [14, 14]
+  });
+};
+
+// ─── Ícone Diferenciado: Badge Satélite de Risco de Dengue (Mosquito 🦟) ────────
+const createDengueBadgeIcon = (dengueScore: number) => {
+  const isCritical = dengueScore >= 70;
+  const isWarning = dengueScore >= 45;
+  const colorClass = isCritical 
+    ? 'bg-rose-950/95 border-rose-500/80 text-rose-300 shadow-[0_0_10px_rgba(244,63,94,0.5)]' 
+    : isWarning 
+    ? 'bg-amber-950/95 border-amber-500/80 text-amber-300 shadow-[0_0_8px_rgba(245,158,11,0.4)]' 
+    : 'bg-emerald-950/95 border-emerald-500/80 text-emerald-300';
+
+  const html = `
+    <div class="relative flex items-center select-none cursor-pointer group pointer-events-auto">
+      <div class="flex items-center gap-1 px-1.5 py-0.5 rounded-md border text-[9px] font-mono font-bold tracking-tight ${colorClass} backdrop-blur-md shadow-lg group-hover:scale-110 transition-transform">
+        <span class="text-[11px] leading-none">🦟</span>
+        <span>${dengueScore}%</span>
+      </div>
+    </div>
+  `;
+  return L.divIcon({
+    html,
+    className: 'custom-dengue-marker',
+    iconSize: [52, 22],
+    iconAnchor: [-10, 11] // Deslocado 10px à direita da cidade
+  });
+};
+
+// ─── Ícone Diferenciado: Pluma Atmosférica de Qualidade do Ar (PM2.5) ──────────
+const createAirQualityIcon = (pm25: number) => {
+  const color = pm25 > 55 ? '#ef4444' : pm25 > 25 ? '#f59e0b' : '#10b981';
+  const html = `
+    <div class="relative flex flex-col items-center select-none pointer-events-none">
+      <!-- Pluma de dispersão atmosférica gasosa (sem borda dura de bola) -->
+      <div class="w-14 h-14 rounded-full -translate-x-1/2 -translate-y-1/2 absolute" style="background: radial-gradient(circle, ${color}40 0%, ${color}15 50%, transparent 80%); filter: blur(3px);"></div>
+      <!-- Mini pílula indicadora de PM2.5 posicionada abaixo do marcador -->
+      <div class="relative mt-3.5 -translate-x-1/2 px-1.5 py-0.2 rounded bg-surface-panel/90 border border-border-subtle text-[8px] font-mono font-semibold text-zinc-300 shadow-md backdrop-blur-xs whitespace-nowrap">
+        <span style="color: ${color}">●</span> PM2.5: ${pm25.toFixed(0)}
+      </div>
+    </div>
+  `;
+  return L.divIcon({
+    html,
+    className: 'custom-aqi-marker',
+    iconSize: [60, 30],
+    iconAnchor: [30, 0] // Centralizado horizontalmente, abaixo do ponto
   });
 };
 
@@ -396,50 +465,30 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
           </>
         )}
 
-        {/* ── Camada Vetorial: Focos de Queimadas Ativos (INPE BDQueimadas) ── */}
+        {/* ── Camada: Focos de Queimadas Ativos com Ícone Térmico 🔥 ── */}
         {showFires && (
           <>
             {ACTIVE_FIRE_HOTSPOTS.map(hotspot => (
-              <React.Fragment key={hotspot.id}>
-                {/* Círculo de pulso térmico / calor radiativo */}
-                <CircleMarker
-                  center={[hotspot.lat, hotspot.lng]}
-                  radius={hotspot.frp > 80 ? 18 : 12}
-                  pathOptions={{
-                    color: '#ef4444',
-                    fillColor: '#dc2626',
-                    fillOpacity: 0.25,
-                    weight: 1,
-                    dashArray: '2, 4'
-                  }}
-                />
-                {/* Núcleo do foco de incêndio */}
-                <CircleMarker
-                  center={[hotspot.lat, hotspot.lng]}
-                  radius={hotspot.frp > 80 ? 6 : 4}
-                  pathOptions={{
-                    color: '#f87171',
-                    fillColor: '#ef4444',
-                    fillOpacity: 0.95,
-                    weight: 1.5
-                  }}
-                >
-                  <Tooltip sticky direction="top" className="custom-fire-tooltip">
-                    <div className="font-mono text-xs p-1 space-y-0.5">
-                      <div className="font-bold text-critical flex items-center gap-1">
-                        <span>🔥</span>
-                        <span>Foco de Calor // {hotspot.municipio}/{hotspot.estado}</span>
-                      </div>
-                      <div className="text-zinc-300 text-[10px]">
-                        Bioma: <span className="text-zinc-100 font-semibold">{hotspot.bioma}</span>
-                      </div>
-                      <div className="text-zinc-400 text-[10px]">
-                        Satélite: {hotspot.satelite} · FRP: {hotspot.frp.toFixed(1)} MW
-                      </div>
+              <Marker
+                key={hotspot.id}
+                position={[hotspot.lat, hotspot.lng]}
+                icon={createFireMarkerIcon(hotspot)}
+              >
+                <Tooltip sticky direction="top" className="custom-fire-tooltip">
+                  <div className="font-mono text-xs p-1 space-y-0.5">
+                    <div className="font-bold text-critical flex items-center gap-1">
+                      <span>🔥</span>
+                      <span>Foco de Queimada // {hotspot.municipio}/{hotspot.estado}</span>
                     </div>
-                  </Tooltip>
-                </CircleMarker>
-              </React.Fragment>
+                    <div className="text-zinc-300 text-[10px]">
+                      Bioma: <span className="text-zinc-100 font-semibold">{hotspot.bioma}</span>
+                    </div>
+                    <div className="text-zinc-400 text-[10px]">
+                      Satélite: {hotspot.satelite} · FRP: {hotspot.frp.toFixed(1)} MW
+                    </div>
+                  </div>
+                </Tooltip>
+              </Marker>
             ))}
           </>
         )}
@@ -477,37 +526,42 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
 
           return (
             <React.Fragment key={city.slug}>
-              {/* Círculo de Risco Epidemiológico de Dengue (Mapa de Calor Térmico) */}
-              {showDengueRisk && (
-                <CircleMarker
-                  center={[city.lat, city.lng]}
-                  radius={dengueMeta.radius}
-                  pathOptions={{
-                    color: dengueMeta.stroke,
-                    fillColor: dengueMeta.color,
-                    fillOpacity: dengueMeta.fillOpacity,
-                    weight: dengueScore >= 70 ? 2 : 1,
-                    dashArray: dengueScore >= 70 ? '3, 5' : undefined
-                  }}
-                />
-              )}
-
-              {/* Círculo de Qualidade do Ar (PM2.5) */}
+              {/* Pluma Atmosférica e Tag Numérica de Qualidade do Ar (PM2.5) */}
               {showAirQuality && reading && (
-                <CircleMarker
-                  center={[city.lat, city.lng]}
-                  radius={Math.max(8, Math.min(28, reading.pm25 * 0.6))}
-                  pathOptions={{
-                    color: pm25Color(reading.pm25),
-                    fillColor: pm25Color(reading.pm25),
-                    fillOpacity: 0.18,
-                    weight: 1.5,
-                    opacity: 0.6
-                  }}
+                <Marker
+                  position={[city.lat, city.lng]}
+                  icon={createAirQualityIcon(reading.pm25)}
+                  interactive={false}
                 />
               )}
 
-              {/* Marcador da cidade com status temporal dinâmico */}
+              {/* Badge Satélite de Risco de Dengue (Mosquito 🦟) */}
+              {showDengueRisk && (
+                <Marker
+                  position={[city.lat, city.lng]}
+                  icon={createDengueBadgeIcon(dengueScore)}
+                  eventHandlers={{
+                    click: () => onSelectCity(city)
+                  }}
+                >
+                  <Tooltip direction="right" offset={[15, 0]}>
+                    <div className="font-mono text-xs p-1 space-y-0.5">
+                      <div className="font-bold text-rose-400 flex items-center gap-1">
+                        <span>🦟</span>
+                        <span>Vigilância Epidemiológica // Dengue</span>
+                      </div>
+                      <div className="text-zinc-300 text-[10px]">
+                        Probabilidade em {city.nome}: <span className="font-bold">{dengueScore}%</span>
+                      </div>
+                      <div className="text-[10px]" style={{ color: dengueMeta.stroke }}>
+                        Classificação: {dengueMeta.label}
+                      </div>
+                    </div>
+                  </Tooltip>
+                </Marker>
+              )}
+
+              {/* Marcador Central da Cidade (Radar Satelital da Capital) */}
               <Marker
                 position={[city.lat, city.lng]}
                 icon={createCityIcon(effectiveCity, isSelected)}
@@ -582,6 +636,23 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
           <span className="w-2.5 h-2.5 rounded-full bg-nominal shadow-[0_0_8px_#00e676]"></span>
           <span className="text-zinc-400">Nominal (Normalidade)</span>
         </div>
+
+        {/* Camadas Temáticas Especiais */}
+        <div className="pt-1.5 mt-0.5 border-t border-white/10 space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] leading-none">🔥</span>
+            <span className="text-zinc-300">Queimadas (Focos Satélite)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] leading-none">🦟</span>
+            <span className="text-zinc-300">Risco Dengue (% Vetores)</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] leading-none">🌫️</span>
+            <span className="text-zinc-300">Qualidade Ar (Pluma PM2.5)</span>
+          </div>
+        </div>
+
         <div className="pt-1.5 mt-0.5 border-t border-white/5 text-[9px] text-zinc-400 font-sans">
           📡 Sensores: INPE · ANA · Open-Meteo · NASA
         </div>
