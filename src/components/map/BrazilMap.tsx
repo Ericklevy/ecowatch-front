@@ -250,11 +250,11 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
           </div>
 
           <div className="space-y-2 font-mono">
-            {/* Rios & Bacias — WMS ANA */}
-            <label className="flex items-center justify-between text-zinc-300 cursor-pointer hover:text-white">
+            {/* Rios & Bacias — Cartografia Oficial Hydro / ANA */}
+            <label className="flex items-center justify-between text-zinc-300 cursor-pointer hover:text-white" title="Rede hidrográfica contínua em alta resolução com afluentes, meandros e reservatórios">
               <span className="flex items-center gap-1.5">
                 <span className="w-2 h-2 rounded-full bg-hydro" />
-                <span>Rios & Bacias (ANA)</span>
+                <span>Rios & Bacias (Hydro / ANA)</span>
               </span>
               <input
                 type="checkbox"
@@ -353,49 +353,45 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
           maxZoom={16}
         />
 
-        {/* ── Camada Vetorial: Principais Rios e Bacias Hidrográficas (ANA/HydroRIVERS) ── */}
+        {/* ── Camada Cartográfica Oficial de Hidrografia (ANA / HydroRIVERS / ESRI Hydro) ── */}
         {showRivers && (
           <>
+            {/* Malha Hidrográfica de Alta Resolução Cartográfica (Rios, Meandros, Afluentes, Bacias e Lagos) */}
+            <TileLayer
+              url="https://tiles.arcgis.com/tiles/P3ePLMYs2RVChkJx/arcgis/rest/services/Esri_Hydro_Reference_Overlay/MapServer/tile/{z}/{y}/{x}"
+              attribution='&copy; <a href="https://www.esri.com/">Esri</a>, USGS, NOAA, ANA'
+              maxZoom={16}
+              opacity={0.85}
+              zIndex={5}
+            />
+
+            {/* Eixos Interativos dos Grandes Rios Monitorados pela ANA (Tooltips & Metadados) */}
             {MAJOR_RIVERS.map(river => (
-              <React.Fragment key={river.id}>
-                {/* Halo suave de dispersão de água (sem aspecto neon artificial) */}
-                <Polyline
-                  positions={river.coordinates}
-                  smoothFactor={0.6}
-                  pathOptions={{
-                    color: '#0284c7',
-                    weight: river.principal ? 5.5 : 3.2,
-                    opacity: 0.09,
-                    lineCap: 'round',
-                    lineJoin: 'round'
-                  }}
-                />
-                {/* Leito hidrográfico cartográfico com meandros suaves */}
-                <Polyline
-                  positions={river.coordinates}
-                  smoothFactor={0.6}
-                  pathOptions={{
-                    color: river.principal ? '#3ba2cf' : '#68b4dd',
-                    weight: river.principal ? 1.8 : 1.1,
-                    opacity: river.principal ? 0.72 : 0.55,
-                    lineCap: 'round',
-                    lineJoin: 'round'
-                  }}
-                >
-                  <Tooltip sticky direction="top" className="custom-river-tooltip">
-                    <div className="font-mono text-xs p-1 space-y-0.5">
-                      <div className="font-bold text-sky-300 flex items-center gap-1">
-                        <span>🌊</span>
-                        <span>{river.nome}</span>
-                      </div>
-                      <div className="text-zinc-400 text-[10px]">
-                        {river.bacia} · {river.extensaoKm.toLocaleString('pt-BR')} km
-                        {river.principal ? ' · Leito Principal' : ' · Afluente'}
-                      </div>
+              <Polyline
+                key={river.id}
+                positions={river.coordinates}
+                smoothFactor={0.5}
+                pathOptions={{
+                  color: '#38bdf8',
+                  weight: river.principal ? 3 : 1.8,
+                  opacity: 0.18,
+                  lineCap: 'round',
+                  lineJoin: 'round'
+                }}
+              >
+                <Tooltip sticky direction="top" className="custom-river-tooltip">
+                  <div className="font-mono text-xs p-1 space-y-0.5">
+                    <div className="font-bold text-sky-300 flex items-center gap-1">
+                      <span>🌊</span>
+                      <span>{river.nome}</span>
                     </div>
-                  </Tooltip>
-                </Polyline>
-              </React.Fragment>
+                    <div className="text-zinc-400 text-[10px]">
+                      {river.bacia} · {river.extensaoKm.toLocaleString('pt-BR')} km
+                      {river.principal ? ' · Leito Principal' : ' · Afluente'}
+                    </div>
+                  </div>
+                </Tooltip>
+              </Polyline>
             ))}
           </>
         )}
