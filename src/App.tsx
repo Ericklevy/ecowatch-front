@@ -168,6 +168,7 @@ export const App: React.FC = () => {
               selectedCity={selectedCity}
               onSelectCity={handleSelectCity}
               readings={readings}
+              isDrawerOpen={isDrawerOpen}
             />
             {isDrawerOpen && (
               <TelemetryDrawer

@@ -67,29 +67,73 @@ const getCityDengueScore = (citySlug: string, reading?: WeatherReading): number 
   return 25;
 };
 
-// ─── Componente interno para animação flyTo ──────────────────────────────────
+// ─── Limites Geográficos Focados no Brasil e América do Sul ─────────────────
+// Impede que o usuário dê a volta ao mundo ou se perca em cópias vazias do mapa mundi
+const BRAZIL_MAP_BOUNDS: L.LatLngBoundsLiteral = [
+  [-38.0, -90.0], // Sudoeste (cone sul e oceano Pacífico adjacente)
+  [12.0, -28.0]   // Nordeste (Caribe, norte do país e oceano Atlântico)
+];
+
+// ─── Componente interno para animação flyTo e ajuste de tamanho ────────────────
 interface MapControllerProps {
   selectedCity: CityInfo;
+  isDrawerOpen?: boolean;
 }
 
-const MapController: React.FC<MapControllerProps> = ({ selectedCity }) => {
+const MapController: React.FC<MapControllerProps> = ({ selectedCity, isDrawerOpen }) => {
   const map = useMap();
   const prevCityRef = useRef<string>(selectedCity.slug);
 
+  // 1. Observer de redimensionamento dinâmico (resolve gaveta abrindo/fechando e resize de janela)
+  useEffect(() => {
+    const container = map.getContainer();
+    if (!container) return;
+
+    const ro = new ResizeObserver(() => {
+      map.invalidateSize({ animate: false });
+    });
+    ro.observe(container);
+
+    return () => ro.disconnect();
+  }, [map]);
+
+  // 2. Quando o drawer abre ou fecha, forçar invalidação do tamanho do canvas
+  useEffect(() => {
+    const t1 = setTimeout(() => map.invalidateSize({ animate: false }), 60);
+    const t2 = setTimeout(() => map.invalidateSize({ animate: false }), 240);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [isDrawerOpen, map]);
+
+  // 3. Ao trocar de cidade (ou selecionar visão panorâmica nacional)
   useEffect(() => {
     if (prevCityRef.current !== selectedCity.slug) {
-      if (selectedCity.slug === 'all') {
-        map.flyTo([-14.235, -51.9253], 4.2, {
-          animate: true,
-          duration: 1.2
-        });
-      } else {
-        map.flyTo([selectedCity.lat, selectedCity.lng], 7, {
-          animate: true,
-          duration: 1.2
-        });
-      }
       prevCityRef.current = selectedCity.slug;
+
+      // Interrompe qualquer animação em andamento para não travar os frames do Leaflet
+      map.stop();
+      map.invalidateSize({ animate: false });
+
+      if (selectedCity.slug === 'all') {
+        // Enquadra o Brasil inteiro com zoom inteiro (4) para não quebrar os tiles
+        setTimeout(() => {
+          map.invalidateSize({ animate: false });
+          map.flyTo([-14.235, -51.9253], 4, {
+            animate: true,
+            duration: 0.9
+          });
+        }, 60);
+      } else {
+        setTimeout(() => {
+          map.invalidateSize({ animate: false });
+          map.flyTo([selectedCity.lat, selectedCity.lng], 7, {
+            animate: true,
+            duration: 0.9
+          });
+        }, 60);
+      }
     }
   }, [selectedCity, map]);
 
@@ -108,12 +152,14 @@ interface BrazilMapProps {
   selectedCity: CityInfo;
   onSelectCity: (city: CityInfo) => void;
   readings: Record<string, WeatherReading>;
+  isDrawerOpen?: boolean;
 }
 
 export const BrazilMap: React.FC<BrazilMapProps> = ({
   selectedCity,
   onSelectCity,
-  readings
+  readings,
+  isDrawerOpen
 }) => {
   const [selectedTimeOffset, setSelectedTimeOffset] = useState<number>(0); // 0 = Agora, 1 = D+1, 2 = D+2, 3 = D+3
   const [showRivers, setShowRivers] = useState(false);
@@ -279,26 +325,32 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
       <MapContainer
         center={[-14.2350, -51.9253]}
         zoom={4}
-        minZoom={3}
+        minZoom={3.5}
         maxZoom={12}
+        maxBounds={BRAZIL_MAP_BOUNDS}
+        maxBoundsViscosity={1.0}
         zoomControl={false}
         className="w-full h-full"
         style={{ background: '#090d16' }}
       >
-        {/* Controlador de flyTo ao trocar cidade */}
-        <MapController selectedCity={selectedCity} />
+        {/* Controlador de flyTo e redimensionamento dinâmico */}
+        <MapController selectedCity={selectedCity} isDrawerOpen={isDrawerOpen} />
 
         {/* Camada Base ESRI Dark Gray */}
         <TileLayer
           url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
           attribution='&copy; <a href="https://www.esri.com/">Esri</a>, DeLorme, NAVTEQ'
           maxZoom={16}
+          noWrap={true}
+          bounds={BRAZIL_MAP_BOUNDS}
         />
         {/* Rótulos e Fronteiras ESRI */}
         <TileLayer
           url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}"
           attribution=''
           maxZoom={16}
+          noWrap={true}
+          bounds={BRAZIL_MAP_BOUNDS}
         />
 
         {/* ── Camada Vetorial: Principais Rios e Bacias Hidrográficas (ANA/SNIRH) ── */}
