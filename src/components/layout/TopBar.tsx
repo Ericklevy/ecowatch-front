@@ -50,13 +50,13 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   return (
     <>
-      <header className="h-14 bg-surface-panel border-b border-border-subtle px-3 sm:px-4 flex items-center justify-between z-30 shrink-0 select-none relative">
+      <header className="h-14 glass-panel border-b border-border-subtle/80 px-3 sm:px-4 flex items-center justify-between z-30 shrink-0 select-none relative shadow-lg">
         {/* ── Esquerda: Hamburger Menu (Mobile) + Logo ── */}
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Botão de Menu Hambúrguer (Mobile) */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-1.5 rounded-lg bg-surface-card border border-border-subtle text-zinc-300 hover:text-white active:scale-95 transition-transform"
+            className="md:hidden p-1.5 rounded-lg bg-surface-card border border-border-subtle text-zinc-300 hover:text-white active:scale-90 transition-transform cursor-pointer"
             aria-label="Abrir menu de navegação"
             title="Menu de Páginas"
           >
@@ -65,119 +65,119 @@ export const TopBar: React.FC<TopBarProps> = ({
 
           <button
             onClick={onOpenLanding}
-            className="flex items-center gap-2 hover:opacity-85 transition-opacity text-left cursor-pointer"
+            className="flex items-center gap-2 hover:opacity-90 active:scale-98 transition-all text-left cursor-pointer group"
             title="Ver Apresentação Técnica / Manifesto"
           >
-            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded bg-hydro/10 border border-hydro/30 flex items-center justify-center text-hydro shrink-0">
-              <Radio className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-hydro animate-pulse" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-sm sm:text-base font-mono tracking-wider text-zinc-100">
-                EcoWatch
-              </span>
-              <span className="hidden md:inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-hydro/10 text-hydro border border-hydro/20">
-                v1.0
-              </span>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-hydro/10 border border-hydro/30 flex items-center justify-center text-hydro shrink-0 group-hover:border-hydro transition-colors shadow-[0_0_12px_rgba(56,189,248,0.2)]">
+              <Radio className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-hydro animate-breathing-glow" />
             </div>
-            <p className="text-[10px] text-zinc-500 font-mono hidden sm:block">
-              Centro de Operações Ambientais
-            </p>
-          </div>
-        </button>
-      </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-sm sm:text-base font-sans tracking-wide text-white group-hover:text-hydro transition-colors">
+                  EcoWatch
+                </span>
+                <span className="hidden md:inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-hydro/15 text-hydro border border-hydro/30">
+                  v1.0
+                </span>
+              </div>
+              <p className="text-[10px] text-zinc-400 font-sans hidden sm:block">
+                Centro de Inteligência Climática
+              </p>
+            </div>
+          </button>
+        </div>
 
-      {/* ── Centro: Navegação de Abas (Visível em Telas Médias e Grandes) ── */}
-      <nav className="hidden md:flex items-center gap-1 bg-surface-base border border-border-subtle rounded-md p-1">
-        <button
-          onClick={() => onTabChange('map')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all ${
-            activeTab === 'map'
-              ? 'bg-hydro/15 text-hydro border border-hydro/30 shadow-sm'
-              : 'text-zinc-400 hover:text-zinc-200 hover:bg-surface-card'
-          }`}
-        >
-          <Map className="w-3.5 h-3.5" />
-          <span>Mapa</span>
-        </button>
+        {/* ── Centro: Navegação de Abas (Visível em Telas Médias e Grandes) ── */}
+        <nav className="hidden md:flex items-center gap-1 bg-surface-base/80 border border-border-subtle/80 rounded-lg p-1 backdrop-blur shadow-inner">
+          <button
+            onClick={() => onTabChange('map')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 cursor-pointer ${
+              activeTab === 'map'
+                ? 'bg-hydro/20 text-hydro border border-hydro/40 shadow-[0_0_12px_rgba(56,189,248,0.2)] font-semibold scale-[1.02]'
+                : 'text-zinc-400 hover:text-white hover:bg-surface-card'
+            }`}
+          >
+            <Map className="w-3.5 h-3.5" />
+            <span>Mapa</span>
+          </button>
 
-        <button
-          onClick={() => onTabChange('alerts')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all relative ${
-            activeTab === 'alerts'
-              ? 'bg-hydro/15 text-hydro border border-hydro/30 shadow-sm'
-              : 'text-zinc-400 hover:text-zinc-200 hover:bg-surface-card'
-          }`}
-        >
-          <AlertTriangle className="w-3.5 h-3.5" />
-          <span>Alertas</span>
-          {unreadAlertsCount > 0 && (
-            <span className="w-4 h-4 rounded-full bg-critical text-[10px] text-white flex items-center justify-center font-mono font-bold leading-none">
-              {unreadAlertsCount}
-            </span>
-          )}
-        </button>
+          <button
+            onClick={() => onTabChange('alerts')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 relative cursor-pointer ${
+              activeTab === 'alerts'
+                ? 'bg-hydro/20 text-hydro border border-hydro/40 shadow-[0_0_12px_rgba(56,189,248,0.2)] font-semibold scale-[1.02]'
+                : 'text-zinc-400 hover:text-white hover:bg-surface-card'
+            }`}
+          >
+            <AlertTriangle className="w-3.5 h-3.5" />
+            <span>Alertas</span>
+            {unreadAlertsCount > 0 && (
+              <span className="w-4 h-4 rounded-full bg-critical text-[10px] text-white flex items-center justify-center font-mono font-bold leading-none animate-pulse">
+                {unreadAlertsCount}
+              </span>
+            )}
+          </button>
 
-        <button
-          onClick={() => onTabChange('forecast')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all ${
-            activeTab === 'forecast'
-              ? 'bg-hydro/15 text-hydro border border-hydro/30 shadow-sm'
-              : 'text-zinc-400 hover:text-zinc-200 hover:bg-surface-card'
-          }`}
-        >
-          <TrendingUp className="w-3.5 h-3.5" />
-          <span>Previsões</span>
-        </button>
+          <button
+            onClick={() => onTabChange('forecast')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 cursor-pointer ${
+              activeTab === 'forecast'
+                ? 'bg-hydro/20 text-hydro border border-hydro/40 shadow-[0_0_12px_rgba(56,189,248,0.2)] font-semibold scale-[1.02]'
+                : 'text-zinc-400 hover:text-white hover:bg-surface-card'
+            }`}
+          >
+            <TrendingUp className="w-3.5 h-3.5" />
+            <span>Previsões</span>
+          </button>
 
-        <button
-          onClick={() => onTabChange('reports')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all ${
-            activeTab === 'reports'
-              ? 'bg-hydro/15 text-hydro border border-hydro/30 shadow-sm'
-              : 'text-zinc-400 hover:text-zinc-200 hover:bg-surface-card'
-          }`}
-        >
-          <FileText className="w-3.5 h-3.5" />
-          <span>Relatórios</span>
-        </button>
+          <button
+            onClick={() => onTabChange('reports')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 cursor-pointer ${
+              activeTab === 'reports'
+                ? 'bg-hydro/20 text-hydro border border-hydro/40 shadow-[0_0_12px_rgba(56,189,248,0.2)] font-semibold scale-[1.02]'
+                : 'text-zinc-400 hover:text-white hover:bg-surface-card'
+            }`}
+          >
+            <FileText className="w-3.5 h-3.5" />
+            <span>Relatórios</span>
+          </button>
 
-        <button
-          onClick={() => onTabChange('news')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all ${
-            activeTab === 'news'
-              ? 'bg-hydro/15 text-hydro border border-hydro/30 shadow-sm'
-              : 'text-zinc-400 hover:text-zinc-200 hover:bg-surface-card'
-          }`}
-        >
-          <Newspaper className="w-3.5 h-3.5" />
-          <span>Notícias</span>
-        </button>
+          <button
+            onClick={() => onTabChange('news')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 cursor-pointer ${
+              activeTab === 'news'
+                ? 'bg-hydro/20 text-hydro border border-hydro/40 shadow-[0_0_12px_rgba(56,189,248,0.2)] font-semibold scale-[1.02]'
+                : 'text-zinc-400 hover:text-white hover:bg-surface-card'
+            }`}
+          >
+            <Newspaper className="w-3.5 h-3.5" />
+            <span>Notícias</span>
+          </button>
 
-        <button
-          onClick={() => onTabChange('glossary')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all ${
-            activeTab === 'glossary'
-              ? 'bg-hydro/15 text-hydro border border-hydro/30 shadow-sm'
-              : 'text-zinc-400 hover:text-zinc-200 hover:bg-surface-card'
-          }`}
-        >
-          <BookOpen className="w-3.5 h-3.5" />
-          <span>Glossário</span>
-        </button>
+          <button
+            onClick={() => onTabChange('glossary')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 cursor-pointer ${
+              activeTab === 'glossary'
+                ? 'bg-hydro/20 text-hydro border border-hydro/40 shadow-[0_0_12px_rgba(56,189,248,0.2)] font-semibold scale-[1.02]'
+                : 'text-zinc-400 hover:text-white hover:bg-surface-card'
+            }`}
+          >
+            <BookOpen className="w-3.5 h-3.5" />
+            <span>Glossário</span>
+          </button>
 
-        <button
-          onClick={() => onTabChange('about')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-xs font-medium transition-all ${
-            activeTab === 'about'
-              ? 'bg-hydro/15 text-hydro border border-hydro/30 shadow-sm'
-              : 'text-zinc-400 hover:text-zinc-200 hover:bg-surface-card'
-          }`}
-        >
-          <Info className="w-3.5 h-3.5" />
-          <span>Sobre</span>
-        </button>
-      </nav>
+          <button
+            onClick={() => onTabChange('about')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 cursor-pointer ${
+              activeTab === 'about'
+                ? 'bg-hydro/20 text-hydro border border-hydro/40 shadow-[0_0_12px_rgba(56,189,248,0.2)] font-semibold scale-[1.02]'
+                : 'text-zinc-400 hover:text-white hover:bg-surface-card'
+            }`}
+          >
+            <Info className="w-3.5 h-3.5" />
+            <span>Sobre</span>
+          </button>
+        </nav>
 
       {/* ── Direita: Seletor de Cidade + Status + Ações ── */}
       <div className="flex items-center gap-1.5 sm:gap-2">

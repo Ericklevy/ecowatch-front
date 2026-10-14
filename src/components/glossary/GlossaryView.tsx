@@ -196,7 +196,7 @@ export const GlossaryView: React.FC = () => {
             {filteredTerms.map(term => (
               <article
                 key={term.id}
-                className="p-5 sm:p-6 rounded-xl bg-surface-panel border border-border-subtle space-y-4 shadow-sm hover:border-hydro/30 transition-colors"
+                className="p-5 sm:p-6 rounded-2xl glass-panel border border-border-subtle card-interactive space-y-4 shadow-md hover:border-hydro/40"
               >
                 {/* Cabeçalho do Card */}
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2 border-b border-border-subtle/60 pb-3">

@@ -22,17 +22,19 @@ const createCityIcon = (city: CityInfo, isSelected: boolean) => {
   const selectedRing = isSelected ? 'ring-2 ring-hydro ring-offset-2 ring-offset-surface-base' : '';
 
   const html = `
-    <div class="relative flex items-center justify-center w-6 h-6 -translate-x-1/2 -translate-y-1/2 cursor-pointer group">
+    <div class="relative flex items-center justify-center w-8 h-8 -translate-x-1/2 -translate-y-1/2 cursor-pointer group">
+      ${isSelected ? `<span class="absolute w-full h-full rounded-full animate-radar bg-hydro/35 pointer-events-none"></span>` : ''}
       ${city.status === 'critical' ? `<span class="absolute w-full h-full rounded-full animate-ping ${pingClass}"></span>` : ''}
-      <span class="relative w-3.5 h-3.5 rounded-full ${colorClass} border-2 ${selectedRing} shadow-lg transition-transform duration-200 group-hover:scale-125"></span>
+      ${city.status === 'warning' ? `<span class="absolute w-6 h-6 rounded-full animate-pulse bg-warning/30"></span>` : ''}
+      <span class="relative w-3.5 h-3.5 rounded-full ${colorClass} border-2 ${selectedRing} shadow-[0_0_12px_rgba(56,189,248,0.5)] transition-all duration-300 group-hover:scale-125"></span>
     </div>
   `;
 
   return L.divIcon({
     html,
     className: 'custom-city-marker',
-    iconSize: [24, 24],
-    iconAnchor: [12, 12]
+    iconSize: [32, 32],
+    iconAnchor: [16, 16]
   });
 };
 

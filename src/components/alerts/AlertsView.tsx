@@ -162,16 +162,16 @@ export const AlertsView: React.FC = () => {
             filteredAlerts.map(alert => (
               <div
                 key={alert.id}
-                className="p-3 rounded-lg bg-surface-panel border border-border-subtle space-y-2 shadow-sm"
+                className="p-3.5 rounded-xl glass-panel border border-border-subtle card-interactive space-y-2.5 shadow-sm"
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2 flex-wrap">
                     {getSeverityBadge(alert.tipoAlerta)}
-                    <span className="font-bold text-xs text-zinc-200">
+                    <span className="font-bold text-xs text-white font-sans">
                       {formatAlertTypeName(alert.tipoAlerta)}
                     </span>
                   </div>
-                  <span className="text-[10px] font-mono text-zinc-500 shrink-0">
+                  <span className="text-[10px] font-mono text-zinc-400 shrink-0">
                     {new Date(alert.dataHoraAlerta).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })} {new Date(alert.dataHoraAlerta).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
@@ -180,39 +180,39 @@ export const AlertsView: React.FC = () => {
                   {alert.mensagem}
                 </p>
 
-                <div className="flex items-center justify-between pt-1 border-t border-border-subtle/50 text-[11px] font-mono text-zinc-400">
+                <div className="flex items-center justify-between pt-1.5 border-t border-border-subtle/50 text-[11px] font-sans text-zinc-400">
                   <span className="text-zinc-200 font-semibold">{alert.municipio} ({alert.estado})</span>
-                  <span className="text-zinc-500">ID #{alert.id}</span>
+                  <span className="text-zinc-500 font-mono">ID #{alert.id}</span>
                 </div>
               </div>
             ))
           ) : (
-            <div className="py-12 text-center text-zinc-500 font-mono">
-              <CheckCircle2 className="w-6 h-6 mx-auto text-nominal mb-2" />
+            <div className="py-12 text-center text-zinc-500 font-sans text-xs">
+              <CheckCircle2 className="w-6 h-6 mx-auto text-nominal mb-2 animate-bounce" />
               Nenhum alerta encontrado para os filtros selecionados.
             </div>
           )}
         </div>
 
         {/* Visualização Desktop: Tabela Completa */}
-        <div className="hidden md:block border border-border-subtle rounded-md bg-surface-panel overflow-hidden shadow-xl">
+        <div className="hidden md:block border border-border-subtle/80 rounded-xl glass-panel overflow-hidden shadow-2xl">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-border-subtle bg-surface-dim/70 text-[11px] font-mono text-zinc-400 uppercase tracking-wider">
-                <th className="py-2.5 px-4 font-semibold">Severidade</th>
-                <th className="py-2.5 px-4 font-semibold">Tipo de Evento</th>
-                <th className="py-2.5 px-4 font-semibold">Capital</th>
-                <th className="py-2.5 px-4 font-semibold">UF</th>
-                <th className="py-2.5 px-4 font-semibold">Mensagem Operacional</th>
-                <th className="py-2.5 px-4 font-semibold text-right">Data/Hora (UTC)</th>
+              <tr className="border-b border-border-subtle bg-surface-dim/80 text-[11px] font-sans font-semibold text-zinc-400 uppercase tracking-wider">
+                <th className="py-3 px-4 font-semibold">Severidade</th>
+                <th className="py-3 px-4 font-semibold">Tipo de Evento</th>
+                <th className="py-3 px-4 font-semibold">Capital</th>
+                <th className="py-3 px-4 font-semibold">UF</th>
+                <th className="py-3 px-4 font-semibold">Mensagem Operacional</th>
+                <th className="py-3 px-4 font-semibold text-right">Data/Hora (UTC)</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-border-subtle/50 text-xs font-mono">
+            <tbody className="divide-y divide-border-subtle/40 text-xs">
               {filteredAlerts.length > 0 ? (
                 filteredAlerts.map(alert => (
                   <tr 
                     key={alert.id}
-                    className="hover:bg-surface-hover/50 transition-colors group"
+                    className="hover:bg-surface-hover/60 transition-colors group"
                   >
                     <td className="py-3 px-4 whitespace-nowrap">
                       {getSeverityBadge(alert.tipoAlerta)}

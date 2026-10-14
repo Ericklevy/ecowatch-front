@@ -131,7 +131,7 @@ export const NewsView: React.FC = () => {
             {filteredNews.map(item => (
               <article
                 key={item.id}
-                className="p-4 sm:p-5 rounded-lg bg-surface-panel border border-border-subtle hover:border-hydro/30 transition-all flex flex-col justify-between space-y-3 group shadow-sm"
+                className="p-4 sm:p-5 rounded-xl glass-panel border border-border-subtle card-interactive hover:border-hydro/40 flex flex-col justify-between space-y-3 group shadow-md"
               >
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between gap-2 flex-wrap">

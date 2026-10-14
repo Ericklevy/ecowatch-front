@@ -94,13 +94,13 @@ export const ForecastView: React.FC = () => {
         </div>
       </div>
 
-      {/* 3 Cards de Destaque Operacional */}
+      {/* 3 Cards de Destaque Operacional com Microinterações */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Card 1: Risco de Incêndio */}
-        <div className="p-4 rounded-md bg-surface-panel border border-border-subtle hover:border-critical/40 transition-colors">
-          <div className="flex items-center justify-between text-xs font-mono text-zinc-400 mb-2">
-            <span className="uppercase font-semibold text-critical flex items-center gap-1.5">
-              <Flame className="w-4 h-4" />
+        <div className="p-4 rounded-xl glass-panel border border-border-subtle card-interactive hover:border-critical/50 transition-all">
+          <div className="flex items-center justify-between text-xs font-sans text-zinc-400 mb-2">
+            <span className="uppercase font-semibold text-critical flex items-center gap-1.5 tracking-wider">
+              <Flame className="w-4 h-4 animate-breathing-glow" />
               <span>Maior Chance de Fogo na Vegetação</span>
             </span>
           </div>
@@ -109,16 +109,20 @@ export const ForecastView: React.FC = () => {
             <span className="text-3xl font-extrabold font-mono text-critical">91</span>
             <span className="text-xs font-mono text-zinc-400">/100 (Score Crítico)</span>
           </div>
-          <p className="text-[11px] font-mono text-zinc-400 mt-2 border-t border-border-subtle pt-2">
+          {/* Barra de Progresso Visual */}
+          <div className="w-full bg-surface-base h-2 rounded-full overflow-hidden mt-3 border border-border-subtle/50">
+            <div className="h-full bg-gradient-to-r from-orange-500 to-critical rounded-full transition-all duration-1000" style={{ width: '91%' }} />
+          </div>
+          <p className="text-[11px] font-sans text-zinc-400 mt-2.5 pt-2 border-t border-border-subtle/60 leading-relaxed">
             Projeção por ar seco (12%), calor (38°C) e estiagem no Cerrado · Facilita faíscas
           </p>
         </div>
 
         {/* Card 2: Risco de Dengue */}
-        <div className="p-4 rounded-md bg-surface-panel border border-border-subtle hover:border-warning/40 transition-colors">
-          <div className="flex items-center justify-between text-xs font-mono text-zinc-400 mb-2">
-            <span className="uppercase font-semibold text-warning flex items-center gap-1.5">
-              <Bug className="w-4 h-4" />
+        <div className="p-4 rounded-xl glass-panel border border-border-subtle card-interactive hover:border-warning/50 transition-all">
+          <div className="flex items-center justify-between text-xs font-sans text-zinc-400 mb-2">
+            <span className="uppercase font-semibold text-warning flex items-center gap-1.5 tracking-wider">
+              <Bug className="w-4 h-4 animate-breathing-glow" />
               <span>Maior Risco de Dengue</span>
             </span>
           </div>
@@ -127,16 +131,20 @@ export const ForecastView: React.FC = () => {
             <span className="text-3xl font-extrabold font-mono text-warning">78</span>
             <span className="text-xs font-mono text-zinc-400">/100 (Score Elevado)</span>
           </div>
-          <p className="text-[11px] font-mono text-zinc-400 mt-2 border-t border-border-subtle pt-2">
+          {/* Barra de Progresso Visual */}
+          <div className="w-full bg-surface-base h-2 rounded-full overflow-hidden mt-3 border border-border-subtle/50">
+            <div className="h-full bg-gradient-to-r from-amber-500 to-warning rounded-full transition-all duration-1000" style={{ width: '78%' }} />
+          </div>
+          <p className="text-[11px] font-sans text-zinc-400 mt-2.5 pt-2 border-t border-border-subtle/60 leading-relaxed">
             Chuva 45.2mm acumulada · Umidade 89% · Temp 31.8°C
           </p>
         </div>
 
         {/* Card 3: Maior Precipitação */}
-        <div className="p-4 rounded-md bg-surface-panel border border-border-subtle hover:border-hydro/40 transition-colors">
-          <div className="flex items-center justify-between text-xs font-mono text-zinc-400 mb-2">
-            <span className="uppercase font-semibold text-hydro flex items-center gap-1.5">
-              <CloudRain className="w-4 h-4" />
+        <div className="p-4 rounded-xl glass-panel border border-border-subtle card-interactive hover:border-hydro/50 transition-all">
+          <div className="flex items-center justify-between text-xs font-sans text-zinc-400 mb-2">
+            <span className="uppercase font-semibold text-hydro flex items-center gap-1.5 tracking-wider">
+              <CloudRain className="w-4 h-4 animate-breathing-glow" />
               <span>Maior Volume de Chuva</span>
             </span>
           </div>
@@ -145,7 +153,11 @@ export const ForecastView: React.FC = () => {
             <span className="text-3xl font-extrabold font-mono text-hydro">52.3</span>
             <span className="text-xs font-mono text-zinc-400">mm previstos</span>
           </div>
-          <p className="text-[11px] font-mono text-zinc-400 mt-2 border-t border-border-subtle pt-2">
+          {/* Barra de Progresso Visual */}
+          <div className="w-full bg-surface-base h-2 rounded-full overflow-hidden mt-3 border border-border-subtle/50">
+            <div className="h-full bg-gradient-to-r from-cyan-500 to-hydro rounded-full transition-all duration-1000" style={{ width: '65%' }} />
+          </div>
+          <p className="text-[11px] font-sans text-zinc-400 mt-2.5 pt-2 border-t border-border-subtle/60 leading-relaxed">
             Alerta para enxurradas e transbordamento fluvial
           </p>
         </div>

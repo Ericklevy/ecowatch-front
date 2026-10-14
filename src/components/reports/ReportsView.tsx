@@ -281,77 +281,77 @@ export const ReportsView: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
           
           {/* Card 1: Chuva Acumulada no Período (Com explicação leiga) */}
-          <div className="p-4 rounded-lg bg-surface-panel border border-border-subtle space-y-2 flex flex-col justify-between">
+          <div className="p-4 rounded-xl glass-panel border border-border-subtle card-interactive space-y-2 flex flex-col justify-between shadow-sm">
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs text-zinc-400 font-mono">
+              <div className="flex items-center justify-between text-xs text-zinc-400 font-sans font-medium">
                 <span>Chuva Acumulada</span>
-                <CloudRain className="w-4 h-4 text-hydro" />
+                <CloudRain className="w-4 h-4 text-hydro animate-breathing-glow" />
               </div>
               <div className="text-2xl font-bold font-mono text-zinc-100">
                 {kpis.chuvaBase.toFixed(1)} mm
               </div>
-              <div className="text-[11px] font-mono font-semibold text-hydro">
+              <div className="text-[11px] font-sans font-semibold text-hydro">
                 {kpis.chuvaObj.label}
               </div>
             </div>
-            <p className="text-[11px] text-zinc-400 font-sans leading-relaxed pt-2 border-t border-border-subtle/40">
+            <p className="text-[11px] text-zinc-400 font-sans leading-relaxed pt-2 border-t border-border-subtle/50">
               💡 {kpis.chuvaObj.explanation}
             </p>
           </div>
 
           {/* Card 2: Cota do Rio / Nível das Águas (Com explicação de transbordamento) */}
-          <div className="p-4 rounded-lg bg-surface-panel border border-border-subtle space-y-2 flex flex-col justify-between">
+          <div className="p-4 rounded-xl glass-panel border border-border-subtle card-interactive space-y-2 flex flex-col justify-between shadow-sm">
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs text-zinc-400 font-mono">
+              <div className="flex items-center justify-between text-xs text-zinc-400 font-sans font-medium">
                 <span>Nível do Rio ({selectedCity.rioNome || 'Bacia'})</span>
-                <Droplets className="w-4 h-4 text-nominal" />
+                <Droplets className="w-4 h-4 text-nominal animate-breathing-glow" />
               </div>
               <div className="text-2xl font-bold font-mono text-zinc-100">
                 {selectedCity.rioNome ? `${kpis.nivelRio.toFixed(2)}m` : 'Estável'}
               </div>
-              <div className="text-[11px] font-mono font-semibold text-zinc-300">
+              <div className="text-[11px] font-sans font-semibold text-zinc-300">
                 {kpis.rioObj ? kpis.rioObj.label : 'Sem risco de enchente'}
               </div>
             </div>
-            <p className="text-[11px] text-zinc-400 font-sans leading-relaxed pt-2 border-t border-border-subtle/40">
+            <p className="text-[11px] text-zinc-400 font-sans leading-relaxed pt-2 border-t border-border-subtle/50">
               💡 {kpis.rioObj ? kpis.rioObj.explanation : 'Região sem rio com cota de transbordamento monitorada pela ANA.'}
             </p>
           </div>
 
           {/* Card 3: Qualidade do Ar (Com explicação do que é PM2.5) */}
-          <div className="p-4 rounded-lg bg-surface-panel border border-border-subtle space-y-2 flex flex-col justify-between">
+          <div className="p-4 rounded-xl glass-panel border border-border-subtle card-interactive space-y-2 flex flex-col justify-between shadow-sm">
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs text-zinc-400 font-mono">
+              <div className="flex items-center justify-between text-xs text-zinc-400 font-sans font-medium">
                 <span>Qualidade do Ar (PM2.5)</span>
-                <Wind className="w-4 h-4 text-warning" />
+                <Wind className="w-4 h-4 text-warning animate-breathing-glow" />
               </div>
               <div className="text-2xl font-bold font-mono text-zinc-100">
                 {kpis.pm25Base.toFixed(1)} µg/m³
               </div>
-              <div className="text-[11px] font-mono font-semibold text-warning">
+              <div className="text-[11px] font-sans font-semibold text-warning">
                 {kpis.arObj.label}
               </div>
             </div>
-            <p className="text-[11px] text-zinc-400 font-sans leading-relaxed pt-2 border-t border-border-subtle/40">
+            <p className="text-[11px] text-zinc-400 font-sans leading-relaxed pt-2 border-t border-border-subtle/50">
               💡 {kpis.arObj.explanation}
             </p>
           </div>
 
           {/* Card 4: Focos de Queimadas e Risco de Fogo */}
-          <div className="p-4 rounded-lg bg-surface-panel border border-border-subtle space-y-2 flex flex-col justify-between">
+          <div className="p-4 rounded-xl glass-panel border border-border-subtle card-interactive space-y-2 flex flex-col justify-between shadow-sm">
             <div className="space-y-1.5">
-              <div className="flex items-center justify-between text-xs text-zinc-400 font-mono">
+              <div className="flex items-center justify-between text-xs text-zinc-400 font-sans font-medium">
                 <span>Focos de Fogo no Período</span>
-                <Flame className={`w-4 h-4 ${kpis.focosIncendioPeriodo > 5 ? 'text-critical' : 'text-nominal'}`} />
+                <Flame className={`w-4 h-4 animate-breathing-glow ${kpis.focosIncendioPeriodo > 5 ? 'text-critical' : 'text-nominal'}`} />
               </div>
               <div className="text-2xl font-bold font-mono text-zinc-100">
                 {kpis.focosIncendioPeriodo} focos
               </div>
-              <div className="text-[11px] font-mono font-semibold text-critical">
+              <div className="text-[11px] font-sans font-semibold text-critical">
                 {kpis.fogoObj.label}
               </div>
             </div>
-            <p className="text-[11px] text-zinc-400 font-sans leading-relaxed pt-2 border-t border-border-subtle/40">
+            <p className="text-[11px] text-zinc-400 font-sans leading-relaxed pt-2 border-t border-border-subtle/50">
               💡 {kpis.fogoObj.explanation}
             </p>
           </div>

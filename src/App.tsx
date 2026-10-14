@@ -123,8 +123,8 @@ export const App: React.FC = () => {
         onSelectCity={handleSelectCity}
       />
 
-      {/* Conteúdo Principal */}
-      <main className="flex-1 flex overflow-hidden relative">
+      {/* Conteúdo Principal com Transição Fluida entre Abas */}
+      <main key={activeTab} className="flex-1 flex overflow-hidden relative animate-fade-up">
         {activeTab === 'map' && (
           <div className="flex-1 flex w-full h-full relative overflow-hidden">
             <BrazilMap
