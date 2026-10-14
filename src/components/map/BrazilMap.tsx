@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Tooltip, CircleMarker, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { Layers } from 'lucide-react';
+import { Layers, Compass } from 'lucide-react';
 import { CityInfo, WeatherReading } from '../../types';
-import { MONITORED_CITIES, MOCK_FORECASTS } from '../../data/mockData';
+import { MONITORED_CITIES, MOCK_FORECASTS, ALL_BRAZIL_CITY } from '../../data/mockData';
 import { MAJOR_RIVERS, ACTIVE_FIRE_HOTSPOTS } from '../../data/geoData';
 
 // ─── Ícone de marcador personalizado ────────────────────────────────────────
@@ -66,13 +66,6 @@ const getCityDengueScore = (citySlug: string, reading?: WeatherReading): number 
   }
   return 25;
 };
-
-// ─── Limites Geográficos Focados no Brasil e América do Sul ─────────────────
-// Impede que o usuário dê a volta ao mundo ou se perca em cópias vazias do mapa mundi
-const BRAZIL_MAP_BOUNDS: L.LatLngBoundsLiteral = [
-  [-38.0, -90.0], // Sudoeste (cone sul e oceano Pacífico adjacente)
-  [12.0, -28.0]   // Nordeste (Caribe, norte do país e oceano Atlântico)
-];
 
 // ─── Componente interno para animação flyTo e ajuste de tamanho ────────────────
 interface MapControllerProps {
@@ -321,14 +314,25 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
         </div>
       </div>
 
-      {/* ── Mapa Leaflet ── */}
+      {/* ── Botão Flutuante: Foco Brasil (Top Right) ── */}
+      <div className="absolute top-3 right-3 z-[1000] select-none">
+        <button
+          onClick={() => onSelectCity(ALL_BRAZIL_CITY)}
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-surface-panel/95 hover:bg-surface-panel backdrop-blur border border-border-subtle hover:border-hydro/50 text-xs font-mono text-zinc-300 hover:text-white shadow-2xl active:scale-95 transition-all cursor-pointer group"
+          title="Recentralizar visualização panorâmica do Brasil"
+        >
+          <Compass className="w-4 h-4 text-hydro group-hover:rotate-45 transition-transform duration-300" />
+          <span className="font-semibold text-zinc-200">Foco Brasil</span>
+        </button>
+      </div>
+
+      {/* ── Mapa Leaflet Dinâmico Global ── */}
       <MapContainer
         center={[-14.2350, -51.9253]}
         zoom={4}
-        minZoom={3.5}
-        maxZoom={12}
-        maxBounds={BRAZIL_MAP_BOUNDS}
-        maxBoundsViscosity={1.0}
+        minZoom={2.5}
+        maxZoom={15}
+        worldCopyJump={true}
         zoomControl={false}
         className="w-full h-full"
         style={{ background: '#090d16' }}
@@ -341,41 +345,39 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
           url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}"
           attribution='&copy; <a href="https://www.esri.com/">Esri</a>, DeLorme, NAVTEQ'
           maxZoom={16}
-          noWrap={true}
-          bounds={BRAZIL_MAP_BOUNDS}
         />
         {/* Rótulos e Fronteiras ESRI */}
         <TileLayer
           url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}"
           attribution=''
           maxZoom={16}
-          noWrap={true}
-          bounds={BRAZIL_MAP_BOUNDS}
         />
 
-        {/* ── Camada Vetorial: Principais Rios e Bacias Hidrográficas (ANA/SNIRH) ── */}
+        {/* ── Camada Vetorial: Principais Rios e Bacias Hidrográficas (ANA/HydroRIVERS) ── */}
         {showRivers && (
           <>
             {MAJOR_RIVERS.map(river => (
               <React.Fragment key={river.id}>
-                {/* Linha externa para dispersão suave de luz na água */}
+                {/* Halo suave de dispersão de água (sem aspecto neon artificial) */}
                 <Polyline
                   positions={river.coordinates}
+                  smoothFactor={0.6}
                   pathOptions={{
                     color: '#0284c7',
-                    weight: river.principal ? 4.5 : 3,
-                    opacity: 0.18,
+                    weight: river.principal ? 5.5 : 3.2,
+                    opacity: 0.09,
                     lineCap: 'round',
                     lineJoin: 'round'
                   }}
                 />
-                {/* Leito hidrográfico do rio */}
+                {/* Leito hidrográfico cartográfico com meandros suaves */}
                 <Polyline
                   positions={river.coordinates}
+                  smoothFactor={0.6}
                   pathOptions={{
-                    color: river.principal ? '#38bdf8' : '#7dd3fc',
-                    weight: river.principal ? 2 : 1.4,
-                    opacity: 0.8,
+                    color: river.principal ? '#3ba2cf' : '#68b4dd',
+                    weight: river.principal ? 1.8 : 1.1,
+                    opacity: river.principal ? 0.72 : 0.55,
                     lineCap: 'round',
                     lineJoin: 'round'
                   }}
