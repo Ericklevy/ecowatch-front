@@ -108,6 +108,7 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
   onSelectCity,
   readings
 }) => {
+  const [selectedTimeOffset, setSelectedTimeOffset] = useState<number>(0); // 0 = Agora, 1 = D+1, 2 = D+2, 3 = D+3
   const [showRivers, setShowRivers] = useState(false);
   const [showFires, setShowFires] = useState(false);
   const [showAirQuality, setShowAirQuality] = useState(false);
@@ -118,6 +119,57 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
 
   return (
     <div className="relative w-full h-full flex-1 overflow-hidden bg-surface-base">
+
+      {/* ── Seletor Temporal Estilo Windy (Top Center) ── */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-[1000] select-none">
+        <div className="flex items-center gap-1 p-1 rounded-full bento-card shadow-2xl backdrop-blur-md border border-white/10 text-xs font-mono">
+          <button
+            onClick={() => setSelectedTimeOffset(0)}
+            className={`px-3 py-1 rounded-full flex items-center gap-1.5 transition-all cursor-pointer ${
+              selectedTimeOffset === 0
+                ? 'bg-critical/20 text-critical font-bold border border-critical/30 shadow-[0_0_10px_rgba(255,23,68,0.3)]'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+            title="Telemetria e dados em tempo real"
+          >
+            <span className={`w-1.5 h-1.5 rounded-full ${selectedTimeOffset === 0 ? 'bg-critical animate-ping' : 'bg-zinc-500'}`} />
+            <span>Tempo Real</span>
+          </button>
+          <button
+            onClick={() => setSelectedTimeOffset(1)}
+            className={`px-2.5 py-1 rounded-full transition-all cursor-pointer ${
+              selectedTimeOffset === 1
+                ? 'bg-hydro/20 text-hydro font-bold border border-hydro/30 shadow-[0_0_10px_rgba(0,229,255,0.3)]'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+            title="Previsão meteorológica para amanhã"
+          >
+            <span>D+1 (Amanhã)</span>
+          </button>
+          <button
+            onClick={() => setSelectedTimeOffset(2)}
+            className={`px-2.5 py-1 rounded-full transition-all cursor-pointer ${
+              selectedTimeOffset === 2
+                ? 'bg-hydro/20 text-hydro font-bold border border-hydro/30 shadow-[0_0_10px_rgba(0,229,255,0.3)]'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+            title="Previsão para depois de amanhã"
+          >
+            <span>D+2</span>
+          </button>
+          <button
+            onClick={() => setSelectedTimeOffset(3)}
+            className={`px-2.5 py-1 rounded-full transition-all cursor-pointer ${
+              selectedTimeOffset === 3
+                ? 'bg-hydro/20 text-hydro font-bold border border-hydro/30 shadow-[0_0_10px_rgba(0,229,255,0.3)]'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+            title="Previsão para 3 dias à frente"
+          >
+            <span>D+3</span>
+          </button>
+        </div>
+      </div>
 
       {/* ── Painel Flutuante de Camadas (Top Left) ── */}
       <div className="absolute top-3 left-3 z-[1000] select-none">
@@ -342,6 +394,30 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
           const dengueScore = getCityDengueScore(city.slug, reading);
           const dengueMeta = getDengueMeta(dengueScore);
 
+          // Integração com a Timeline Windy
+          const isLive = selectedTimeOffset === 0;
+          const forecast = !isLive ? MOCK_FORECASTS[city.slug]?.[selectedTimeOffset - 1] : null;
+
+          const displayTemp = isLive 
+            ? reading?.temperatura 
+            : forecast?.temperaturaPrevista ?? reading?.temperatura;
+          const displayRain = isLive 
+            ? reading?.precipitacao 
+            : forecast?.precipitacaoPrevista ?? reading?.precipitacao;
+
+          let effectiveStatus = city.status;
+          if (!isLive && forecast) {
+            if (forecast.riscoIncendio >= 70 || forecast.precipitacaoPrevista >= 40) {
+              effectiveStatus = 'critical';
+            } else if (forecast.riscoIncendio >= 40 || forecast.precipitacaoPrevista >= 20) {
+              effectiveStatus = 'warning';
+            } else {
+              effectiveStatus = 'nominal';
+            }
+          }
+
+          const effectiveCity: CityInfo = { ...city, status: effectiveStatus as any };
+
           return (
             <React.Fragment key={city.slug}>
               {/* Círculo de Risco Epidemiológico de Dengue (Mapa de Calor Térmico) */}
@@ -374,10 +450,10 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
                 />
               )}
 
-              {/* Marcador da cidade */}
+              {/* Marcador da cidade com status temporal dinâmico */}
               <Marker
                 position={[city.lat, city.lng]}
-                icon={createCityIcon(city, isSelected)}
+                icon={createCityIcon(effectiveCity, isSelected)}
                 eventHandlers={{
                   click: () => onSelectCity(city)
                 }}
@@ -393,34 +469,35 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
                     <div className="font-bold text-white flex items-center justify-between gap-2">
                       <span>{city.nome} ({city.estado})</span>
                       <span className={`text-[9px] uppercase px-1 rounded ${
-                        city.status === 'critical' ? 'bg-critical/20 text-critical' :
-                        city.status === 'warning' ? 'bg-warning/20 text-warning' : 'bg-nominal/20 text-nominal'
+                        effectiveStatus === 'critical' ? 'bg-critical/20 text-critical' :
+                        effectiveStatus === 'warning' ? 'bg-warning/20 text-warning' : 'bg-nominal/20 text-nominal'
                       }`}>
-                        {city.status}
+                        {isLive ? city.status : `D+${selectedTimeOffset} (${effectiveStatus})`}
                       </span>
                     </div>
-                    {reading && (
-                      <div className="text-[10px] text-zinc-400 space-y-0.5 pt-1 border-t border-border-subtle mt-1">
-                        <div>Temp: {reading.temperatura.toFixed(1)}°C · Chuva: {reading.precipitacao.toFixed(1)}mm</div>
-                        {city.rioNome && (
-                          <div>{city.rioNome}: {reading.nivelRio.toFixed(2)}m</div>
-                        )}
-                        {showDengueRisk && (
-                          <div className="flex items-center justify-between pt-0.5" style={{ color: dengueMeta.stroke }}>
-                            <span>🦟 Risco Dengue:</span>
-                            <span className="font-bold">{dengueScore}/100 ({dengueMeta.label.split(' ')[0]})</span>
-                          </div>
-                        )}
-                        {showAirQuality && (
-                          <div style={{ color: pm25Color(reading.pm25) }}>
-                            PM2.5: {reading.pm25.toFixed(1)} µg/m³
-                          </div>
-                        )}
-                        {reading.focosIncendio > 0 && (
-                          <div className="text-critical font-medium">⚠ {reading.focosIncendio} focos de queimada</div>
-                        )}
+                    <div className="text-[10px] text-zinc-400 space-y-0.5 pt-1 border-t border-border-subtle mt-1">
+                      <div>
+                        Temp: {displayTemp !== undefined ? `${displayTemp.toFixed(1)}°C` : 'N/D'} · Chuva: {displayRain !== undefined ? `${displayRain.toFixed(1)}mm` : '0.0mm'}
+                        {!isLive && <span className="text-hydro font-semibold ml-1">(Previsto)</span>}
                       </div>
-                    )}
+                      {city.rioNome && (
+                        <div>{city.rioNome}: {reading?.nivelRio.toFixed(2)}m</div>
+                      )}
+                      {showDengueRisk && (
+                        <div className="flex items-center justify-between pt-0.5" style={{ color: dengueMeta.stroke }}>
+                          <span>🦟 Risco Dengue:</span>
+                          <span className="font-bold">{dengueScore}/100 ({dengueMeta.label.split(' ')[0]})</span>
+                        </div>
+                      )}
+                      {showAirQuality && reading && (
+                        <div style={{ color: pm25Color(reading.pm25) }}>
+                          PM2.5: {reading.pm25.toFixed(1)} µg/m³
+                        </div>
+                      )}
+                      {reading && reading.focosIncendio > 0 && isLive && (
+                        <div className="text-critical font-medium">⚠ {reading.focosIncendio} focos de queimada</div>
+                      )}
+                    </div>
                     <div className="text-[9px] text-hydro/80 pt-0.5">Clique para inspecionar telemetria</div>
                   </div>
                 </Tooltip>

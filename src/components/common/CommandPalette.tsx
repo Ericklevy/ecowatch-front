@@ -10,7 +10,10 @@ import {
   Info,
   MapPin,
   RefreshCw,
-  ChevronRight
+  ChevronRight,
+  Download,
+  Printer,
+  ShieldAlert
 } from 'lucide-react';
 import { ActiveTab } from '../layout/TopBar';
 import { MONITORED_CITIES } from '../../data/mockData';
@@ -102,14 +105,38 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       icon: Info,
       action: () => { onTabChange('about'); onClose(); }
     },
-    // ── Ações Rápidas ──
+    // ── Ações Executáveis (Estilo Linear) ──
     {
       id: 'act-sync',
       group: 'Ações Rápidas',
-      title: 'Sincronizar Telemetria Agora',
-      subtitle: 'Requisitar nova varredura de dados na Azure',
+      title: 'Sincronizar Telemetria com Satélites',
+      subtitle: 'Disparar varredura de dados em tempo real na nuvem',
       icon: RefreshCw,
       action: () => { if (onSync) onSync(); onClose(); }
+    },
+    {
+      id: 'act-filter-critical',
+      group: 'Ações Rápidas',
+      title: 'Filtrar Alertas de Emergência & Críticos',
+      subtitle: 'Isolar ocorrências de enchente e queimadas ativas',
+      icon: ShieldAlert,
+      action: () => { onTabChange('alerts'); onClose(); }
+    },
+    {
+      id: 'act-export-csv',
+      group: 'Ações Rápidas',
+      title: 'Exportar Relatório Consolidado (CSV)',
+      subtitle: 'Baixar dados tabulares de monitoramento para auditoria',
+      icon: Download,
+      action: () => { onTabChange('reports'); onClose(); }
+    },
+    {
+      id: 'act-print',
+      group: 'Ações Rápidas',
+      title: 'Imprimir / Gerar PDF Timbrado',
+      subtitle: 'Boletim oficial formatado para imprensa e Defesa Civil',
+      icon: Printer,
+      action: () => { onClose(); setTimeout(() => window.print(), 200); }
     },
     // ── Capitais Monitoradas ──
     ...MONITORED_CITIES.map(city => ({

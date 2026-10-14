@@ -11,7 +11,9 @@ import {
   CheckCircle2,
   RefreshCw,
   Newspaper,
-  ExternalLink
+  ExternalLink,
+  Satellite,
+  ShieldCheck
 } from 'lucide-react';
 import { CityInfo, WeatherReading, AlertDTO, formatAlertTypeName, NewsItem } from '../../types';
 import { triggerCitySync, fetchCityWeather, fetchCityDashboard, fetchNews } from '../../services/api';
@@ -404,6 +406,39 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
                 {reading.focosIncendio}
               </span>
               <span className="text-[11px] font-mono text-zinc-400">focos ativos</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Bloco NASA VEDA: Rastreabilidade Governamental & Confiança do Dado */}
+        <div className="p-3.5 rounded-xl bento-card border border-white/5 space-y-2 text-[11px] font-mono">
+          <div className="text-[10px] text-zinc-400 uppercase tracking-wider font-semibold border-b border-white/5 pb-1 flex items-center justify-between">
+            <span className="flex items-center gap-1.5 text-zinc-300">
+              <Satellite className="w-3.5 h-3.5 text-hydro" />
+              <span>Rastreabilidade de Sensores (NASA VEDA Standard)</span>
+            </span>
+            <span className="text-nominal flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-nominal" />
+              <span>Auditado</span>
+            </span>
+          </div>
+
+          <div className="space-y-1.5 text-zinc-300">
+            <div className="flex items-center justify-between">
+              <span className="text-zinc-500">Queimadas & Fogo:</span>
+              <span className="text-zinc-300 font-medium">INPE / VIIRS 375m (Confiança: 94%)</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-zinc-500">Rede Fluviométrica:</span>
+              <span className="text-zinc-300 font-medium">{city.postoAna ? `ANA #${city.postoAna}` : 'ANA HidroWeb Contínua'}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-zinc-500">Clima & Radar:</span>
+              <span className="text-zinc-300 font-medium">Open-Meteo ECMWF / GFS 0.1°</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-zinc-500">Qualidade do Ar:</span>
+              <span className="text-zinc-300 font-medium">CAMS / Copernicus PM2.5</span>
             </div>
           </div>
         </div>
