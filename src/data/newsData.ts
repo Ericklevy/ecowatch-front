@@ -88,5 +88,27 @@ export const MOCK_NEWS: NewsItem[] = [
     categoria: 'GENERAL',
     municipio: 'São Paulo',
     estado: 'SP'
+  },
+  {
+    id: 'news-am-09',
+    titulo: 'DETER/INPE aponta pressão agropecuária em áreas de amortecimento na Amazônia',
+    resumo: 'Imagens orbitais dos satélites CBERS e Sentinel mostram avanço sobre o bioma amazônico em áreas próximas a Unidades de Conservação e Terras Indígenas no sul do estado.',
+    fonte: 'Agência Brasil / INPE',
+    url: 'https://agenciabrasil.ebc.com.br/meio-ambiente',
+    dataHora: '2026-10-14T08:00:00Z',
+    categoria: 'DEFORESTATION',
+    municipio: 'Manaus',
+    estado: 'AM'
+  },
+  {
+    id: 'news-pa-10',
+    titulo: 'Operação integrada combate desmatamento ilegal e apreende maquinário pesado no Pará',
+    resumo: 'Ação com apoio de imagens de radar do Censipam identificou polígonos de corte raso na floresta nativa. Frentes de fiscalização mantêm vigilância contínua.',
+    fonte: 'Agência Gov / IBAMA',
+    url: 'https://agenciabrasil.ebc.com.br/meio-ambiente',
+    dataHora: '2026-10-13T17:20:00Z',
+    categoria: 'DEFORESTATION',
+    municipio: 'Belém',
+    estado: 'PA'
   }
 ];

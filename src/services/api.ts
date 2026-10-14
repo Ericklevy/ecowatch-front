@@ -1,6 +1,7 @@
 import { WeatherReading, AlertDTO, PrevisaoDTO, DashboardDTO, NewsItem } from '../types';
 import { MOCK_WEATHER_READINGS, MOCK_ALERTS, MOCK_FORECASTS, MONITORED_CITIES } from '../data/mockData';
 import { MOCK_NEWS } from '../data/newsData';
+import { sanitizeNewsList } from '../utils/newsSanitizer';
 
 // ── Endpoints do Backend (injetados via variáveis de ambiente da Vercel/.env) ──
 const READ_MODEL_URL        = import.meta.env.VITE_READ_MODEL_URL        || '';
@@ -195,16 +196,22 @@ export async function fetchNews(params?: FetchNewsParams): Promise<{ items: News
 
       if (res.ok) {
         const data = await res.json();
+        const rawItems = (data.content || []) as NewsItem[];
+        const sanitized = sanitizeNewsList(rawItems);
+        const filteredByCat = (params?.categoria && params.categoria !== 'ALL')
+          ? sanitized.filter(n => n.categoria === params.categoria)
+          : sanitized;
         return {
-          items: data.content || [],
-          total: data.totalElements || 0
+          items: filteredByCat,
+          total: filteredByCat.length
         };
       }
     } catch { /* fallback suave */ }
   }
 
   // Fallback para MOCK_NEWS caso offline
-  let filtered = MOCK_NEWS;
+  const sanitized = sanitizeNewsList(MOCK_NEWS);
+  let filtered = sanitized;
   if (params?.categoria && params.categoria !== 'ALL') {
     filtered = filtered.filter(n => n.categoria === params.categoria);
   }

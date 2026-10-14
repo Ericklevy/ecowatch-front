@@ -77,7 +77,7 @@ export interface NewsItem {
   fonte: string;
   url: string;
   dataHora: string;
-  categoria: 'FIRE' | 'FLOOD' | 'RAIN' | 'DENGUE' | 'GENERAL';
+  categoria: 'FIRE' | 'FLOOD' | 'RAIN' | 'DENGUE' | 'DEFORESTATION' | 'GENERAL';
   municipio?: string;
   estado?: string;
 }

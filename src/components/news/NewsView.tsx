@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Newspaper, Search, Flame, Waves, CloudRain, Bug, ShieldAlert, Radio, RefreshCw, ExternalLink, CheckCircle2 } from 'lucide-react';
+import { Newspaper, Search, Flame, Waves, CloudRain, Bug, ShieldAlert, Radio, RefreshCw, ExternalLink, CheckCircle2, Trees } from 'lucide-react';
 import { fetchNews, triggerNewsSync } from '../../services/api';
 import { NewsItem } from '../../types';
+import { sanitizeNewsList } from '../../utils/newsSanitizer';
 
 const CATEGORIES = [
   { key: 'ALL', label: 'Todas as Notícias' },
@@ -9,6 +10,7 @@ const CATEGORIES = [
   { key: 'FLOOD', label: 'Rios & Enchentes', icon: Waves, color: 'text-hydro' },
   { key: 'RAIN', label: 'Chuvas Extremas', icon: CloudRain, color: 'text-nominal' },
   { key: 'DENGUE', label: 'Vigilância Dengue', icon: Bug, color: 'text-warning' },
+  { key: 'DEFORESTATION', label: 'Desmatamento & Biomas', icon: Trees, color: 'text-emerald-400' },
   { key: 'GENERAL', label: 'Defesa Civil & Secas', icon: ShieldAlert, color: 'text-zinc-300' }
 ];
 
@@ -25,9 +27,9 @@ export const NewsView: React.FC = () => {
     try {
       const result = await fetchNews({
         categoria: categoria !== 'ALL' ? categoria : undefined,
-        size: 30
+        size: 50
       });
-      setNews(result.items);
+      setNews(sanitizeNewsList(result.items));
     } catch {
       // erro tratado com fallback no próprio serviço
     } finally {
@@ -94,6 +96,13 @@ export const NewsView: React.FC = () => {
           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-warning/15 text-warning border border-warning/30 uppercase">
             <Bug className="w-3 h-3" />
             <span>Risco de Dengue</span>
+          </span>
+        );
+      case 'DEFORESTATION':
+        return (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 uppercase">
+            <Trees className="w-3 h-3" />
+            <span>Desmatamento & Biomas</span>
           </span>
         );
       default:
