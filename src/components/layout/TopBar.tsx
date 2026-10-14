@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Map, AlertTriangle, TrendingUp, FileText, RefreshCw, Bell, Radio, MapPin, Menu, X, ChevronRight, Newspaper, Info, BookOpen } from 'lucide-react';
+import { Map, AlertTriangle, TrendingUp, FileText, RefreshCw, Bell, Radio, MapPin, Menu, X, ChevronRight, Newspaper, Info, BookOpen, Search } from 'lucide-react';
 import { triggerManualSync } from '../../services/api';
 import { CityInfo } from '../../types';
 import { MONITORED_CITIES } from '../../data/mockData';
@@ -13,6 +13,7 @@ interface TopBarProps {
   unreadAlertsCount?: number;
   selectedCity?: CityInfo;
   onSelectCity?: (city: CityInfo) => void;
+  onOpenCommandPalette?: () => void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -21,7 +22,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   onOpenLanding,
   unreadAlertsCount = 3,
   selectedCity,
-  onSelectCity
+  onSelectCity,
+  onOpenCommandPalette
 }) => {
   const [syncing, setSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
@@ -181,6 +183,21 @@ export const TopBar: React.FC<TopBarProps> = ({
 
       {/* ── Direita: Seletor de Cidade + Status + Ações ── */}
       <div className="flex items-center gap-1.5 sm:gap-2">
+
+        {/* Botão de Busca Rápida Command Palette (Ctrl+K) */}
+        {onOpenCommandPalette && (
+          <button
+            onClick={onOpenCommandPalette}
+            className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-surface-card/80 hover:bg-surface-hover border border-border-subtle hover:border-hydro/40 text-xs text-zinc-400 hover:text-white transition-all shadow-sm active:scale-95 cursor-pointer"
+            title="Abrir Menu de Comandos (Ctrl + K)"
+          >
+            <Search className="w-3.5 h-3.5 text-hydro" />
+            <span className="hidden lg:inline text-[11px] font-sans">Buscar...</span>
+            <kbd className="hidden sm:inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-zinc-400 bg-surface-base border border-border-subtle rounded">
+              ⌘K
+            </kbd>
+          </button>
+        )}
 
         {/* Seletor de Cidade (Acessível no Mobile e Desktop) */}
         {selectedCity && onSelectCity && (

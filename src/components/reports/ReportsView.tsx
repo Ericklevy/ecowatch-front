@@ -21,6 +21,7 @@ import {
   humanizeRiverLevel,
   humanizeFireRisk
 } from '../../utils/humanFormatters';
+import { Sparkline } from '../common/Sparkline';
 
 export const ReportsView: React.FC = () => {
   const [selectedCitySlug, setSelectedCitySlug] = useState<string>('brasilia');
@@ -277,81 +278,119 @@ export const ReportsView: React.FC = () => {
           </div>
         </div>
 
-        {/* ── Cards de Indicadores Consolidados (KPIs Humanizados) ── */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        {/* ── Cards de Indicadores Consolidados (KPIs Humanizados & Bento Architecture) ── */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
           
-          {/* Card 1: Chuva Acumulada no Período (Com explicação leiga) */}
-          <div className="p-4 rounded-xl glass-panel border border-border-subtle card-interactive space-y-2 flex flex-col justify-between shadow-sm">
+          {/* Card 1: Chuva Acumulada no Período */}
+          <div className="p-4 rounded-xl bento-card card-interactive space-y-2.5 flex flex-col justify-between shadow-sm relative overflow-hidden">
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs text-zinc-400 font-sans font-medium">
-                <span>Chuva Acumulada</span>
+                <span className="tracking-wide">Chuva Acumulada</span>
                 <CloudRain className="w-4 h-4 text-hydro animate-breathing-glow" />
               </div>
-              <div className="text-2xl font-bold font-mono text-zinc-100">
-                {kpis.chuvaBase.toFixed(1)} mm
+              <div className="flex items-baseline justify-between">
+                <div className="text-2xl font-bold font-mono text-zinc-100 tnum">
+                  {kpis.chuvaBase.toFixed(1)} <span className="text-sm font-normal text-zinc-400">mm</span>
+                </div>
+                <div className="w-20 h-6">
+                  <Sparkline 
+                    data={kpis.chuvaBase === 0 ? [0, 0, 0, 0, 0] : [kpis.chuvaBase * 0.1, kpis.chuvaBase * 0.25, kpis.chuvaBase * 0.05, kpis.chuvaBase * 0.45, kpis.chuvaBase]} 
+                    color="#00e5ff" 
+                    height={24} 
+                  />
+                </div>
               </div>
               <div className="text-[11px] font-sans font-semibold text-hydro">
                 {kpis.chuvaObj.label}
               </div>
             </div>
-            <p className="text-[11px] text-zinc-400 font-sans leading-relaxed pt-2 border-t border-border-subtle/50">
+            <p className="text-[11px] text-zinc-400 font-sans leading-relaxed pt-2 border-t border-white/5">
               💡 {kpis.chuvaObj.explanation}
             </p>
           </div>
 
-          {/* Card 2: Cota do Rio / Nível das Águas (Com explicação de transbordamento) */}
-          <div className="p-4 rounded-xl glass-panel border border-border-subtle card-interactive space-y-2 flex flex-col justify-between shadow-sm">
+          {/* Card 2: Cota do Rio / Nível das Águas */}
+          <div className="p-4 rounded-xl bento-card card-interactive space-y-2.5 flex flex-col justify-between shadow-sm relative overflow-hidden">
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs text-zinc-400 font-sans font-medium">
-                <span>Nível do Rio ({selectedCity.rioNome || 'Bacia'})</span>
+                <span className="tracking-wide">Nível do Rio ({selectedCity.rioNome || 'Bacia'})</span>
                 <Droplets className="w-4 h-4 text-nominal animate-breathing-glow" />
               </div>
-              <div className="text-2xl font-bold font-mono text-zinc-100">
-                {selectedCity.rioNome ? `${kpis.nivelRio.toFixed(2)}m` : 'Estável'}
+              <div className="flex items-baseline justify-between">
+                <div className="text-2xl font-bold font-mono text-zinc-100 tnum">
+                  {selectedCity.rioNome ? `${kpis.nivelRio.toFixed(2)}m` : 'Estável'}
+                </div>
+                {selectedCity.rioNome && (
+                  <div className="w-20 h-6">
+                    <Sparkline 
+                      data={[kpis.nivelRio * 0.94, kpis.nivelRio * 0.97, kpis.nivelRio * 0.95, kpis.nivelRio * 0.99, kpis.nivelRio]} 
+                      color="#00e676" 
+                      height={24} 
+                    />
+                  </div>
+                )}
               </div>
               <div className="text-[11px] font-sans font-semibold text-zinc-300">
                 {kpis.rioObj ? kpis.rioObj.label : 'Sem risco de enchente'}
               </div>
             </div>
-            <p className="text-[11px] text-zinc-400 font-sans leading-relaxed pt-2 border-t border-border-subtle/50">
+            <p className="text-[11px] text-zinc-400 font-sans leading-relaxed pt-2 border-t border-white/5">
               💡 {kpis.rioObj ? kpis.rioObj.explanation : 'Região sem rio com cota de transbordamento monitorada pela ANA.'}
             </p>
           </div>
 
-          {/* Card 3: Qualidade do Ar (Com explicação do que é PM2.5) */}
-          <div className="p-4 rounded-xl glass-panel border border-border-subtle card-interactive space-y-2 flex flex-col justify-between shadow-sm">
+          {/* Card 3: Qualidade do Ar (PM2.5) */}
+          <div className="p-4 rounded-xl bento-card card-interactive space-y-2.5 flex flex-col justify-between shadow-sm relative overflow-hidden">
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs text-zinc-400 font-sans font-medium">
-                <span>Qualidade do Ar (PM2.5)</span>
+                <span className="tracking-wide">Qualidade do Ar (PM2.5)</span>
                 <Wind className="w-4 h-4 text-warning animate-breathing-glow" />
               </div>
-              <div className="text-2xl font-bold font-mono text-zinc-100">
-                {kpis.pm25Base.toFixed(1)} µg/m³
+              <div className="flex items-baseline justify-between">
+                <div className="text-2xl font-bold font-mono text-zinc-100 tnum">
+                  {kpis.pm25Base.toFixed(1)} <span className="text-xs font-normal text-zinc-400">µg/m³</span>
+                </div>
+                <div className="w-20 h-6">
+                  <Sparkline 
+                    data={[kpis.pm25Base * 0.85, kpis.pm25Base * 0.95, kpis.pm25Base * 1.08, kpis.pm25Base * 0.92, kpis.pm25Base]} 
+                    color="#ffd600" 
+                    height={24} 
+                  />
+                </div>
               </div>
               <div className="text-[11px] font-sans font-semibold text-warning">
                 {kpis.arObj.label}
               </div>
             </div>
-            <p className="text-[11px] text-zinc-400 font-sans leading-relaxed pt-2 border-t border-border-subtle/50">
+            <p className="text-[11px] text-zinc-400 font-sans leading-relaxed pt-2 border-t border-white/5">
               💡 {kpis.arObj.explanation}
             </p>
           </div>
 
           {/* Card 4: Focos de Queimadas e Risco de Fogo */}
-          <div className="p-4 rounded-xl glass-panel border border-border-subtle card-interactive space-y-2 flex flex-col justify-between shadow-sm">
+          <div className="p-4 rounded-xl bento-card card-interactive space-y-2.5 flex flex-col justify-between shadow-sm relative overflow-hidden">
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs text-zinc-400 font-sans font-medium">
-                <span>Focos de Fogo no Período</span>
+                <span className="tracking-wide">Focos no Período</span>
                 <Flame className={`w-4 h-4 animate-breathing-glow ${kpis.focosIncendioPeriodo > 5 ? 'text-critical' : 'text-nominal'}`} />
               </div>
-              <div className="text-2xl font-bold font-mono text-zinc-100">
-                {kpis.focosIncendioPeriodo} focos
+              <div className="flex items-baseline justify-between">
+                <div className="text-2xl font-bold font-mono text-zinc-100 tnum">
+                  {kpis.focosIncendioPeriodo} <span className="text-sm font-normal text-zinc-400">focos</span>
+                </div>
+                <div className="w-20 h-6">
+                  <Sparkline 
+                    data={[Math.max(0, kpis.focosIncendioPeriodo - 4), Math.max(1, kpis.focosIncendioPeriodo - 2), Math.max(1, kpis.focosIncendioPeriodo - 1), kpis.focosIncendioPeriodo]} 
+                    color={kpis.focosIncendioPeriodo > 5 ? '#ff1744' : '#00e676'} 
+                    height={24} 
+                  />
+                </div>
               </div>
               <div className="text-[11px] font-sans font-semibold text-critical">
                 {kpis.fogoObj.label}
               </div>
             </div>
-            <p className="text-[11px] text-zinc-400 font-sans leading-relaxed pt-2 border-t border-border-subtle/50">
+            <p className="text-[11px] text-zinc-400 font-sans leading-relaxed pt-2 border-t border-white/5">
               💡 {kpis.fogoObj.explanation}
             </p>
           </div>

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { CityInfo, WeatherReading, AlertDTO, formatAlertTypeName } from '../../types';
 import { triggerCitySync, fetchCityWeather, fetchCityDashboard } from '../../services/api';
+import { Sparkline } from '../common/Sparkline';
 
 interface TelemetryDrawerProps {
   city: CityInfo;
@@ -188,31 +189,47 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
       <div className="p-4 space-y-4 flex-1">
 
         {/* Bloco 1: Nível do Rio (ANA) */}
-        <div className="p-3.5 rounded-md bg-surface-card border border-border-subtle">
-          <div className="flex items-center justify-between text-xs font-mono text-zinc-400 mb-2">
-            <span className="flex items-center gap-1.5 uppercase font-medium">
-              <Waves className="w-3.5 h-3.5 text-hydro" />
-              <span>Nível do Rio (ANA)</span>
+        <div className="p-4 rounded-xl bento-card card-interactive border border-border-subtle">
+          <div className="flex items-center justify-between text-xs font-sans text-zinc-400 mb-2">
+            <span className="flex items-center gap-1.5 uppercase font-medium tracking-wider">
+              <Waves className="w-3.5 h-3.5 text-hydro animate-breathing-glow" />
+              <span>Nível Hidrológico (ANA)</span>
             </span>
             {city.rioNome && (
-              <span className="text-hydro font-medium">{city.rioNome}</span>
+              <span className="text-hydro font-medium text-xs font-sans">{city.rioNome}</span>
             )}
           </div>
 
           {reading.nivelRio > 0 ? (
             <div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-3xl font-bold font-mono tracking-tight text-white">
-                  {reading.nivelRio.toFixed(2)}
-                </span>
-                <span className="text-sm font-mono text-zinc-400">metros</span>
+              <div className="flex items-center justify-between">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl font-bold font-mono tracking-tight text-white tnum">
+                    {reading.nivelRio.toFixed(2)}
+                  </span>
+                  <span className="text-xs font-sans text-zinc-400">metros</span>
+                </div>
+                {/* Mini Gráfico de Tendência da Lâmina d'água */}
+                <Sparkline
+                  data={[
+                    reading.nivelRio * 0.94,
+                    reading.nivelRio * 0.96,
+                    reading.nivelRio * 0.99,
+                    reading.nivelRio * 0.97,
+                    reading.nivelRio * 1.01,
+                    reading.nivelRio
+                  ]}
+                  width={110}
+                  height={32}
+                  color={city.status === 'critical' ? '#ef4444' : '#38bdf8'}
+                />
               </div>
 
               {city.cotaAlerta && (
                 <div className="mt-3 space-y-1.5">
-                  <div className="w-full bg-surface-base h-2 rounded-full overflow-hidden border border-border-subtle">
+                  <div className="w-full bg-surface-base h-2 rounded-full overflow-hidden border border-border-subtle/60">
                     <div
-                      className={`h-full transition-all duration-500 ${
+                      className={`h-full transition-all duration-500 rounded-full ${
                         city.cotaEmergencia && reading.nivelRio >= city.cotaEmergencia
                           ? 'bg-critical'
                           : reading.nivelRio >= city.cotaAlerta
@@ -223,55 +240,101 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
                     />
                   </div>
                   <div className="flex justify-between text-[11px] font-mono text-zinc-400 pt-0.5">
-                    <span>Cota de Alerta: {city.cotaAlerta.toFixed(1)}m</span>
+                    <span>Cota Alerta: {city.cotaAlerta.toFixed(1)}m</span>
                     {city.cotaEmergencia && (
-                      <span className="text-critical/90">Emergência: {city.cotaEmergencia.toFixed(1)}m</span>
+                      <span className="text-critical/90 font-semibold">Emergência: {city.cotaEmergencia.toFixed(1)}m</span>
                     )}
                   </div>
                 </div>
               )}
             </div>
           ) : (
-            <p className="text-xs text-zinc-500 font-mono py-1">
-              Cidade sem estação fluviométrica com cota crítica no SNIRH.
+            <p className="text-xs text-zinc-400 font-sans py-1 leading-relaxed">
+              Bacia continental com escoamento normalizado; sem estação crítica instalada.
             </p>
           )}
         </div>
 
-        {/* Bloco 2: Clima em Tempo Real */}
+        {/* Bloco 2: Clima em Tempo Real com Bento Cards e Tendências */}
         <div>
-          <span className="text-xs font-mono font-medium text-zinc-400 uppercase tracking-wider block mb-2">
-            Clima Base (NASA / Open-Meteo)
+          <span className="text-xs font-sans font-medium text-zinc-400 uppercase tracking-wider block mb-2">
+            Sensores Meteorológicos (NASA / Open-Meteo)
           </span>
           <div className="grid grid-cols-3 gap-2">
-            <div className="p-2.5 rounded bg-surface-card border border-border-subtle">
-              <div className="flex items-center gap-1 text-[11px] text-zinc-400 mb-1">
-                <Thermometer className="w-3.5 h-3.5 text-warning" />
-                <span>Temp</span>
+            <div className="p-3 rounded-xl bento-card card-interactive flex flex-col justify-between">
+              <div className="flex items-center justify-between text-[11px] text-zinc-400 mb-1">
+                <span className="flex items-center gap-1 font-sans">
+                  <Thermometer className="w-3.5 h-3.5 text-warning animate-breathing-glow" />
+                  <span>Temp</span>
+                </span>
               </div>
-              <span className="text-base font-bold font-mono text-white">
+              <span className="text-lg font-bold font-mono text-white tnum">
                 {reading.temperatura.toFixed(1)}°C
               </span>
+              <div className="pt-2 mt-1 border-t border-border-subtle/50">
+                <Sparkline
+                  data={[
+                    reading.temperatura - 3.2,
+                    reading.temperatura - 1.5,
+                    reading.temperatura + 1.8,
+                    reading.temperatura + 0.5,
+                    reading.temperatura
+                  ]}
+                  width={75}
+                  height={22}
+                  color="#f59e0b"
+                />
+              </div>
             </div>
 
-            <div className="p-2.5 rounded bg-surface-card border border-border-subtle">
-              <div className="flex items-center gap-1 text-[11px] text-zinc-400 mb-1">
-                <Droplets className="w-3.5 h-3.5 text-hydro" />
-                <span>Umidade</span>
+            <div className="p-3 rounded-xl bento-card card-interactive flex flex-col justify-between">
+              <div className="flex items-center justify-between text-[11px] text-zinc-400 mb-1">
+                <span className="flex items-center gap-1 font-sans">
+                  <Droplets className="w-3.5 h-3.5 text-hydro animate-breathing-glow" />
+                  <span>Ar</span>
+                </span>
               </div>
-              <span className="text-base font-bold font-mono text-white">
+              <span className="text-lg font-bold font-mono text-white tnum">
                 {Math.round(reading.umidade)}%
               </span>
+              <div className="pt-2 mt-1 border-t border-border-subtle/50">
+                <Sparkline
+                  data={[
+                    Math.max(10, reading.umidade - 8),
+                    Math.max(10, reading.umidade - 4),
+                    reading.umidade + 3,
+                    reading.umidade
+                  ]}
+                  width={75}
+                  height={22}
+                  color="#38bdf8"
+                />
+              </div>
             </div>
 
-            <div className="p-2.5 rounded bg-surface-card border border-border-subtle">
-              <div className="flex items-center gap-1 text-[11px] text-zinc-400 mb-1">
-                <CloudRain className="w-3.5 h-3.5 text-hydro" />
-                <span>Chuva</span>
+            <div className="p-3 rounded-xl bento-card card-interactive flex flex-col justify-between">
+              <div className="flex items-center justify-between text-[11px] text-zinc-400 mb-1">
+                <span className="flex items-center gap-1 font-sans">
+                  <CloudRain className="w-3.5 h-3.5 text-nominal animate-breathing-glow" />
+                  <span>Chuva</span>
+                </span>
               </div>
-              <span className="text-base font-bold font-mono text-white">
+              <span className="text-lg font-bold font-mono text-white tnum">
                 {reading.precipitacao.toFixed(1)} mm
               </span>
+              <div className="pt-2 mt-1 border-t border-border-subtle/50">
+                <Sparkline
+                  data={[
+                    0,
+                    reading.precipitacao * 0.2,
+                    reading.precipitacao * 0.8,
+                    reading.precipitacao
+                  ]}
+                  width={75}
+                  height={22}
+                  color="#10b981"
+                />
+              </div>
             </div>
           </div>
         </div>

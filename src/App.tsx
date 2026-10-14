@@ -11,6 +11,8 @@ import { NewsView } from './components/news/NewsView';
 import { GlossaryView } from './components/glossary/GlossaryView';
 import { AboutView } from './components/about/AboutView';
 import { LandingPage } from './components/landing/LandingPage';
+import { LiveStatusTicker } from './components/layout/LiveStatusTicker';
+import { CommandPalette } from './components/common/CommandPalette';
 import { MONITORED_CITIES, MOCK_WEATHER_READINGS, MOCK_ALERTS } from './data/mockData';
 import { CityInfo, WeatherReading, AlertDTO } from './types';
 import { fetchCityWeather, fetchCityDashboard, fetchAllAlerts } from './services/api';
@@ -26,6 +28,19 @@ export const App: React.FC = () => {
   const [unreadAlertsCount, setUnreadAlertsCount] = useState<number>(3);
   const [isBackendOnline, setIsBackendOnline] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
+
+  // ── Atalho Global de Teclado (Ctrl + K / Cmd + K) estilo Raycast ──────────
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        setIsCommandPaletteOpen(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   // ── Verifica se o backend está online e carrega leituras ──────────────────
   useEffect(() => {
@@ -113,7 +128,7 @@ export const App: React.FC = () => {
 
   return (
     <div className="h-screen w-screen flex flex-col bg-surface-base text-zinc-100 overflow-hidden font-sans">
-      {/* Barra de Topo */}
+      {/* Barra de Topo com Glassmorphism */}
       <TopBar
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -121,7 +136,11 @@ export const App: React.FC = () => {
         unreadAlertsCount={unreadAlertsCount}
         selectedCity={selectedCity}
         onSelectCity={handleSelectCity}
+        onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
       />
+
+      {/* Fita de Telemetria e Operações ao Vivo (Live Status Ticker) */}
+      <LiveStatusTicker />
 
       {/* Conteúdo Principal com Transição Fluida entre Abas */}
       <main key={activeTab} className="flex-1 flex overflow-hidden relative animate-fade-up">
@@ -237,6 +256,14 @@ export const App: React.FC = () => {
       <div className="hidden md:block shrink-0">
         <StatusBar isBackendOnline={isBackendOnline} lastUpdate={lastUpdate} />
       </div>
+
+      {/* Menu Global de Comandos (Ctrl + K) estilo Raycast */}
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        onTabChange={setActiveTab}
+        onSelectCity={handleSelectCity}
+      />
     </div>
   );
 };
