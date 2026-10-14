@@ -3,6 +3,7 @@ import { Search, Filter, CheckCircle2 } from 'lucide-react';
 import { MOCK_ALERTS, MONITORED_CITIES } from '../../data/mockData';
 import { formatAlertTypeName, AlertDTO } from '../../types';
 import { fetchAllAlerts } from '../../services/api';
+import { normalizeCityName } from '../../utils/humanFormatters';
 
 const ALERT_CATEGORIES = [
   { key: 'ALL', label: 'Todos os Alertas' },
@@ -34,16 +35,21 @@ export const AlertsView: React.FC = () => {
   const filteredAlerts = useMemo(() => {
     return alerts.filter(alert => {
       const matchCategory = selectedCategory === 'ALL' || alert.tipoAlerta === selectedCategory;
-      const matchCity = selectedCity === 'ALL' || alert.municipio.toLowerCase() === selectedCity.toLowerCase();
+      const matchCity = selectedCity === 'ALL' || 
+        normalizeCityName(alert.municipio) === normalizeCityName(selectedCity) ||
+        normalizeCityName(alert.municipio).includes(normalizeCityName(selectedCity)) ||
+        normalizeCityName(selectedCity).includes(normalizeCityName(alert.municipio));
+
+      const queryNorm = normalizeCityName(searchQuery);
       const matchSearch = searchQuery === '' || 
-        alert.municipio.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        normalizeCityName(alert.municipio).includes(queryNorm) ||
         alert.mensagem.toLowerCase().includes(searchQuery.toLowerCase()) ||
         alert.tipoAlerta.toLowerCase().includes(searchQuery.toLowerCase()) ||
         formatAlertTypeName(alert.tipoAlerta).toLowerCase().includes(searchQuery.toLowerCase());
 
       return matchCategory && matchCity && matchSearch;
     });
-  }, [selectedCategory, selectedCity, searchQuery]);
+  }, [alerts, selectedCategory, selectedCity, searchQuery]);
 
   const getSeverityBadge = (tipoAlerta: string) => {
     if (tipoAlerta === 'RIVER_FLOOD' || tipoAlerta === 'FOREST_FIRE' || tipoAlerta === 'FLASH_FLOOD') {
@@ -118,6 +124,33 @@ export const AlertsView: React.FC = () => {
               {cat.label}
             </button>
           ))}
+        </div>
+
+        {/* Resumo da Filtragem Ativa e Contagem Dinâmica */}
+        <div className="pt-1 flex items-center justify-between text-xs font-mono border-t border-border-subtle/40">
+          <div className="flex items-center gap-2">
+            <span className="text-zinc-400">Exibindo:</span>
+            <span className="px-2 py-0.5 rounded bg-hydro/10 border border-hydro/30 text-hydro font-bold">
+              {filteredAlerts.length} alerta{filteredAlerts.length === 1 ? '' : 's'}
+            </span>
+            <span className="text-zinc-500">
+              {selectedCity === 'ALL' ? 'no Brasil inteiro' : `em ${selectedCity}`}
+              {selectedCategory !== 'ALL' && ` · ${ALERT_CATEGORIES.find(c => c.key === selectedCategory)?.label}`}
+            </span>
+          </div>
+
+          {(selectedCity !== 'ALL' || selectedCategory !== 'ALL' || searchQuery !== '') && (
+            <button
+              onClick={() => {
+                setSelectedCity('ALL');
+                setSelectedCategory('ALL');
+                setSearchQuery('');
+              }}
+              className="text-zinc-400 hover:text-white underline cursor-pointer text-[11px]"
+            >
+              Limpar filtros
+            </button>
+          )}
         </div>
       </div>
 

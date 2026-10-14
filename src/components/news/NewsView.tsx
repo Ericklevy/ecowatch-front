@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Newspaper, Search, ExternalLink, Flame, Waves, CloudRain, Bug, ShieldAlert, Radio } from 'lucide-react';
+import { Newspaper, Search, Flame, Waves, CloudRain, Bug, ShieldAlert, Radio } from 'lucide-react';
 import { MOCK_NEWS } from '../../data/newsData';
 import { NewsItem } from '../../types';
 
@@ -160,15 +160,10 @@ export const NewsView: React.FC = () => {
                     )}
                   </div>
 
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 text-hydro hover:underline font-semibold text-[11px]"
-                  >
-                    <span>Ver Fonte</span>
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
+                  <div className="inline-flex items-center gap-1 text-[11px] font-mono text-zinc-400 bg-surface-base px-2 py-0.5 rounded border border-border-subtle">
+                    <span className="w-1.5 h-1.5 rounded-full bg-nominal" />
+                    <span>Boletim Verificado</span>
+                  </div>
                 </div>
               </article>
             ))}

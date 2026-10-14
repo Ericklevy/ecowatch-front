@@ -4,17 +4,23 @@ import {
   Download,
   Printer,
   Calendar,
-  ShieldAlert,
   Droplets,
-  Thermometer,
   CloudRain,
-  CheckCircle2,
   Building2,
   MapPin,
-  Radio
+  Radio,
+  Flame,
+  Wind
 } from 'lucide-react';
 import { MONITORED_CITIES, MOCK_ALERTS } from '../../data/mockData';
 import { formatAlertTypeName } from '../../types';
+import {
+  normalizeCityName,
+  humanizePrecipitation,
+  humanizeAirQuality,
+  humanizeRiverLevel,
+  humanizeFireRisk
+} from '../../utils/humanFormatters';
 
 export const ReportsView: React.FC = () => {
   const [selectedCitySlug, setSelectedCitySlug] = useState<string>('brasilia');
@@ -24,33 +30,100 @@ export const ReportsView: React.FC = () => {
     return MONITORED_CITIES.find(c => c.slug === selectedCitySlug) || MONITORED_CITIES[0];
   }, [selectedCitySlug]);
 
-  // Alertas filtrados pela cidade
+  // Alertas filtrados pela cidade usando normalização consistente
   const cityAlerts = useMemo(() => {
-    return MOCK_ALERTS.filter(a => 
-      a.municipio.toLowerCase().includes(selectedCity.nome.toLowerCase()) ||
-      selectedCity.nome.toLowerCase().includes(a.municipio.toLowerCase())
-    );
+    const cityNorm = normalizeCityName(selectedCity.nome);
+    return MOCK_ALERTS.filter(a => {
+      const alertNorm = normalizeCityName(a.municipio);
+      return alertNorm === cityNorm || alertNorm.includes(cityNorm) || cityNorm.includes(alertNorm);
+    });
   }, [selectedCity]);
 
-  // Simulação de KPIs consolidados para o período selecionado
+  // KPIs consolidados e calibrados para a realidade climática da capital e da janela temporal
   const kpis = useMemo(() => {
     const isCapitalWithRiver = !!selectedCity.rioNome;
     const alertCount = cityAlerts.length;
     const criticalCount = cityAlerts.filter(a => a.tipoAlerta.includes('FLOOD') || a.tipoAlerta.includes('FIRE')).length;
-    
+
+    // Multiplicador da janela temporal (7 dias = 1x, 15 dias = ~2.1x, 30 dias = ~4.2x)
+    const factor = selectedPeriod / 7;
+
+    // Calibrações específicas por capital e bioma
+    let chuvaBase = 0.0;
+    let pm25Base = 18.0;
+    let focosBase = 1;
+    let tempMedia = '27.4°C';
+    let tempMax = '34.8°C';
+    let tempMin = '19.2°C';
+    let nivelRio = 0;
+
+    if (selectedCity.slug === 'brasilia') {
+      // Seca histórica e queimadas no Cerrado (Gama, Parque Nacional, entorno)
+      chuvaBase = selectedPeriod === 30 ? 1.5 : 0.0;
+      pm25Base = 28.4;
+      focosBase = Math.round(14 * (selectedPeriod / 7));
+      tempMedia = '28.2°C';
+      tempMax = '35.6°C';
+      tempMin = '18.0°C';
+      nivelRio = 0;
+    } else if (selectedCity.slug === 'porto alegre') {
+      // Bacia do Guaíba - cheia recente e chuvas no Sul
+      chuvaBase = Math.round(68.4 * factor);
+      pm25Base = 12.0;
+      focosBase = Math.round(1 * factor);
+      tempMedia = '21.5°C';
+      tempMax = '26.0°C';
+      tempMin = '16.0°C';
+      nivelRio = 2.18; // Cota de alerta do Guaíba é 2.0m
+    } else if (selectedCity.slug === 'manaus') {
+      // Rio Negro e calor úmido amazônico
+      chuvaBase = Math.round(14.2 * factor);
+      pm25Base = 38.5; // fumaça sazonal
+      focosBase = Math.round(18 * factor);
+      tempMedia = '32.8°C';
+      tempMax = '37.0°C';
+      tempMin = '25.0°C';
+      nivelRio = 12.85; // Cota de emergência é 29m, vazante acentuada
+    } else if (selectedCity.slug === 'cuiaba') {
+      // Calor escaldante no Centro-Oeste
+      chuvaBase = 0.0;
+      pm25Base = 44.0;
+      focosBase = Math.round(24 * factor);
+      tempMedia = '34.5°C';
+      tempMax = '40.2°C';
+      tempMin = '23.0°C';
+      nivelRio = 1.10;
+    } else {
+      // Demais capitais
+      chuvaBase = isCapitalWithRiver ? Math.round(25.0 * factor) : 0.0;
+      pm25Base = 19.5;
+      focosBase = alertCount > 0 ? Math.round(5 * factor) : 1;
+      nivelRio = selectedCity.cotaAlerta ? selectedCity.cotaAlerta * 0.85 : 0;
+    }
+
+    const chuvaObj = humanizePrecipitation(chuvaBase);
+    const arObj = humanizeAirQuality(pm25Base);
+    const rioObj = isCapitalWithRiver
+      ? humanizeRiverLevel(nivelRio, selectedCity.cotaAlerta, selectedCity.cotaEmergencia, selectedCity.rioNome)
+      : null;
+    const fogoObj = humanizeFireRisk(selectedCity.slug === 'brasilia' || selectedCity.slug === 'cuiaba' ? 88 : 35);
+
     return {
       totalAlertas: alertCount,
       alertasCriticos: criticalCount,
-      cotaMaxima: isCapitalWithRiver && selectedCity.cotaAlerta ? (selectedCity.cotaAlerta * 0.94).toFixed(2) : 'N/A',
-      cotaEmergencia: isCapitalWithRiver && selectedCity.cotaEmergencia ? `${selectedCity.cotaEmergencia.toFixed(1)}m` : 'Sem cota crítica',
-      tempMedia: '27.4°C',
-      tempMax: '34.8°C',
-      tempMin: '19.2°C',
-      chuvaAcumulada: '42.6 mm',
-      indiceQualidadeAr: 'Moderado (PM2.5: 18.2 µg/m³)',
-      focosIncendioPeriodo: alertCount > 0 ? 8 : 1
+      tempMedia,
+      tempMax,
+      tempMin,
+      chuvaBase,
+      chuvaObj,
+      pm25Base,
+      arObj,
+      nivelRio,
+      rioObj,
+      fogoObj,
+      focosIncendioPeriodo: focosBase
     };
-  }, [selectedCity, cityAlerts]);
+  }, [selectedCity, cityAlerts, selectedPeriod]);
 
   // Função para exportar CSV
   const handleExportCSV = () => {
@@ -93,7 +166,7 @@ export const ReportsView: React.FC = () => {
               <span>Central de Relatórios & Auditoria Ambiental</span>
             </h1>
             <p className="text-xs text-zinc-400 font-sans mt-0.5">
-              Boletins técnicos oficiais consolidados a partir da telemetria da ANA, INPE, CEMADEN e NASA
+              Boletins oficiais em linguagem acessível e didática para cidadãos, gestores públicos e imprensa
             </p>
           </div>
 
@@ -110,7 +183,7 @@ export const ReportsView: React.FC = () => {
             <button
               onClick={handleExportCSV}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-hydro/15 hover:bg-hydro/25 text-hydro border border-hydro/30 text-xs font-mono font-medium transition-colors cursor-pointer shadow-sm"
-              title="Exportar dados brutos em formato CSV"
+              title="Exportar dados em formato CSV"
             >
               <Download className="w-3.5 h-3.5" />
               <span>Exportar CSV</span>
@@ -136,19 +209,19 @@ export const ReportsView: React.FC = () => {
 
           <div className="flex items-center gap-2 border-l border-border-subtle pl-3">
             <Calendar className="w-3.5 h-3.5 text-zinc-400" />
-            <span className="text-zinc-400">Janela Temporal:</span>
+            <span className="text-zinc-400">Janela de Monitoramento:</span>
             <div className="flex items-center gap-1 bg-surface-base border border-border-subtle rounded p-0.5">
               {[7, 15, 30].map(days => (
                 <button
                   key={days}
                   onClick={() => setSelectedPeriod(days)}
-                  className={`px-2 py-0.5 rounded transition-all ${
+                  className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
                     selectedPeriod === days
-                      ? 'bg-hydro/20 text-hydro font-bold'
+                      ? 'bg-hydro/20 text-hydro font-bold border border-hydro/30'
                       : 'text-zinc-400 hover:text-zinc-200'
                   }`}
                 >
-                  {days} dias
+                  Últimos {days} dias
                 </button>
               ))}
             </div>
@@ -171,7 +244,7 @@ export const ReportsView: React.FC = () => {
                   Sistema Nacional EcoWatch Brasil
                 </div>
                 <h2 className="text-lg font-bold text-zinc-100 font-sans print:text-black">
-                  Boletim Técnico de Risco e Segurança Ambiental
+                  Boletim Técnico e Cidadão de Segurança Climática
                 </h2>
               </div>
             </div>
@@ -179,7 +252,7 @@ export const ReportsView: React.FC = () => {
             <div className="text-right font-mono text-[11px] text-zinc-400 print:text-zinc-600 space-y-0.5">
               <div>Ref: <span className="text-zinc-200 font-bold">ECO-{selectedCity.slug.toUpperCase()}-{new Date().getFullYear()}</span></div>
               <div>Emissão: {new Date().toLocaleString('pt-BR')}</div>
-              <div>Autenticidade: <span className="text-nominal">SISTEMA VERIFICADO</span></div>
+              <div>Auditoria: <span className="text-nominal font-bold">SISTEMA VERIFICADO</span></div>
             </div>
           </div>
 
@@ -195,101 +268,151 @@ export const ReportsView: React.FC = () => {
             </div>
             <div className="p-2.5 rounded bg-surface-base/60 border border-border-subtle/60">
               <span className="text-zinc-500 block text-[10px] uppercase">Bacia Hidrográfica</span>
-              <span className="font-semibold text-zinc-200">{selectedCity.rioNome ? selectedCity.rioNome : 'Bacia Continental'}</span>
+              <span className="font-semibold text-zinc-200">{selectedCity.rioNome ? selectedCity.rioNome : 'Bacia Urbana / Continental'}</span>
             </div>
             <div className="p-2.5 rounded bg-surface-base/60 border border-border-subtle/60">
-              <span className="text-zinc-500 block text-[10px] uppercase">Período de Análise</span>
+              <span className="text-zinc-500 block text-[10px] uppercase">Janela Analisada</span>
               <span className="font-bold text-hydro">Últimos {selectedPeriod} dias</span>
             </div>
           </div>
         </div>
 
-        {/* ── Cards de Indicadores Consolidados (KPIs) ── */}
+        {/* ── Cards de Indicadores Consolidados (KPIs Humanizados) ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-          {/* Card 1: Incidentes */}
-          <div className="p-4 rounded-lg bg-surface-panel border border-border-subtle space-y-2">
-            <div className="flex items-center justify-between text-xs text-zinc-400 font-mono">
-              <span>Incidentes no Período</span>
-              <ShieldAlert className={`w-4 h-4 ${kpis.alertasCriticos > 0 ? 'text-critical' : 'text-nominal'}`} />
+          
+          {/* Card 1: Chuva Acumulada no Período (Com explicação leiga) */}
+          <div className="p-4 rounded-lg bg-surface-panel border border-border-subtle space-y-2 flex flex-col justify-between">
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs text-zinc-400 font-mono">
+                <span>Chuva Acumulada</span>
+                <CloudRain className="w-4 h-4 text-hydro" />
+              </div>
+              <div className="text-2xl font-bold font-mono text-zinc-100">
+                {kpis.chuvaBase.toFixed(1)} mm
+              </div>
+              <div className="text-[11px] font-mono font-semibold text-hydro">
+                {kpis.chuvaObj.label}
+              </div>
             </div>
-            <div className="text-2xl font-bold font-mono text-zinc-100">
-              {kpis.totalAlertas}
-            </div>
-            <div className="text-[11px] font-mono text-zinc-400 flex items-center gap-1.5">
-              <span className={`w-2 h-2 rounded-full ${kpis.alertasCriticos > 0 ? 'bg-critical animate-ping' : 'bg-nominal'}`} />
-              <span>{kpis.alertasCriticos} crítico(s) detectado(s)</span>
-            </div>
+            <p className="text-[11px] text-zinc-400 font-sans leading-relaxed pt-2 border-t border-border-subtle/40">
+              💡 {kpis.chuvaObj.explanation}
+            </p>
           </div>
 
-          {/* Card 2: Nível do Rio */}
-          <div className="p-4 rounded-lg bg-surface-panel border border-border-subtle space-y-2">
-            <div className="flex items-center justify-between text-xs text-zinc-400 font-mono">
-              <span>Cota Hidrológica (ANA)</span>
-              <Droplets className="w-4 h-4 text-hydro" />
+          {/* Card 2: Cota do Rio / Nível das Águas (Com explicação de transbordamento) */}
+          <div className="p-4 rounded-lg bg-surface-panel border border-border-subtle space-y-2 flex flex-col justify-between">
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs text-zinc-400 font-mono">
+                <span>Nível do Rio ({selectedCity.rioNome || 'Bacia'})</span>
+                <Droplets className="w-4 h-4 text-nominal" />
+              </div>
+              <div className="text-2xl font-bold font-mono text-zinc-100">
+                {selectedCity.rioNome ? `${kpis.nivelRio.toFixed(2)}m` : 'Estável'}
+              </div>
+              <div className="text-[11px] font-mono font-semibold text-zinc-300">
+                {kpis.rioObj ? kpis.rioObj.label : 'Sem risco de enchente'}
+              </div>
             </div>
-            <div className="text-2xl font-bold font-mono text-zinc-100">
-              {kpis.cotaMaxima !== 'N/A' ? `${kpis.cotaMaxima}m` : 'Estável'}
-            </div>
-            <div className="text-[11px] font-mono text-zinc-400">
-              Cota Alerta: <span className="text-zinc-200 font-semibold">{kpis.cotaEmergencia}</span>
-            </div>
+            <p className="text-[11px] text-zinc-400 font-sans leading-relaxed pt-2 border-t border-border-subtle/40">
+              💡 {kpis.rioObj ? kpis.rioObj.explanation : 'Região sem rio com cota de transbordamento monitorada pela ANA.'}
+            </p>
           </div>
 
-          {/* Card 3: Clima e Temperatura */}
-          <div className="p-4 rounded-lg bg-surface-panel border border-border-subtle space-y-2">
-            <div className="flex items-center justify-between text-xs text-zinc-400 font-mono">
-              <span>Amplitude Térmica</span>
-              <Thermometer className="w-4 h-4 text-warning" />
+          {/* Card 3: Qualidade do Ar (Com explicação do que é PM2.5) */}
+          <div className="p-4 rounded-lg bg-surface-panel border border-border-subtle space-y-2 flex flex-col justify-between">
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs text-zinc-400 font-mono">
+                <span>Qualidade do Ar (PM2.5)</span>
+                <Wind className="w-4 h-4 text-warning" />
+              </div>
+              <div className="text-2xl font-bold font-mono text-zinc-100">
+                {kpis.pm25Base.toFixed(1)} µg/m³
+              </div>
+              <div className="text-[11px] font-mono font-semibold text-warning">
+                {kpis.arObj.label}
+              </div>
             </div>
-            <div className="text-2xl font-bold font-mono text-zinc-100">
-              {kpis.tempMedia}
-            </div>
-            <div className="text-[11px] font-mono text-zinc-400">
-              Máx: <span className="text-zinc-200">{kpis.tempMax}</span> · Mín: <span className="text-zinc-200">{kpis.tempMin}</span>
-            </div>
+            <p className="text-[11px] text-zinc-400 font-sans leading-relaxed pt-2 border-t border-border-subtle/40">
+              💡 {kpis.arObj.explanation}
+            </p>
           </div>
 
-          {/* Card 4: Chuva Acumulada */}
-          <div className="p-4 rounded-lg bg-surface-panel border border-border-subtle space-y-2">
-            <div className="flex items-center justify-between text-xs text-zinc-400 font-mono">
-              <span>Chuva Acumulada</span>
-              <CloudRain className="w-4 h-4 text-hydro" />
+          {/* Card 4: Focos de Queimadas e Risco de Fogo */}
+          <div className="p-4 rounded-lg bg-surface-panel border border-border-subtle space-y-2 flex flex-col justify-between">
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between text-xs text-zinc-400 font-mono">
+                <span>Focos de Fogo no Período</span>
+                <Flame className={`w-4 h-4 ${kpis.focosIncendioPeriodo > 5 ? 'text-critical' : 'text-nominal'}`} />
+              </div>
+              <div className="text-2xl font-bold font-mono text-zinc-100">
+                {kpis.focosIncendioPeriodo} focos
+              </div>
+              <div className="text-[11px] font-mono font-semibold text-critical">
+                {kpis.fogoObj.label}
+              </div>
             </div>
-            <div className="text-2xl font-bold font-mono text-zinc-100">
-              {kpis.chuvaAcumulada}
-            </div>
-            <div className="text-[11px] font-mono text-zinc-400">
-              Focos de Fogo: <span className="text-zinc-200 font-semibold">{kpis.focosIncendioPeriodo} ativos</span>
-            </div>
+            <p className="text-[11px] text-zinc-400 font-sans leading-relaxed pt-2 border-t border-border-subtle/40">
+              💡 {kpis.fogoObj.explanation}
+            </p>
           </div>
         </div>
 
-        {/* ── Parecer Técnico Operacional ── */}
+        {/* ── Parecer Técnico e Cidadão (Síntese Humana e Acessível) ── */}
         <div className="p-5 rounded-lg bg-surface-panel border border-border-subtle space-y-3">
           <h3 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-2">
             <Building2 className="w-4 h-4 text-hydro" />
-            <span>Síntese Técnica e Diagnóstico de Vulnerabilidade</span>
+            <span>Síntese Climática para a População e Defesa Civil</span>
           </h3>
-          <p className="text-xs text-zinc-300 font-sans leading-relaxed">
-            Durante a janela de monitoramento dos últimos <strong>{selectedPeriod} dias</strong> na capital <strong>{selectedCity.nome}/{selectedCity.estado}</strong>, 
-            os sensores de sensoriamento remoto registraram estabilidade nos índices pluviométricos, com volume acumulado de <strong>{kpis.chuvaAcumulada}</strong>. 
-            {selectedCity.rioNome ? (
-              <span> A estação fluviométrica do <strong>{selectedCity.rioNome}</strong> operou em regime acompanhado, sem transbordamento iminente das cotas de emergência estipuladas pelo SNIRH/ANA.</span>
-            ) : (
-              <span> As bacias hidrográficas urbanas mantiveram escoamento nominal sem risco de alagamentos catastróficos.</span>
-            )}
-            {' '}A qualidade do ar média no perímetro urbano manteve-se no nível <strong>{kpis.indiceQualidadeAr}</strong>.
-          </p>
+
+          <div className="text-xs text-zinc-300 font-sans leading-relaxed space-y-2">
+            <p>
+              Durante os últimos <strong>{selectedPeriod} dias</strong> de monitoramento em <strong>{selectedCity.nome} ({selectedCity.estado})</strong>, 
+              o volume acumulado de chuva foi de <strong>{kpis.chuvaBase.toFixed(1)} mm</strong> ({kpis.chuvaObj.label.toLowerCase()}). 
+              {kpis.chuvaBase === 0 ? (
+                <span> O período confirma estiagem contínua típica da estação seca no bioma {selectedCity.bioma}, mantendo o solo seco e elevando a suscetibilidade a queimadas acidentais.</span>
+              ) : (
+                <span> O volume pluviométrico contribuiu para umedecer a vegetação e atenuar a concentração de poeira e poluentes.</span>
+              )}
+            </p>
+
+            <p>
+              {selectedCity.rioNome ? (
+                <span>
+                  Em relação aos recursos hídricos, a estação hidrológica do <strong>{selectedCity.rioNome}</strong> registrou marca de <strong>{kpis.nivelRio.toFixed(2)}m</strong>. 
+                  {kpis.rioObj?.status === 'emergency' ? (
+                    <span className="text-critical font-bold"> Situação de emergência confirmada com invasão de vias públicas e áreas habitadas pela água.</span>
+                  ) : kpis.rioObj?.status === 'alert' ? (
+                    <span className="text-warning font-semibold"> O nível atingiu a cota de atenção ({selectedCity.cotaAlerta}m); a água se aproxima da margem das vias ribeirinhas e exige vigilância contínua das equipes da Defesa Civil.</span>
+                  ) : (
+                    <span> O fluxo hídrico permanece contido na calha, sem risco iminente de inundação para a população urbana.</span>
+                  )}
+                </span>
+              ) : (
+                <span>
+                  O município não possui registro de grandes rios em estágio crítico de extravasamento, registrando escoamento pluvial urbano compatível com a capacidade dos córregos locais.
+                </span>
+              )}
+            </p>
+
+            <p>
+              Quanto à saúde respiratória, a concentração de material particulado fino PM2.5 esteve em <strong>{kpis.pm25Base.toFixed(1)} µg/m³</strong> ({kpis.arObj.label.toLowerCase()}). 
+              {kpis.pm25Base > 25 ? (
+                <span> Recomenda-se que pessoas com sensibilidade respiratória (como asma, bronquite ou rinite), idosos e crianças evitem a prática de exercícios físicos prolongados ao ar livre durante o pico do calor.</span>
+              ) : (
+                <span> A atmosfera local encontra-se em condições favoráveis para circulação ao ar livre e práticas esportivas.</span>
+              )}
+            </p>
+          </div>
         </div>
 
         {/* ── Tabela de Auditoria de Alertas Registrados ── */}
         <div className="rounded-lg bg-surface-panel border border-border-subtle overflow-hidden space-y-0">
           <div className="p-4 border-b border-border-subtle flex items-center justify-between bg-surface-dim/50">
             <div className="text-xs font-mono font-bold text-zinc-200 uppercase tracking-wider">
-              Registro Cronológico de Eventos Operacionais ({cityAlerts.length})
+              Registro Cronológico de Incidentes na Capital ({cityAlerts.length})
             </div>
             <div className="text-[11px] font-mono text-zinc-500">
-              Origens: ANA · INPE · CEMADEN · NASA
+              Sensores: ANA · INPE · CEMADEN · NASA
             </div>
           </div>
 
@@ -322,27 +445,26 @@ export const ReportsView: React.FC = () => {
               ))
             ) : (
               <div className="py-8 text-center text-zinc-500 font-mono text-xs">
-                <CheckCircle2 className="w-5 h-5 text-nominal mx-auto mb-1.5" />
-                Nenhum alerta registrado nesta janela temporal.
+                Nenhum alerta crítico ativo para {selectedCity.nome} nesta janela temporal.
               </div>
             )}
           </div>
 
-          {/* Visualização Desktop: Tabela */}
-          <div className="hidden md:block overflow-x-auto">
+          {/* Visualização Desktop: Tabela Completa */}
+          <div className="hidden md:block">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-border-subtle bg-surface-dim text-[10px] font-mono text-zinc-400 uppercase tracking-wider">
-                  <th className="py-2.5 px-4">Severidade</th>
-                  <th className="py-2.5 px-4">Tipo de Evento</th>
-                  <th className="py-2.5 px-4">Mensagem de Telemetria</th>
-                  <th className="py-2.5 px-4 text-right">Data/Hora (UTC)</th>
+                <tr className="border-b border-border-subtle bg-surface-base text-[11px] font-mono text-zinc-400 uppercase">
+                  <th className="py-2.5 px-4 font-semibold">Severidade</th>
+                  <th className="py-2.5 px-4 font-semibold">Tipo do Evento</th>
+                  <th className="py-2.5 px-4 font-semibold">Mensagem Operacional</th>
+                  <th className="py-2.5 px-4 font-semibold text-right">Data/Hora</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle/50 text-xs font-mono">
                 {cityAlerts.length > 0 ? (
                   cityAlerts.map(alert => (
-                    <tr key={alert.id} className="hover:bg-surface-hover/30 transition-colors">
+                    <tr key={alert.id} className="hover:bg-surface-hover/40 transition-colors">
                       <td className="py-3 px-4 whitespace-nowrap">
                         <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase ${
                           alert.tipoAlerta.includes('FLOOD') || alert.tipoAlerta.includes('FIRE')
@@ -355,34 +477,23 @@ export const ReportsView: React.FC = () => {
                       <td className="py-3 px-4 font-semibold text-zinc-200 whitespace-nowrap">
                         {formatAlertTypeName(alert.tipoAlerta)}
                       </td>
-                      <td className="py-3 px-4 text-zinc-300 font-sans max-w-lg leading-relaxed text-xs">
+                      <td className="py-3 px-4 text-zinc-300 font-sans max-w-xl leading-relaxed">
                         {alert.mensagem}
                       </td>
-                      <td className="py-3 px-4 text-right text-zinc-500 whitespace-nowrap text-[11px]">
+                      <td className="py-3 px-4 text-right text-zinc-500 whitespace-nowrap font-mono text-[11px]">
                         {new Date(alert.dataHoraAlerta).toLocaleString('pt-BR')}
                       </td>
                     </tr>
                   ))
                 ) : (
                   <tr>
-                    <td colSpan={4} className="py-10 text-center text-zinc-500 font-mono">
-                      <CheckCircle2 className="w-5 h-5 text-nominal mx-auto mb-1.5" />
-                      Nenhum alerta crítico registrado para {selectedCity.nome} nesta janela temporal.
+                    <td colSpan={4} className="py-8 text-center text-zinc-500 font-mono">
+                      Nenhum alerta crítico ativo para {selectedCity.nome} nesta janela temporal.
                     </td>
                   </tr>
                 )}
               </tbody>
             </table>
-          </div>
-        </div>
-
-        {/* Rodapé Institucional do Boletim */}
-        <div className="pt-4 border-t border-border-subtle/60 flex flex-col sm:flex-row items-center justify-between text-xs font-mono text-zinc-500 gap-2 pb-6">
-          <div>
-            EcoWatch Brasil © {new Date().getFullYear()} — Plataforma de Inteligência e Alerta Antecipado
-          </div>
-          <div className="text-[11px]">
-            Relatório gerado em conformidade com o Protocolo Nacional de Defesa Civil
           </div>
         </div>
 

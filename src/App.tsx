@@ -8,6 +8,7 @@ import { AlertsView } from './components/alerts/AlertsView';
 import { ForecastView } from './components/forecast/ForecastView';
 import { ReportsView } from './components/reports/ReportsView';
 import { NewsView } from './components/news/NewsView';
+import { GlossaryView } from './components/glossary/GlossaryView';
 import { AboutView } from './components/about/AboutView';
 import { LandingPage } from './components/landing/LandingPage';
 import { MONITORED_CITIES, MOCK_WEATHER_READINGS, MOCK_ALERTS } from './data/mockData';
@@ -150,6 +151,7 @@ export const App: React.FC = () => {
         {activeTab === 'forecast' && <ForecastView />}
         {activeTab === 'reports' && <ReportsView />}
         {activeTab === 'news' && <NewsView />}
+        {activeTab === 'glossary' && <GlossaryView />}
         {activeTab === 'about' && <AboutView />}
       </main>
 
