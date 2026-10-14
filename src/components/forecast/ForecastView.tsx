@@ -3,6 +3,7 @@ import { Flame, Bug, CloudRain, Calendar, TrendingUp, ChevronRight } from 'lucid
 import { MONITORED_CITIES, MOCK_FORECASTS } from '../../data/mockData';
 import { PrevisaoDTO } from '../../types';
 import { Sparkline } from '../common/Sparkline';
+import { AnimatedCounter } from '../common/AnimatedCounter';
 
 export const ForecastView: React.FC = () => {
   const [selectedCitySlug, setSelectedCitySlug] = useState<string | null>(null);
@@ -110,7 +111,11 @@ export const ForecastView: React.FC = () => {
               <div>
                 <div className="text-xl font-bold font-sans text-white">Brasília (DF)</div>
                 <div className="flex items-baseline gap-2 mt-0.5">
-                  <span className="text-3xl font-extrabold font-mono text-critical tnum">91</span>
+                  <AnimatedCounter
+                    value={91}
+                    decimals={0}
+                    className="text-3xl font-extrabold font-mono text-critical"
+                  />
                   <span className="text-xs font-mono text-zinc-400">/100 (Score Crítico)</span>
                 </div>
               </div>
@@ -141,7 +146,11 @@ export const ForecastView: React.FC = () => {
               <div>
                 <div className="text-xl font-bold font-sans text-white">Rio de Janeiro (RJ)</div>
                 <div className="flex items-baseline gap-2 mt-0.5">
-                  <span className="text-3xl font-extrabold font-mono text-warning tnum">78</span>
+                  <AnimatedCounter
+                    value={78}
+                    decimals={0}
+                    className="text-3xl font-extrabold font-mono text-warning"
+                  />
                   <span className="text-xs font-mono text-zinc-400">/100 (Score Elevado)</span>
                 </div>
               </div>
@@ -172,7 +181,11 @@ export const ForecastView: React.FC = () => {
               <div>
                 <div className="text-xl font-bold font-sans text-white">Salvador (BA)</div>
                 <div className="flex items-baseline gap-2 mt-0.5">
-                  <span className="text-3xl font-extrabold font-mono text-hydro tnum">52.3</span>
+                  <AnimatedCounter
+                    value={52.3}
+                    decimals={1}
+                    className="text-3xl font-extrabold font-mono text-hydro"
+                  />
                   <span className="text-xs font-mono text-zinc-400">mm previstos</span>
                 </div>
               </div>

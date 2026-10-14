@@ -14,6 +14,7 @@ import {
 import { CityInfo, WeatherReading, AlertDTO, formatAlertTypeName } from '../../types';
 import { triggerCitySync, fetchCityWeather, fetchCityDashboard } from '../../services/api';
 import { Sparkline } from '../common/Sparkline';
+import { AnimatedCounter } from '../common/AnimatedCounter';
 
 interface TelemetryDrawerProps {
   city: CityInfo;
@@ -204,9 +205,11 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
             <div>
               <div className="flex items-center justify-between">
                 <div className="flex items-baseline gap-2">
-                  <span className="text-3xl font-bold font-mono tracking-tight text-white tnum">
-                    {reading.nivelRio.toFixed(2)}
-                  </span>
+                  <AnimatedCounter
+                    value={reading.nivelRio}
+                    decimals={2}
+                    className="text-3xl font-bold font-mono tracking-tight text-white"
+                  />
                   <span className="text-xs font-sans text-zinc-400">metros</span>
                 </div>
                 {/* Mini Gráfico de Tendência da Lâmina d'água */}
@@ -268,9 +271,12 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
                   <span>Temp</span>
                 </span>
               </div>
-              <span className="text-lg font-bold font-mono text-white tnum">
-                {reading.temperatura.toFixed(1)}°C
-              </span>
+              <AnimatedCounter
+                value={reading.temperatura}
+                decimals={1}
+                suffix="°C"
+                className="text-lg font-bold font-mono text-white"
+              />
               <div className="pt-2 mt-1 border-t border-border-subtle/50">
                 <Sparkline
                   data={[
@@ -294,9 +300,12 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
                   <span>Ar</span>
                 </span>
               </div>
-              <span className="text-lg font-bold font-mono text-white tnum">
-                {Math.round(reading.umidade)}%
-              </span>
+              <AnimatedCounter
+                value={Math.round(reading.umidade)}
+                decimals={0}
+                suffix="%"
+                className="text-lg font-bold font-mono text-white"
+              />
               <div className="pt-2 mt-1 border-t border-border-subtle/50">
                 <Sparkline
                   data={[
@@ -319,9 +328,12 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
                   <span>Chuva</span>
                 </span>
               </div>
-              <span className="text-lg font-bold font-mono text-white tnum">
-                {reading.precipitacao.toFixed(1)} mm
-              </span>
+              <AnimatedCounter
+                value={reading.precipitacao}
+                decimals={1}
+                suffix=" mm"
+                className="text-lg font-bold font-mono text-white"
+              />
               <div className="pt-2 mt-1 border-t border-border-subtle/50">
                 <Sparkline
                   data={[

@@ -22,6 +22,7 @@ import {
   humanizeFireRisk
 } from '../../utils/humanFormatters';
 import { Sparkline } from '../common/Sparkline';
+import { AnimatedCounter } from '../common/AnimatedCounter';
 
 export const ReportsView: React.FC = () => {
   const [selectedCitySlug, setSelectedCitySlug] = useState<string>('brasilia');
@@ -289,9 +290,12 @@ export const ReportsView: React.FC = () => {
                 <CloudRain className="w-4 h-4 text-hydro animate-breathing-glow" />
               </div>
               <div className="flex items-baseline justify-between">
-                <div className="text-2xl font-bold font-mono text-zinc-100 tnum">
-                  {kpis.chuvaBase.toFixed(1)} <span className="text-sm font-normal text-zinc-400">mm</span>
-                </div>
+                <AnimatedCounter
+                  value={kpis.chuvaBase}
+                  decimals={1}
+                  suffix=" mm"
+                  className="text-2xl font-bold font-mono text-zinc-100"
+                />
                 <div className="w-20 h-6">
                   <Sparkline 
                     data={kpis.chuvaBase === 0 ? [0, 0, 0, 0, 0] : [kpis.chuvaBase * 0.1, kpis.chuvaBase * 0.25, kpis.chuvaBase * 0.05, kpis.chuvaBase * 0.45, kpis.chuvaBase]} 
@@ -317,9 +321,16 @@ export const ReportsView: React.FC = () => {
                 <Droplets className="w-4 h-4 text-nominal animate-breathing-glow" />
               </div>
               <div className="flex items-baseline justify-between">
-                <div className="text-2xl font-bold font-mono text-zinc-100 tnum">
-                  {selectedCity.rioNome ? `${kpis.nivelRio.toFixed(2)}m` : 'Estável'}
-                </div>
+                {selectedCity.rioNome ? (
+                  <AnimatedCounter
+                    value={kpis.nivelRio}
+                    decimals={2}
+                    suffix="m"
+                    className="text-2xl font-bold font-mono text-zinc-100"
+                  />
+                ) : (
+                  <div className="text-2xl font-bold font-mono text-zinc-100 tnum">Estável</div>
+                )}
                 {selectedCity.rioNome && (
                   <div className="w-20 h-6">
                     <Sparkline 
@@ -347,9 +358,12 @@ export const ReportsView: React.FC = () => {
                 <Wind className="w-4 h-4 text-warning animate-breathing-glow" />
               </div>
               <div className="flex items-baseline justify-between">
-                <div className="text-2xl font-bold font-mono text-zinc-100 tnum">
-                  {kpis.pm25Base.toFixed(1)} <span className="text-xs font-normal text-zinc-400">µg/m³</span>
-                </div>
+                <AnimatedCounter
+                  value={kpis.pm25Base}
+                  decimals={1}
+                  suffix=" µg/m³"
+                  className="text-2xl font-bold font-mono text-zinc-100"
+                />
                 <div className="w-20 h-6">
                   <Sparkline 
                     data={[kpis.pm25Base * 0.85, kpis.pm25Base * 0.95, kpis.pm25Base * 1.08, kpis.pm25Base * 0.92, kpis.pm25Base]} 
@@ -375,9 +389,12 @@ export const ReportsView: React.FC = () => {
                 <Flame className={`w-4 h-4 animate-breathing-glow ${kpis.focosIncendioPeriodo > 5 ? 'text-critical' : 'text-nominal'}`} />
               </div>
               <div className="flex items-baseline justify-between">
-                <div className="text-2xl font-bold font-mono text-zinc-100 tnum">
-                  {kpis.focosIncendioPeriodo} <span className="text-sm font-normal text-zinc-400">focos</span>
-                </div>
+                <AnimatedCounter
+                  value={kpis.focosIncendioPeriodo}
+                  decimals={0}
+                  suffix=" focos"
+                  className="text-2xl font-bold font-mono text-zinc-100"
+                />
                 <div className="w-20 h-6">
                   <Sparkline 
                     data={[Math.max(0, kpis.focosIncendioPeriodo - 4), Math.max(1, kpis.focosIncendioPeriodo - 2), Math.max(1, kpis.focosIncendioPeriodo - 1), kpis.focosIncendioPeriodo]} 

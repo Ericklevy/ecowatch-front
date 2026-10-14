@@ -24,9 +24,12 @@ const createCityIcon = (city: CityInfo, isSelected: boolean) => {
   const html = `
     <div class="relative flex items-center justify-center w-8 h-8 -translate-x-1/2 -translate-y-1/2 cursor-pointer group">
       ${isSelected ? `<span class="absolute w-full h-full rounded-full animate-radar bg-hydro/35 pointer-events-none"></span>` : ''}
-      ${city.status === 'critical' ? `<span class="absolute w-full h-full rounded-full animate-ping ${pingClass}"></span>` : ''}
+      ${city.status === 'critical' ? `
+        <span class="absolute -inset-1 rounded-full animate-ping ${pingClass} opacity-75"></span>
+        <span class="absolute -inset-3 rounded-full border border-critical/40 animate-pulse pointer-events-none"></span>
+      ` : ''}
       ${city.status === 'warning' ? `<span class="absolute w-6 h-6 rounded-full animate-pulse bg-warning/30"></span>` : ''}
-      <span class="relative w-3.5 h-3.5 rounded-full ${colorClass} border-2 ${selectedRing} shadow-[0_0_12px_rgba(56,189,248,0.5)] transition-all duration-300 group-hover:scale-125"></span>
+      <span class="relative w-3.5 h-3.5 rounded-full ${colorClass} border-2 ${selectedRing} shadow-[0_0_14px_rgba(0,229,255,0.6)] transition-all duration-300 group-hover:scale-125"></span>
     </div>
   `;
 
@@ -426,6 +429,29 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
           );
         })}
       </MapContainer>
+
+      {/* ── Legenda Flutuante de Severidade & Sensores (Bottom Right) ── */}
+      <div className="absolute bottom-5 right-4 z-[1000] hidden sm:flex flex-col gap-1.5 p-3 rounded-xl bento-card text-[11px] font-mono shadow-2xl backdrop-blur-md border border-white/10 select-none">
+        <div className="text-[10px] text-zinc-400 uppercase tracking-wider font-semibold border-b border-white/10 pb-1 flex items-center justify-between gap-3">
+          <span>Legenda Operacional</span>
+          <span className="text-hydro">27 Capitais</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-critical shadow-[0_0_8px_#ff1744] animate-pulse"></span>
+          <span className="text-zinc-200">Crítico (Emergência / Fogo)</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-warning shadow-[0_0_8px_#ffd600]"></span>
+          <span className="text-zinc-300">Atenção (Cota Alerta / Calor)</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="w-2.5 h-2.5 rounded-full bg-nominal shadow-[0_0_8px_#00e676]"></span>
+          <span className="text-zinc-400">Nominal (Normalidade)</span>
+        </div>
+        <div className="pt-1.5 mt-0.5 border-t border-white/5 text-[9px] text-zinc-400 font-sans">
+          📡 Sensores: INPE · ANA · Open-Meteo · NASA
+        </div>
+      </div>
     </div>
   );
 };
