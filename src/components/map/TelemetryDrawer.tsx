@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   X,
   Droplets,
@@ -9,10 +9,12 @@ import {
   AlertTriangle,
   Download,
   CheckCircle2,
-  RefreshCw
+  RefreshCw,
+  Newspaper,
+  ExternalLink
 } from 'lucide-react';
-import { CityInfo, WeatherReading, AlertDTO, formatAlertTypeName } from '../../types';
-import { triggerCitySync, fetchCityWeather, fetchCityDashboard } from '../../services/api';
+import { CityInfo, WeatherReading, AlertDTO, formatAlertTypeName, NewsItem } from '../../types';
+import { triggerCitySync, fetchCityWeather, fetchCityDashboard, fetchNews } from '../../services/api';
 import { Sparkline } from '../common/Sparkline';
 import { AnimatedCounter } from '../common/AnimatedCounter';
 
@@ -33,6 +35,25 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
 }) => {
   const [syncing, setSyncing] = useState(false);
   const [syncMsg, setSyncMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [localNews, setLocalNews] = useState<NewsItem[]>([]);
+  const [loadingNews, setLoadingNews] = useState<boolean>(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    setLoadingNews(true);
+    fetchNews({ estado: city.estado, size: 3 })
+      .then(res => {
+        if (isMounted) setLocalNews(res.items);
+      })
+      .catch(() => {
+        if (isMounted) setLocalNews([]);
+      })
+      .finally(() => {
+        if (isMounted) setLoadingNews(false);
+      });
+
+    return () => { isMounted = false; };
+  }, [city.estado, city.nome]);
 
   const getSeverityBadge = () => {
     switch (city.status) {
@@ -416,6 +437,53 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
             <div className="p-3 rounded bg-surface-card/30 border border-border-subtle text-center">
               <CheckCircle2 className="w-4 h-4 text-nominal mx-auto mb-1" />
               <p className="text-xs text-zinc-400 font-mono">Nenhum alerta crítico ativo para esta capital.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Bloco 5: Comunicados Oficiais & Notícias Verificadas */}
+        <div className="pt-2">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-mono font-medium text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
+              <Newspaper className="w-3.5 h-3.5 text-hydro" />
+              <span>Boletins Oficiais ({city.estado})</span>
+            </span>
+            <span className="text-[10px] font-mono text-zinc-500">Agência Brasil · Defesa Civil</span>
+          </div>
+
+          {loadingNews ? (
+            <div className="p-3 rounded bg-surface-card/30 border border-border-subtle text-center text-xs font-mono text-zinc-500">
+              Consultando comunicados oficiais...
+            </div>
+          ) : localNews.length > 0 ? (
+            <div className="space-y-2">
+              {localNews.map(item => (
+                <div key={item.id} className="p-2.5 rounded bg-surface-card/60 border border-border-subtle hover:border-hydro/30 transition-all text-xs space-y-1.5">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-[10px] font-mono text-hydro font-semibold truncate">{item.fonte}</span>
+                    <span className="text-[10px] font-mono text-zinc-500">
+                      {new Date(item.dataHora).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                    </span>
+                  </div>
+                  <p className="font-semibold text-zinc-200 line-clamp-2 leading-snug">{item.titulo}</p>
+                  <p className="text-[11px] text-zinc-400 line-clamp-2 leading-relaxed">{item.resumo}</p>
+                  <div className="pt-1 flex justify-end">
+                    <a
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[11px] font-mono text-hydro hover:underline cursor-pointer"
+                    >
+                      <span>Confirmar matéria oficial</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-3 rounded bg-surface-card/30 border border-border-subtle text-center">
+              <p className="text-xs text-zinc-500 font-mono">Sem comunicados de emergência recentes para este estado.</p>
             </div>
           )}
         </div>

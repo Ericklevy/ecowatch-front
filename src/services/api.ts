@@ -1,5 +1,6 @@
-import { WeatherReading, AlertDTO, PrevisaoDTO, DashboardDTO } from '../types';
+import { WeatherReading, AlertDTO, PrevisaoDTO, DashboardDTO, NewsItem } from '../types';
 import { MOCK_WEATHER_READINGS, MOCK_ALERTS, MOCK_FORECASTS, MONITORED_CITIES } from '../data/mockData';
+import { MOCK_NEWS } from '../data/newsData';
 
 // ── Endpoints do Backend (injetados via variáveis de ambiente da Vercel/.env) ──
 const READ_MODEL_URL        = import.meta.env.VITE_READ_MODEL_URL        || '';
@@ -167,3 +168,78 @@ export async function triggerAllCitiesSync(): Promise<{ success: boolean; messag
 export async function triggerManualSync(): Promise<{ success: boolean; message: string }> {
   return triggerAllCitiesSync();
 }
+
+// ── Busca notícias ambientais reais do read-model-service ─────────────────
+export interface FetchNewsParams {
+  categoria?: string;
+  estado?: string;
+  municipio?: string;
+  page?: number;
+  size?: number;
+}
+
+export async function fetchNews(params?: FetchNewsParams): Promise<{ items: NewsItem[]; total: number }> {
+  if (READ_MODEL_URL) {
+    try {
+      const searchParams = new URLSearchParams();
+      if (params?.categoria && params.categoria !== 'ALL') searchParams.set('categoria', params.categoria);
+      if (params?.estado) searchParams.set('estado', params.estado);
+      if (params?.municipio) searchParams.set('municipio', params.municipio);
+      if (typeof params?.page === 'number') searchParams.set('page', String(params.page));
+      if (typeof params?.size === 'number') searchParams.set('size', String(params.size));
+
+      const queryStr = searchParams.toString() ? `?${searchParams.toString()}` : '';
+      const res = await fetch(`${READ_MODEL_URL}/api/v1/news${queryStr}`, {
+        signal: AbortSignal.timeout(6000)
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        return {
+          items: data.content || [],
+          total: data.totalElements || 0
+        };
+      }
+    } catch { /* fallback suave */ }
+  }
+
+  // Fallback para MOCK_NEWS caso offline
+  let filtered = MOCK_NEWS;
+  if (params?.categoria && params.categoria !== 'ALL') {
+    filtered = filtered.filter(n => n.categoria === params.categoria);
+  }
+  if (params?.estado) {
+    filtered = filtered.filter(n => n.estado?.toUpperCase() === params.estado?.toUpperCase());
+  }
+  if (params?.municipio) {
+    filtered = filtered.filter(n => n.municipio?.toLowerCase().includes(params.municipio!.toLowerCase()));
+  }
+
+  return {
+    items: filtered,
+    total: filtered.length
+  };
+}
+
+// ── Sincroniza notícias sob demanda no backend ────────────────────────────
+export async function triggerNewsSync(): Promise<{ success: boolean; count: number; message: string }> {
+  if (READ_MODEL_URL) {
+    try {
+      const res = await fetch(`${READ_MODEL_URL}/api/v1/news/sync`, {
+        method: 'POST',
+        signal: AbortSignal.timeout(15000)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const count = data.novasNoticiasImportadas || 0;
+        return {
+          success: true,
+          count,
+          message: count > 0 ? `${count} novas matérias oficiais sincronizadas!` : 'Feeds atualizados. Nenhuma nova matéria recente.'
+        };
+      }
+    } catch { /* offline */ }
+  }
+  return { success: false, count: 0, message: 'Não foi possível sincronizar notícias no momento.' };
+}
+
