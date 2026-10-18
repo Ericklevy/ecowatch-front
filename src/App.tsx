@@ -42,54 +42,55 @@ export const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
-  // ── Verifica se o backend está online e carrega leituras ──────────────────
-  useEffect(() => {
-    async function loadData() {
-      let anyOnline = false;
-      const updatedReadings: Record<string, WeatherReading> = { ...MOCK_WEATHER_READINGS };
+  // ── Função unificada para carregar e atualizar leituras ao vivo ──────────
+  const loadData = async () => {
+    let anyOnline = false;
+    const updatedReadings: Record<string, WeatherReading> = { ...MOCK_WEATHER_READINGS };
 
-      const results = await Promise.allSettled(
-        MONITORED_CITIES.map(city => fetchCityWeather(city.slug))
-      );
+    const results = await Promise.allSettled(
+      MONITORED_CITIES.map(city => fetchCityWeather(city.slug))
+    );
 
-      results.forEach((res, index) => {
-        const city = MONITORED_CITIES[index];
-        if (res.status === 'fulfilled' && res.value) {
-          const reading = res.value;
-          if (reading.timestamp !== MOCK_WEATHER_READINGS[city.slug]?.timestamp) {
-            anyOnline = true;
-          }
-          updatedReadings[city.slug] = reading;
+    results.forEach((res, index) => {
+      const city = MONITORED_CITIES[index];
+      if (res.status === 'fulfilled' && res.value) {
+        const reading = res.value;
+        if (reading.timestamp !== MOCK_WEATHER_READINGS[city.slug]?.timestamp) {
+          anyOnline = true;
         }
-      });
-
-      // Fallback: verifica se o read-model-service (Swagger/Dashboard) está respondendo
-      if (!anyOnline) {
-        try {
-          const dashboard = await fetchCityDashboard('brasilia');
-          if (dashboard && dashboard.alertas && dashboard.alertas.length > 0) {
-            anyOnline = true;
-          }
-        } catch {
-          // Offline
-        }
+        updatedReadings[city.slug] = reading;
       }
+    });
 
-      // Busca todos os alertas para atualizar contador global
+    // Fallback: verifica se o read-model-service (Swagger/Dashboard) está respondendo
+    if (!anyOnline) {
       try {
-        const allAlerts = await fetchAllAlerts();
-        if (allAlerts && allAlerts.length > 0) {
-          setUnreadAlertsCount(allAlerts.length);
+        const dashboard = await fetchCityDashboard('brasilia');
+        if (dashboard && dashboard.alertas && dashboard.alertas.length > 0) {
+          anyOnline = true;
         }
       } catch {
-        // Fallback mantém valor anterior
+        // Offline
       }
-
-      setReadings(updatedReadings);
-      setIsBackendOnline(anyOnline);
-      setLastUpdate(new Date());
     }
 
+    // Busca todos os alertas para atualizar contador global
+    try {
+      const allAlerts = await fetchAllAlerts();
+      if (allAlerts && allAlerts.length > 0) {
+        setUnreadAlertsCount(allAlerts.length);
+      }
+    } catch {
+      // Fallback mantém valor anterior
+    }
+
+    setReadings(updatedReadings);
+    setIsBackendOnline(anyOnline);
+    setLastUpdate(new Date());
+  };
+
+  // ── Carregamento inicial e timer periódico de 60s ─────────────────────────
+  useEffect(() => {
     loadData();
 
     // Recarrega a cada 60 segundos
@@ -155,6 +156,7 @@ export const App: React.FC = () => {
         selectedCity={selectedCity}
         onSelectCity={handleSelectCity}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
+        onRefreshAll={loadData}
       />
 
       {/* Fita de Telemetria e Operações ao Vivo (Live Status Ticker) */}
@@ -282,6 +284,7 @@ export const App: React.FC = () => {
         onClose={() => setIsCommandPaletteOpen(false)}
         onTabChange={setActiveTab}
         onSelectCity={handleSelectCity}
+        onSync={loadData}
       />
     </div>
   );

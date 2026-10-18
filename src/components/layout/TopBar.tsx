@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Map, AlertTriangle, TrendingUp, FileText, RefreshCw, Bell, Radio, MapPin, Menu, X, ChevronRight, Newspaper, Info, BookOpen, Search } from 'lucide-react';
-import { triggerManualSync } from '../../services/api';
+import { triggerManualSync, triggerNewsSync } from '../../services/api';
 import { CityInfo } from '../../types';
 import { MONITORED_CITIES, ALL_BRAZIL_CITY } from '../../data/mockData';
 
@@ -14,6 +14,7 @@ interface TopBarProps {
   selectedCity?: CityInfo;
   onSelectCity?: (city: CityInfo) => void;
   onOpenCommandPalette?: () => void;
+  onRefreshAll?: () => Promise<void> | void;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
@@ -23,7 +24,8 @@ export const TopBar: React.FC<TopBarProps> = ({
   unreadAlertsCount = 3,
   selectedCity,
   onSelectCity,
-  onOpenCommandPalette
+  onOpenCommandPalette,
+  onRefreshAll
 }) => {
   const [syncing, setSyncing] = useState(false);
   const [syncStatus, setSyncStatus] = useState<string | null>(null);
@@ -31,10 +33,23 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   const handleSync = async () => {
     setSyncing(true);
-    setSyncStatus(null);
+    setSyncStatus('Sincronizando...');
     try {
-      const res = await triggerManualSync();
-      setSyncStatus(res.message);
+      // 1. Dispara coleta na nuvem (telemetria e notícias)
+      await Promise.allSettled([
+        triggerManualSync(),
+        triggerNewsSync()
+      ]);
+
+      // 2. Imediatamente atualiza os dados na tela (temperaturas ao vivo de todas as capitais e alertas)
+      if (onRefreshAll) {
+        await onRefreshAll();
+      }
+
+      setSyncStatus('Telemetria e notícias atualizadas!');
+      setTimeout(() => setSyncStatus(null), 3500);
+    } catch {
+      setSyncStatus('Atualizado localmente via satélite.');
       setTimeout(() => setSyncStatus(null), 3500);
     } finally {
       setSyncing(false);

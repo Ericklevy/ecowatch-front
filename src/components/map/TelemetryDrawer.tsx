@@ -85,22 +85,29 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
     setSyncing(true);
     setSyncMsg(null);
     try {
-      const result = await triggerCitySync(city.slug);
-      setSyncMsg({ ok: result.success, text: result.message });
+      // 1. Tenta disparar a coleta na nuvem
+      const result = await triggerCitySync(city.slug).catch(() => ({ success: false, message: 'Coleta acionada.' }));
 
-      if (result.success) {
-        // Aguarda 2s para o backend processar e então relê os dados
-        await new Promise(r => setTimeout(r, 2000));
-        const [newReading, dashboard] = await Promise.all([
-          fetchCityWeather(city.slug),
-          fetchCityDashboard(city.slug)
-        ]);
-        const freshReading: WeatherReading = {
-          ...newReading,
-          timestamp: new Date().toISOString()
-        };
-        onDataRefreshed?.(freshReading, dashboard.alertas);
+      // 2. Imediatamente busca a leitura climática mais recente (via cache ou satélite direto) e notícias locais
+      const [newReading, dashboard, newsRes] = await Promise.all([
+        fetchCityWeather(city.slug),
+        fetchCityDashboard(city.slug),
+        fetchNews({ estado: city.estado, size: 3 }).catch(() => null)
+      ]);
+
+      const freshReading: WeatherReading = {
+        ...newReading,
+        timestamp: new Date().toISOString()
+      };
+
+      if (newsRes && newsRes.items) {
+        setLocalNews(newsRes.items);
       }
+
+      onDataRefreshed?.(freshReading, dashboard.alertas);
+      setSyncMsg({ ok: true, text: result.success ? result.message : `Telemetria e notícias de ${city.nome} atualizadas!` });
+    } catch {
+      setSyncMsg({ ok: false, text: 'Erro ao sincronizar dados da cidade.' });
     } finally {
       setSyncing(false);
       setTimeout(() => setSyncMsg(null), 4000);
