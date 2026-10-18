@@ -133,6 +133,26 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
     ? Math.round((Date.now() - new Date(reading.timestamp).getTime()) / 60000)
     : null;
 
+  const formatReadingTime = (ts?: string) => {
+    if (!ts) return null;
+    try {
+      const d = new Date(ts);
+      if (isNaN(d.getTime())) return null;
+      return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    } catch {
+      return null;
+    }
+  };
+
+  const formatAgeText = (mins: number | null) => {
+    if (mins === null) return null;
+    if (mins <= 0) return 'agora';
+    if (mins < 60) return `${mins}min atrás`;
+    const hours = Math.floor(mins / 60);
+    const remMins = mins % 60;
+    return remMins > 0 ? `${hours}h ${remMins}m atrás` : `${hours}h atrás`;
+  };
+
   return (
     <>
       {/* Backdrop no mobile para fechar gaveta ao tocar fora */}
@@ -171,8 +191,8 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
             {dataAge !== null && (
               <>
                 <span>·</span>
-                <span className={dataAge > 60 ? 'text-warning' : 'text-zinc-500'}>
-                  {dataAge === 0 ? 'agora' : `${dataAge}min atrás`}
+                <span className={dataAge > 60 ? 'text-warning' : 'text-zinc-500'} title={`Leitura registrada às ${formatReadingTime(reading.timestamp)}`}>
+                  {formatReadingTime(reading.timestamp) ? `${formatReadingTime(reading.timestamp)} (${formatAgeText(dataAge)})` : formatAgeText(dataAge)}
                 </span>
               </>
             )}
