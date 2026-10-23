@@ -256,6 +256,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         <button
           onClick={handleSync}
           disabled={syncing}
+          aria-label="Forçar sincronização de telemetria"
           title="Forçar sincronização de telemetria"
           className="p-1.5 rounded border border-border-subtle bg-surface-card text-zinc-400 hover:text-hydro hover:border-hydro/40 transition-colors disabled:opacity-50"
         >
@@ -276,6 +277,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         {/* Sino de alertas */}
         <button
           onClick={() => onTabChange('alerts')}
+          aria-label={`Central de Alertas (${unreadAlertsCount} não lidos)`}
           className="relative p-1.5 rounded border border-border-subtle bg-surface-card text-zinc-400 hover:text-zinc-200"
           title="Central de Alertas"
         >
