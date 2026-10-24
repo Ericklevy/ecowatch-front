@@ -31,6 +31,19 @@ const BLACKLIST_PATTERNS = [
 ];
 
 /**
+ * Valida se uma URL é segura para navegação externa (previne esquemas maliciosos como javascript: ou data:).
+ */
+export function isSafeUrl(url: string): boolean {
+  if (!url || typeof url !== 'string') return false;
+  try {
+    const parsed = new URL(url.trim());
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Valida se uma matéria é estritamente relevante para o EcoWatch Brasil.
  */
 export function isEcoWatchRelevant(item: NewsItem): boolean {
@@ -92,11 +105,11 @@ export function classifyNewsCategory(item: NewsItem): NewsItem['categoria'] {
 }
 
 /**
- * Sanitiza o lote de notícias: elimina ruídos e recalcula as categorias certas.
+ * Sanitiza o lote de notícias: elimina ruídos, valida URLs e recalcula as categorias certas.
  */
 export function sanitizeNewsList(items: NewsItem[]): NewsItem[] {
   return items
-    .filter(isEcoWatchRelevant)
+    .filter(item => isEcoWatchRelevant(item) && isSafeUrl(item.url))
     .map(item => ({
       ...item,
       categoria: classifyNewsCategory(item)
