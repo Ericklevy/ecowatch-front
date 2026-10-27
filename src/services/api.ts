@@ -12,7 +12,7 @@ export async function fetchCityWeather(citySlug: string): Promise<WeatherReading
   // 1. Tenta buscar do backend (alert-service Redis cache na Azure)
   if (ALERT_SERVICE_URL) {
     try {
-      const res = await fetch(`${ALERT_SERVICE_URL}/api/cache/${citySlug}`, {
+      const res = await fetch(`${ALERT_SERVICE_URL}/api/cache/${encodeURIComponent(citySlug)}`, {
         signal: AbortSignal.timeout(2000)
       });
       if (res.ok) return await res.json();
@@ -64,7 +64,7 @@ export async function fetchCityWeather(citySlug: string): Promise<WeatherReading
 
 export async function fetchCityDashboard(citySlug: string): Promise<DashboardDTO> {
   try {
-    const res = await fetch(`${READ_MODEL_URL}/api/dashboard/${citySlug}`, {
+    const res = await fetch(`${READ_MODEL_URL}/api/dashboard/${encodeURIComponent(citySlug)}`, {
       signal: AbortSignal.timeout(6000)
     });
     if (res.ok) return await res.json();
@@ -109,7 +109,7 @@ export async function fetchAllForecasts(): Promise<{ city: string; uf: string; f
 // ── Dispara coleta sob demanda para UMA cidade específica ─────────────────
 export async function triggerCitySync(citySlug: string): Promise<{ success: boolean; message: string }> {
   try {
-    const res = await fetch(`${INGESTION_SERVICE_URL}/api/scheduler/trigger/${citySlug}`, {
+    const res = await fetch(`${INGESTION_SERVICE_URL}/api/scheduler/trigger/${encodeURIComponent(citySlug)}`, {
       method: 'POST',
       signal: AbortSignal.timeout(8000)
     });
@@ -153,7 +153,7 @@ export async function triggerAllCitiesSync(): Promise<{ success: boolean; messag
   try {
     await Promise.all(
       MONITORED_CITIES.map(city =>
-        fetch(`${INGESTION_SERVICE_URL}/api/scheduler/trigger/${city.slug}`, {
+        fetch(`${INGESTION_SERVICE_URL}/api/scheduler/trigger/${encodeURIComponent(city.slug)}`, {
           method: 'POST',
           signal: AbortSignal.timeout(5000)
         }).catch(() => null)
