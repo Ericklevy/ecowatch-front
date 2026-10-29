@@ -83,9 +83,10 @@ export const AlertsView: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           {/* Campo de Busca */}
           <div className="relative flex-1 max-w-md">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" aria-hidden="true" />
             <input
               type="text"
+              aria-label="Buscar alertas por capital, palavra-chave ou tipo de evento"
               placeholder="Buscar por capital, palavra-chave ou tipo de evento..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
@@ -95,9 +96,10 @@ export const AlertsView: React.FC = () => {
 
           {/* Filtro por Cidade */}
           <div className="flex items-center gap-2">
-            <Filter className="w-3.5 h-3.5 text-zinc-400" />
+            <Filter className="w-3.5 h-3.5 text-zinc-400" aria-hidden="true" />
             <select
               value={selectedCity}
+              aria-label="Filtrar alertas por capital"
               onChange={e => setSelectedCity(e.target.value)}
               className="bg-surface-base border border-border-subtle rounded py-1.5 px-3 text-xs font-mono text-zinc-200 focus:outline-none focus:border-hydro cursor-pointer"
             >

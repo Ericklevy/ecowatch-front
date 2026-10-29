@@ -194,6 +194,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   return (
     <div
+      role="dialog"
+      aria-modal="true"
+      aria-label="Menu de Comandos e Busca Global"
       className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-start justify-center pt-16 sm:pt-24 p-4 animate-fade-in"
       onClick={onClose}
     >
@@ -204,10 +207,11 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       >
         {/* Campo de Entrada estilo Raycast */}
         <div className="relative flex items-center px-4 py-3.5 border-b border-border-subtle/80 bg-surface-panel/90">
-          <Search className="w-5 h-5 text-hydro mr-3 shrink-0" />
+          <Search className="w-5 h-5 text-hydro mr-3 shrink-0" aria-hidden="true" />
           <input
             ref={inputRef}
             type="text"
+            aria-label="Buscar páginas, cidades e alertas"
             placeholder="Buscar páginas, cidades (Brasília, Manaus...), alertas..."
             value={query}
             onChange={e => {
@@ -224,7 +228,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         </div>
 
         {/* Lista de Resultados */}
-        <div className="max-h-80 overflow-y-auto p-2 divide-y divide-transparent">
+        <div className="max-h-80 overflow-y-auto p-2 divide-y divide-transparent" role="listbox" aria-label="Resultados da busca">
           {filtered.length > 0 ? (
             filtered.map((item, idx) => {
               const Icon = item.icon;
@@ -233,6 +237,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               return (
                 <div
                   key={item.id}
+                  role="option"
+                  aria-selected={isSelected}
                   onClick={item.action}
                   onMouseEnter={() => setSelectedIndex(idx)}
                   className={`flex items-center justify-between p-2.5 rounded-xl cursor-pointer transition-all ${

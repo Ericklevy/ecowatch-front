@@ -165,7 +165,11 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
       <aside className="fixed inset-x-0 bottom-14 max-h-[75vh] md:max-h-full md:bottom-0 md:static md:w-[420px] md:h-full bg-surface-panel/98 backdrop-blur border-t md:border-t-0 md:border-l border-border-subtle flex flex-col z-40 md:z-20 overflow-y-auto shadow-2xl rounded-t-2xl md:rounded-none">
         {/* Puxador celular */}
         <div 
+          role="button"
+          tabIndex={0}
+          aria-label="Fechar painel"
           onClick={onClose}
+          onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClose(); } }}
           className="w-12 h-1.5 bg-zinc-500/80 hover:bg-zinc-400 rounded-full mx-auto my-2.5 md:hidden shrink-0 cursor-pointer active:scale-95 transition-all" 
           title="Toque para fechar"
         />
@@ -201,6 +205,7 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
 
         <button
           onClick={onClose}
+          aria-label="Fechar painel de telemetria"
           className="p-1 rounded text-zinc-400 hover:text-white hover:bg-surface-card transition-colors shrink-0"
           title="Fechar painel"
         >
