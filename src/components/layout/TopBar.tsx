@@ -116,7 +116,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 cursor-pointer ${
               activeTab === 'map'
                 ? 'bg-hydro/20 text-hydro border border-hydro/40 shadow-[0_0_12px_rgba(56,189,248,0.2)] font-semibold scale-[1.02]'
-                : 'text-zinc-400 hover:text-white hover:bg-surface-card'
+                : 'text-zinc-400 hover:text-white hover:bg-surface-card/80 transition-all duration-300 ease-in-out'
             }`}
           >
             <Map className="w-3.5 h-3.5" />
@@ -128,13 +128,13 @@ export const TopBar: React.FC<TopBarProps> = ({
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 relative cursor-pointer ${
               activeTab === 'alerts'
                 ? 'bg-hydro/20 text-hydro border border-hydro/40 shadow-[0_0_12px_rgba(56,189,248,0.2)] font-semibold scale-[1.02]'
-                : 'text-zinc-400 hover:text-white hover:bg-surface-card'
+                : 'text-zinc-400 hover:text-white hover:bg-surface-card/80 transition-all duration-300 ease-in-out'
             }`}
           >
             <AlertTriangle className="w-3.5 h-3.5" />
             <span>Alertas</span>
             {unreadAlertsCount > 0 && (
-              <span className="w-4 h-4 rounded-full bg-critical text-[10px] text-white flex items-center justify-center font-mono font-bold leading-none animate-pulse">
+              <span className="w-4 h-4 rounded-full bg-critical text-[10px] text-white flex items-center justify-center font-mono font-bold leading-none animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.6)]">
                 {unreadAlertsCount}
               </span>
             )}
@@ -145,7 +145,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 cursor-pointer ${
               activeTab === 'forecast'
                 ? 'bg-hydro/20 text-hydro border border-hydro/40 shadow-[0_0_12px_rgba(56,189,248,0.2)] font-semibold scale-[1.02]'
-                : 'text-zinc-400 hover:text-white hover:bg-surface-card'
+                : 'text-zinc-400 hover:text-white hover:bg-surface-card/80 transition-all duration-300 ease-in-out'
             }`}
           >
             <TrendingUp className="w-3.5 h-3.5" />
@@ -157,7 +157,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 cursor-pointer ${
               activeTab === 'reports'
                 ? 'bg-hydro/20 text-hydro border border-hydro/40 shadow-[0_0_12px_rgba(56,189,248,0.2)] font-semibold scale-[1.02]'
-                : 'text-zinc-400 hover:text-white hover:bg-surface-card'
+                : 'text-zinc-400 hover:text-white hover:bg-surface-card/80 transition-all duration-300 ease-in-out'
             }`}
           >
             <FileText className="w-3.5 h-3.5" />
@@ -169,7 +169,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 cursor-pointer ${
               activeTab === 'news'
                 ? 'bg-hydro/20 text-hydro border border-hydro/40 shadow-[0_0_12px_rgba(56,189,248,0.2)] font-semibold scale-[1.02]'
-                : 'text-zinc-400 hover:text-white hover:bg-surface-card'
+                : 'text-zinc-400 hover:text-white hover:bg-surface-card/80 transition-all duration-300 ease-in-out'
             }`}
           >
             <Newspaper className="w-3.5 h-3.5" />
@@ -181,7 +181,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 cursor-pointer ${
               activeTab === 'glossary'
                 ? 'bg-hydro/20 text-hydro border border-hydro/40 shadow-[0_0_12px_rgba(56,189,248,0.2)] font-semibold scale-[1.02]'
-                : 'text-zinc-400 hover:text-white hover:bg-surface-card'
+                : 'text-zinc-400 hover:text-white hover:bg-surface-card/80 transition-all duration-300 ease-in-out'
             }`}
           >
             <BookOpen className="w-3.5 h-3.5" />
@@ -193,7 +193,7 @@ export const TopBar: React.FC<TopBarProps> = ({
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 cursor-pointer ${
               activeTab === 'about'
                 ? 'bg-hydro/20 text-hydro border border-hydro/40 shadow-[0_0_12px_rgba(56,189,248,0.2)] font-semibold scale-[1.02]'
-                : 'text-zinc-400 hover:text-white hover:bg-surface-card'
+                : 'text-zinc-400 hover:text-white hover:bg-surface-card/80 transition-all duration-300 ease-in-out'
             }`}
           >
             <Info className="w-3.5 h-3.5" />
@@ -221,7 +221,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* Seletor de Cidade (Acessível no Mobile e Desktop) */}
         {selectedCity && onSelectCity && (
-          <div className="flex items-center gap-1 sm:gap-1.5 bg-surface-card border border-border-subtle rounded px-1.5 sm:px-2 py-1 text-xs font-mono">
+          <div className="flex items-center gap-1 sm:gap-1.5 bg-surface-card border border-border-subtle rounded px-1.5 sm:px-2 py-1 text-xs font-mono shadow-sm hover:shadow-md hover:border-hydro/50 active:scale-95 transition-all duration-200">
             <MapPin className="w-3 h-3 text-hydro shrink-0" />
             <select
               value={selectedCity.slug}
@@ -258,7 +258,7 @@ export const TopBar: React.FC<TopBarProps> = ({
           disabled={syncing}
           aria-label="Forçar sincronização de telemetria"
           title="Forçar sincronização de telemetria"
-          className="p-1.5 rounded border border-border-subtle bg-surface-card text-zinc-400 hover:text-hydro hover:border-hydro/40 transition-colors disabled:opacity-50"
+          className="p-1.5 rounded border border-border-subtle bg-surface-card text-zinc-400 hover:text-hydro shadow-sm hover:shadow-md hover:border-hydro/50 active:scale-95 transition-all duration-200 disabled:opacity-50"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin text-hydro' : ''}`} />
         </button>
@@ -283,7 +283,7 @@ export const TopBar: React.FC<TopBarProps> = ({
         >
           <Bell className="w-3.5 h-3.5" />
           {unreadAlertsCount > 0 && (
-            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-critical" />
+            <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-critical shadow-[0_0_8px_rgba(239,68,68,0.6)]" />
           )}
         </button>
       </div>
