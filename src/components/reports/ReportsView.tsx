@@ -127,7 +127,20 @@ export const ReportsView: React.FC = () => {
     };
   }, [selectedCity, cityAlerts, selectedPeriod]);
 
-  // Função para exportar CSV
+  /**
+   * Sanitiza valores de células CSV prevenindo Formula Injection (CWE-1236).
+   * Adiciona citação simples antes de caracteres executáveis (=, +, -, @, \t, \r).
+   */
+  const sanitizeCsvCell = (value: unknown): string => {
+    if (value === null || value === undefined) return '""';
+    let str = String(value);
+    if (/^[=+@\t\r-]/.test(str)) {
+      str = `'${str}`;
+    }
+    return `"${str.replace(/"/g, '""')}"`;
+  };
+
+  // Função para exportar CSV (protegida contra CSV Formula Injection)
   const handleExportCSV = () => {
     const headers = ['ID', 'Data/Hora UTC', 'Capital', 'UF', 'Tipo de Evento', 'Severidade', 'Mensagem'];
     const rows = cityAlerts.map(a => [
@@ -137,11 +150,14 @@ export const ReportsView: React.FC = () => {
       a.estado,
       formatAlertTypeName(a.tipoAlerta),
       a.tipoAlerta.includes('FLOOD') || a.tipoAlerta.includes('FIRE') ? 'CRÍTICO' : 'ALERTA',
-      `"${a.mensagem.replace(/"/g, '""')}"`
+      a.mensagem
     ]);
 
     const csvContent = 'data:text/csv;charset=utf-8,' + 
-      [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+      [
+        headers.map(sanitizeCsvCell).join(','),
+        ...rows.map(row => row.map(sanitizeCsvCell).join(','))
+      ].join('\n');
 
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
