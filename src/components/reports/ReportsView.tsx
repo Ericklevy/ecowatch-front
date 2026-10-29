@@ -127,29 +127,41 @@ export const ReportsView: React.FC = () => {
     };
   }, [selectedCity, cityAlerts, selectedPeriod]);
 
-  // Função para exportar CSV
+  // Sanitiza célula CSV para prevenir CSV Formula Injection (OWASP) e formatação incorreta
+  const sanitizeCsvCell = (value: string | number | undefined | null): string => {
+    if (value === null || value === undefined) return '""';
+    let str = String(value);
+    // Neutraliza caracteres de execução de fórmula (=, +, -, @, tab, CR)
+    if (/^[\=\+\-\@\t\r]/.test(str.trim())) {
+      str = "'" + str;
+    }
+    return `"${str.replace(/"/g, '""')}"`;
+  };
+
+  // Função para exportar CSV seguro (previne CSV Formula Injection e vazamento de caracteres)
   const handleExportCSV = () => {
     const headers = ['ID', 'Data/Hora UTC', 'Capital', 'UF', 'Tipo de Evento', 'Severidade', 'Mensagem'];
+    const sanitizedHeaders = headers.map(sanitizeCsvCell).join(',');
     const rows = cityAlerts.map(a => [
-      a.id,
-      new Date(a.dataHoraAlerta).toISOString(),
-      a.municipio,
-      a.estado,
-      formatAlertTypeName(a.tipoAlerta),
-      a.tipoAlerta.includes('FLOOD') || a.tipoAlerta.includes('FIRE') ? 'CRÍTICO' : 'ALERTA',
-      `"${a.mensagem.replace(/"/g, '""')}"`
-    ]);
+      sanitizeCsvCell(a.id),
+      sanitizeCsvCell(new Date(a.dataHoraAlerta).toISOString()),
+      sanitizeCsvCell(a.municipio),
+      sanitizeCsvCell(a.estado),
+      sanitizeCsvCell(formatAlertTypeName(a.tipoAlerta)),
+      sanitizeCsvCell(a.tipoAlerta.includes('FLOOD') || a.tipoAlerta.includes('FIRE') ? 'CRÍTICO' : 'ALERTA'),
+      sanitizeCsvCell(a.mensagem)
+    ].join(','));
 
-    const csvContent = 'data:text/csv;charset=utf-8,' + 
-      [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
-
-    const encodedUri = encodeURI(csvContent);
+    const csvContent = [sanitizedHeaders, ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.setAttribute('href', encodedUri);
+    link.setAttribute('href', url);
     link.setAttribute('download', `ecowatch-relatorio-${selectedCity.slug}-${selectedPeriod}dias.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   // Função para imprimir / Gerar PDF nativo
