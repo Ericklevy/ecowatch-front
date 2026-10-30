@@ -8,30 +8,42 @@ const READ_MODEL_URL        = import.meta.env.VITE_READ_MODEL_URL        || '';
 const ALERT_SERVICE_URL     = import.meta.env.VITE_ALERT_SERVICE_URL     || '';
 const INGESTION_SERVICE_URL = import.meta.env.VITE_INGESTION_SERVICE_URL || '';
 
-export async function fetchCityWeather(citySlug: string): Promise<WeatherReading> {
-  // 1. Tenta buscar do backend (alert-service Redis cache na Azure)
-  if (ALERT_SERVICE_URL) {
+export async function fetchCityWeather(citySlug: string, forceLive: boolean = false): Promise<WeatherReading> {
+  // 1. Tenta buscar do backend (alert-service Redis cache na Azure), a menos que forceLive=true
+  if (!forceLive && ALERT_SERVICE_URL) {
     try {
       const res = await fetch(`${ALERT_SERVICE_URL}/api/cache/${encodeURIComponent(citySlug)}`, {
         signal: AbortSignal.timeout(2000)
       });
-      if (res.ok) return await res.json();
+      if (res.ok) {
+        const cached: WeatherReading = await res.json();
+        // Só aproveita o cache se tiver menos de 45 minutos para garantir temperatura condizente
+        if (cached && cached.timestamp) {
+          const ageMinutes = (Date.now() - new Date(cached.timestamp).getTime()) / 60000;
+          if (ageMinutes < 45) {
+            return cached;
+          }
+        }
+      }
     } catch { /* fallback para satélite direto */ }
   }
 
-  // 2. Busca direto da Open-Meteo ao vivo (mesma fonte oficial que o backend consome)
+  // 2. Busca direto da Open-Meteo ao vivo (garante graus atualizados para o horário exato sem cache)
   const city = MONITORED_CITIES.find(c => 
     c.slug.toLowerCase() === citySlug.toLowerCase() || 
     c.nome.toLowerCase() === citySlug.toLowerCase()
   );
   if (city) {
     try {
+      const cb = Date.now();
       const [weatherRes, aqRes] = await Promise.all([
-        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lng}&current=temperature_2m,relative_humidity_2m,precipitation&timezone=America/Sao_Paulo`, {
-          signal: AbortSignal.timeout(3500)
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lng}&current=temperature_2m,relative_humidity_2m,precipitation&timezone=America/Sao_Paulo&_cb=${cb}`, {
+          signal: AbortSignal.timeout(4000),
+          cache: 'no-store'
         }),
-        fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${city.lat}&longitude=${city.lng}&current=pm10,pm2_5`, {
-          signal: AbortSignal.timeout(3500)
+        fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${city.lat}&longitude=${city.lng}&current=pm10,pm2_5&_cb=${cb}`, {
+          signal: AbortSignal.timeout(4000),
+          cache: 'no-store'
         }).catch(() => null)
       ]);
 

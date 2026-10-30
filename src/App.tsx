@@ -43,12 +43,12 @@ export const App: React.FC = () => {
   }, []);
 
   // ── Função unificada para carregar e atualizar leituras ao vivo ──────────
-  const loadData = async () => {
+  const loadData = async (forceLive: boolean = false) => {
     let anyOnline = false;
     const updatedReadings: Record<string, WeatherReading> = { ...MOCK_WEATHER_READINGS };
 
     const results = await Promise.allSettled(
-      MONITORED_CITIES.map(city => fetchCityWeather(city.slug))
+      MONITORED_CITIES.map(city => fetchCityWeather(city.slug, forceLive))
     );
 
     results.forEach((res, index) => {
@@ -156,7 +156,7 @@ export const App: React.FC = () => {
         selectedCity={selectedCity}
         onSelectCity={handleSelectCity}
         onOpenCommandPalette={() => setIsCommandPaletteOpen(true)}
-        onRefreshAll={loadData}
+        onRefreshAll={() => loadData(true)}
       />
 
       {/* Fita de Telemetria e Operações ao Vivo (Live Status Ticker) */}

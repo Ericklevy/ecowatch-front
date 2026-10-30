@@ -90,7 +90,7 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
 
       // 2. Imediatamente busca a leitura climática mais recente (via cache ou satélite direto) e notícias locais
       const [newReading, dashboard, newsRes] = await Promise.all([
-        fetchCityWeather(city.slug),
+        fetchCityWeather(city.slug, true),
         fetchCityDashboard(city.slug),
         fetchNews({ estado: city.estado, size: 3 }).catch(() => null)
       ]);
