@@ -223,11 +223,21 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
               ? 'bg-hydro/10 border-hydro/30 text-hydro cursor-wait'
               : 'bg-surface-card border-border-subtle text-zinc-300 hover:border-hydro/40 hover:text-hydro hover:bg-hydro/5'
           } disabled:opacity-70`}
-          title="Busca dados frescos dos satélites NASA/Open-Meteo/INPE/ANA agora"
+          title="Busca dados frescos dos satélites NASA/Open-Meteo/INPE/ANA agora (Rotina agendada da rede: 07h, 13h e 19h BRT)"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin text-hydro' : ''}`} />
           <span>{syncing ? 'Sincronizando com satélites...' : `↻ Atualizar dados de ${city.nome}`}</span>
         </button>
+
+        {/* Informação sobre os horários de atualização */}
+        <div className="mt-2 flex items-center justify-between text-[11px] font-mono text-zinc-500 px-1.5 py-1 bg-surface-base/60 rounded border border-border-subtle/50">
+          <span title="Horários em que a rotina na nuvem coleta telemetria de todas as 27 capitais">
+            🕒 Rede: 07h, 13h e 19h BRT
+          </span>
+          <span title="Modelos meteorológicos e estações consolidam novas leituras a cada 1 hora">
+            🛰️ Satélites: a cada 1h
+          </span>
+        </div>
 
         {/* Feedback da sincronização */}
         {syncMsg && (

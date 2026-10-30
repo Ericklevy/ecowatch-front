@@ -30,9 +30,13 @@ export const StatusBar: React.FC<StatusBarProps> = ({ isBackendOnline, lastUpdat
 
         <span className="text-zinc-600">·</span>
 
-        <span className="flex items-center gap-1.5 text-zinc-400">
+        <span 
+          className="flex items-center gap-1.5 text-zinc-400 cursor-help"
+          title="Sincronização agendada da rede: 07:00, 13:00 e 19:00 BRT. Leituras horárias de satélites (Open-Meteo/NASA)."
+        >
           <ShieldCheck className="w-3.5 h-3.5 text-nominal" />
-          <span>Pipeline // Ciclo: 1h</span>
+          <span className="hidden sm:inline">Sincronização: 07h, 13h, 19h (Ciclos de 1h)</span>
+          <span className="sm:hidden">Sinc: 07h, 13h, 19h</span>
         </span>
 
         {lastUpdate && (

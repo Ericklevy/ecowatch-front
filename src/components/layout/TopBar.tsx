@@ -256,8 +256,8 @@ export const TopBar: React.FC<TopBarProps> = ({
         <button
           onClick={handleSync}
           disabled={syncing}
-          aria-label="Forçar sincronização de telemetria"
-          title="Forçar sincronização de telemetria"
+          aria-label="Forçar sincronização de telemetria e notícias"
+          title="Forçar sincronização imediata (Rotina agendada da rede: 07h, 13h, 19h BRT · Satélites: a cada 1h)"
           className="p-1.5 rounded border border-border-subtle bg-surface-card text-zinc-400 hover:text-hydro shadow-sm hover:shadow-md hover:border-hydro/50 active:scale-95 transition-all duration-200 disabled:opacity-50"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${syncing ? 'animate-spin text-hydro' : ''}`} />
