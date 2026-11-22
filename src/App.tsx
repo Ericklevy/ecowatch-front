@@ -9,6 +9,7 @@ import { ForecastView } from './components/forecast/ForecastView';
 import { ReportsView } from './components/reports/ReportsView';
 import { NewsView } from './components/news/NewsView';
 import { AiAssistantView } from './components/ai/AiAssistantView';
+import { AiFloatingAssistant } from './components/ai/AiFloatingAssistant';
 import { GlossaryView } from './components/glossary/GlossaryView';
 import { AboutView } from './components/about/AboutView';
 import { LandingPage } from './components/landing/LandingPage';
@@ -192,10 +193,13 @@ export const App: React.FC = () => {
         {activeTab === 'forecast' && <ForecastView />}
         {activeTab === 'reports' && <ReportsView />}
         {activeTab === 'news' && <NewsView />}
-        {activeTab === 'ai' && <AiAssistantView />}
+        {activeTab === 'ai' && <AiAssistantView cidade={selectedCity} />}
         {activeTab === 'glossary' && <GlossaryView />}
         {activeTab === 'about' && <AboutView />}
       </main>
+
+      {/* Gota: assistente de IA flutuante (some na aba da IA, que já é a versão em tela cheia) */}
+      {activeTab !== 'ai' && <AiFloatingAssistant cidade={selectedCity} onExpand={() => setActiveTab('ai')} />}
 
       {/* ── Barra de Navegação Inferior (Mobile Bottom Navigation) ── */}
       <nav className="md:hidden h-16 bg-surface-panel/98 backdrop-blur border-t border-border-subtle flex items-center justify-around px-1 z-50 shrink-0 select-none shadow-[0_-4px_20px_rgba(0,0,0,0.5)]">
