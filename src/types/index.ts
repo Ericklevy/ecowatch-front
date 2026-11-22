@@ -102,6 +102,14 @@ export interface AiAskResponse {
   totalFontesEncontradas: number;
   modelo: string;
   tempoRespostaMs: number;
+  limiteAtingido?: boolean;
+  cidadesConsultadas?: string[];
+  periodoFontes?: string | null;
+}
+
+export interface AiHistoricoItem {
+  autor: 'usuario' | 'ia';
+  texto: string;
 }
 
 export interface AiStatusResponse {

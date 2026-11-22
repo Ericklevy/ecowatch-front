@@ -1,4 +1,4 @@
-import { WeatherReading, AlertDTO, PrevisaoDTO, DashboardDTO, NewsItem, RagSourceItem, AiAskResponse, AiStatusResponse } from '../types';
+import { WeatherReading, AlertDTO, PrevisaoDTO, DashboardDTO, NewsItem, AiAskResponse, AiStatusResponse, AiHistoricoItem } from '../types';
 import { MOCK_WEATHER_READINGS, MOCK_ALERTS, MOCK_FORECASTS, MONITORED_CITIES } from '../data/mockData';
 import { MOCK_NEWS } from '../data/newsData';
 import { sanitizeNewsList } from '../utils/newsSanitizer';
@@ -263,61 +263,44 @@ export async function triggerNewsSync(): Promise<{ success: boolean; count: numb
 }
 
 // ── Assistente de IA & RAG ───────────────────────────────────────────────
+export class AiIndisponivelError extends Error {
+  constructor(public motivo: 'offline' | 'erro') {
+    super(motivo);
+  }
+}
+
+/**
+ * Pergunta à IA. Não inventa resposta: se o servidor não responder, lança AiIndisponivelError
+ * e a tela mostra o aviso com botão de tentar de novo.
+ */
 export async function askEcoWatchAi(
   pergunta: string,
   categoria?: string,
   estado?: string,
-  topK: number = 4
+  topK: number = 4,
+  historico: AiHistoricoItem[] = []
 ): Promise<AiAskResponse> {
-  if (READ_MODEL_URL) {
-    try {
-      const res = await fetch(`${READ_MODEL_URL}/api/v1/ai/ask`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          pergunta,
-          categoria: categoria && categoria !== 'ALL' ? categoria : undefined,
-          estado: estado && estado !== 'all' ? estado : undefined,
-          topK
-        }),
-        signal: AbortSignal.timeout(20000)
-      });
-      if (res.ok) {
-        return await res.json();
-      }
-    } catch { /* fallback */ }
+  if (!READ_MODEL_URL) throw new AiIndisponivelError('offline');
+  let res: Response;
+  try {
+    res = await fetch(`${READ_MODEL_URL}/api/v1/ai/ask`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pergunta,
+        categoria: categoria && categoria !== 'ALL' ? categoria : undefined,
+        estado: estado && estado !== 'all' ? estado : undefined,
+        topK,
+        historico: historico.slice(-4)
+      }),
+      // O servidor gratuito "dorme"; a primeira chamada pode levar uns 40 s para acordar
+      signal: AbortSignal.timeout(60000)
+    });
+  } catch {
+    throw new AiIndisponivelError('offline');
   }
-
-  // Fallback simulado caso o backend esteja em cold start ou offline
-  await new Promise(r => setTimeout(r, 600));
-  const normalizedQuery = pergunta.toLowerCase();
-  const matchedNews = MOCK_NEWS.filter(n =>
-    n.titulo.toLowerCase().includes(normalizedQuery) ||
-    n.resumo.toLowerCase().includes(normalizedQuery) ||
-    (n.municipio && n.municipio.toLowerCase().includes(normalizedQuery))
-  ).slice(0, topK);
-
-  const sources: RagSourceItem[] = (matchedNews.length > 0 ? matchedNews : MOCK_NEWS.slice(0, 3)).map((n, i) => ({
-    id: i + 1,
-    titulo: n.titulo,
-    resumo: n.resumo,
-    fonte: n.fonte,
-    url: n.url,
-    dataHora: n.dataHora,
-    categoria: n.categoria,
-    municipio: n.municipio,
-    estado: n.estado,
-    similaridade: 0.88
-  }));
-
-  return {
-    pergunta,
-    resposta: `Com base nas informações consolidadas pelo EcoWatch Brasil, foram localizadas ${sources.length} matérias oficiais pertinentes à sua pesquisa. As equipes de Defesa Civil e monitoramento ambiental apontam ações contínuas nas regiões afetadas. Consulte as referências abaixo para acessar os boletins na íntegra.`,
-    fontes: sources,
-    totalFontesEncontradas: sources.length,
-    modelo: 'ecowatch-rag-client-fallback',
-    tempoRespostaMs: 620
-  };
+  if (!res.ok) throw new AiIndisponivelError('erro');
+  return await res.json();
 }
 
 export async function fetchAiStatus(): Promise<AiStatusResponse | null> {
@@ -333,20 +316,3 @@ export async function fetchAiStatus(): Promise<AiStatusResponse | null> {
   }
   return null;
 }
-
-export async function syncAiEmbeddings(): Promise<{ success: boolean; message: string }> {
-  if (READ_MODEL_URL) {
-    try {
-      const res = await fetch(`${READ_MODEL_URL}/api/v1/ai/sync`, {
-        method: 'POST',
-        signal: AbortSignal.timeout(25000)
-      });
-      if (res.ok) {
-        const data = await res.json();
-        return { success: true, message: data.message || 'Embeddings sincronizados com sucesso!' };
-      }
-    } catch { /* offline */ }
-  }
-  return { success: false, message: 'Falha ao sincronizar embeddings com a nuvem.' };
-}
-
