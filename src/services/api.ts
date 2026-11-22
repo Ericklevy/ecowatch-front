@@ -1,4 +1,16 @@
-import { WeatherReading, AlertDTO, PrevisaoDTO, DashboardDTO, NewsItem, AiAskResponse, AiStatusResponse, AiHistoricoItem } from '../types';
+import {
+  WeatherReading,
+  AlertDTO,
+  PrevisaoDTO,
+  DashboardDTO,
+  NewsItem,
+  AiAskResponse,
+  AiStatusResponse,
+  AiHistoricoItem,
+  RankingEmissaoItem,
+  EmissaoEstadoItem,
+  MunicipioEmissaoDetalhe
+} from '../types';
 import { MOCK_WEATHER_READINGS, MOCK_ALERTS, MOCK_FORECASTS, MONITORED_CITIES } from '../data/mockData';
 import { MOCK_NEWS } from '../data/newsData';
 import { sanitizeNewsList } from '../utils/newsSanitizer';
@@ -334,3 +346,69 @@ export async function fetchAiStatus(): Promise<AiStatusResponse | null> {
   }
   return null;
 }
+
+// ── Emissões Municipais e Estaduais (SEEG 14.0) ────────────────────────────
+
+export async function fetchEmissoesRanking(
+  gas: string = 'CO2e',
+  uf?: string,
+  ano?: number,
+  limite: number = 10
+): Promise<RankingEmissaoItem[]> {
+  if (READ_MODEL_URL) {
+    try {
+      const p = new URLSearchParams();
+      p.set('gas', gas);
+      if (uf && uf !== 'ALL') p.set('uf', uf);
+      if (ano) p.set('ano', String(ano));
+      p.set('limite', String(limite));
+
+      const res = await fetch(`${READ_MODEL_URL}/api/emissoes/ranking?${p.toString()}`, {
+        signal: AbortSignal.timeout(8000)
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch { /* fallback suave */ }
+  }
+  return [];
+}
+
+export async function fetchEmissoesEstados(
+  gas: string = 'CO2e',
+  ano?: number
+): Promise<EmissaoEstadoItem[]> {
+  if (READ_MODEL_URL) {
+    try {
+      const p = new URLSearchParams();
+      p.set('gas', gas);
+      if (ano) p.set('ano', String(ano));
+
+      const res = await fetch(`${READ_MODEL_URL}/api/emissoes/estados?${p.toString()}`, {
+        signal: AbortSignal.timeout(8000)
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch { /* fallback */ }
+  }
+  return [];
+}
+
+export async function fetchEmissoesMunicipio(
+  nome: string,
+  gas: string = 'CO2e'
+): Promise<MunicipioEmissaoDetalhe | null> {
+  if (READ_MODEL_URL) {
+    try {
+      const res = await fetch(`${READ_MODEL_URL}/api/emissoes/municipio/${encodeURIComponent(nome)}?gas=${encodeURIComponent(gas)}`, {
+        signal: AbortSignal.timeout(8000)
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch { /* fallback */ }
+  }
+  return null;
+}
+

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Map, AlertTriangle, TrendingUp, FileText, RefreshCw, Bell, Radio, MapPin, Menu, X, ChevronRight, Newspaper, Info, BookOpen, Search, Sparkles } from 'lucide-react';
+import { Map, AlertTriangle, TrendingUp, FileText, RefreshCw, Bell, Radio, MapPin, Menu, X, ChevronRight, Newspaper, Info, BookOpen, Search, Sparkles, Factory } from 'lucide-react';
 import { triggerManualSync, triggerNewsSync } from '../../services/api';
 import { CityInfo } from '../../types';
 import { MONITORED_CITIES, ALL_BRAZIL_CITY } from '../../data/mockData';
 
-export type ActiveTab = 'map' | 'alerts' | 'forecast' | 'reports' | 'news' | 'ai' | 'about' | 'glossary';
+export type ActiveTab = 'map' | 'alerts' | 'forecast' | 'reports' | 'emissions' | 'news' | 'ai' | 'about' | 'glossary';
 
 interface TopBarProps {
   activeTab: ActiveTab;
@@ -162,6 +162,18 @@ export const TopBar: React.FC<TopBarProps> = ({
           >
             <FileText className="w-3.5 h-3.5" />
             <span>Relatórios</span>
+          </button>
+
+          <button
+            onClick={() => onTabChange('emissions')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all duration-200 cursor-pointer ${
+              activeTab === 'emissions'
+                ? 'bg-hydro/20 text-hydro border border-hydro/40 shadow-[0_0_12px_rgba(56,189,248,0.2)] font-semibold scale-[1.02]'
+                : 'text-zinc-400 hover:text-white hover:bg-surface-card/80 transition-all duration-300 ease-in-out'
+            }`}
+          >
+            <Factory className="w-3.5 h-3.5" />
+            <span>Emissões</span>
           </button>
 
           <button
@@ -367,6 +379,21 @@ export const TopBar: React.FC<TopBarProps> = ({
             <div>
               <div className="text-xs font-mono">Relatórios</div>
               <div className="text-[10px] text-zinc-400">PDF & CSV</div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => { onTabChange('emissions'); setIsMobileMenuOpen(false); }}
+            className={`flex items-center gap-2.5 p-3 rounded-lg border text-left transition-all ${
+              activeTab === 'emissions'
+                ? 'bg-hydro/15 text-hydro border-hydro/40 font-bold'
+                : 'bg-surface-card border-border-subtle text-zinc-300 hover:text-white'
+            }`}
+          >
+            <Factory className="w-4 h-4 text-emerald-400" />
+            <div>
+              <div className="text-xs font-mono">Emissões</div>
+              <div className="text-[10px] text-zinc-400">SEEG 14.0</div>
             </div>
           </button>
 

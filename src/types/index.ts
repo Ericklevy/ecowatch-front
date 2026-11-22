@@ -123,4 +123,44 @@ export interface AiStatusResponse {
   modeloPadrao: string;
 }
 
+// ── Emissões de Gases de Efeito Estufa (SEEG) ─────────────────────────────
+export interface RankingEmissaoItem {
+  codigoIbge: string;
+  municipio: string;
+  uf: string;
+  ano: number;
+  gas: string;
+  emissaoTotal: number;
+  setorPrincipal: string;
+  percentualSetorPrincipal: number;
+  explicacaoSetor: string;
+  quebraPorSetor: Record<string, number>;
+}
+
+export interface EmissaoEstadoItem {
+  uf: string;
+  ano: number;
+  gas: string;
+  emissaoTotal: number;
+  setorPrincipal: string;
+  percentualSetorPrincipal: number;
+  explicacaoSetor: string;
+  quebraPorSetor: Record<string, number>;
+}
+
+export interface MunicipioEmissaoDetalhe {
+  codigoIbge: string;
+  municipio: string;
+  uf: string;
+  gas: string;
+  setorDominante: string;
+  explicacaoSetorDominante: string;
+  serieHistorica: {
+    ano: number;
+    emissaoTotal: number;
+    quebraPorSetor: Record<string, number>;
+  }[];
+}
+
+
 

@@ -7,6 +7,7 @@ import { TelemetryDrawer } from './components/map/TelemetryDrawer';
 import { AlertsView } from './components/alerts/AlertsView';
 import { ForecastView } from './components/forecast/ForecastView';
 import { ReportsView } from './components/reports/ReportsView';
+import { EmissionsView } from './components/emissions/EmissionsView';
 import { NewsView } from './components/news/NewsView';
 import { AiAssistantView } from './components/ai/AiAssistantView';
 import { AiFloatingAssistant } from './components/ai/AiFloatingAssistant';
@@ -192,6 +193,7 @@ export const App: React.FC = () => {
         {activeTab === 'alerts' && <AlertsView />}
         {activeTab === 'forecast' && <ForecastView />}
         {activeTab === 'reports' && <ReportsView />}
+        {activeTab === 'emissions' && <EmissionsView />}
         {activeTab === 'news' && <NewsView />}
         {activeTab === 'ai' && <AiAssistantView cidade={selectedCity} />}
         {activeTab === 'glossary' && <GlossaryView />}

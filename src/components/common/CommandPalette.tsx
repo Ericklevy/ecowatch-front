@@ -13,7 +13,8 @@ import {
   ChevronRight,
   Download,
   Printer,
-  ShieldAlert
+  ShieldAlert,
+  Factory
 } from 'lucide-react';
 import { ActiveTab } from '../layout/TopBar';
 import { MONITORED_CITIES, ALL_BRAZIL_CITY } from '../../data/mockData';
@@ -80,6 +81,14 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       subtitle: 'Boletins técnicos oficiais consolidados',
       icon: FileText,
       action: () => { onTabChange('reports'); onClose(); }
+    },
+    {
+      id: 'tab-emissions',
+      group: 'Navegação',
+      title: 'Emissões de Gases de Efeito Estufa (SEEG)',
+      subtitle: 'Ranking de municípios e estados por CO₂e e metano (CH₄)',
+      icon: Factory,
+      action: () => { onTabChange('emissions'); onClose(); }
     },
     {
       id: 'tab-news',
