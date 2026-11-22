@@ -29,16 +29,23 @@ O backend é uma arquitetura de microsserviços em **Java 21 + Spring Boot 3** c
 | Fonte | Dados |
 |---|---|
 | **NASA POWER** | Temperatura, Radiação Solar, Umidade |
-| **Open-Meteo** | Clima Base + Qualidade do Ar (PM2.5, PM10) |
+| **Open-Meteo / Copernicus CAMS** | Clima Base, Qualidade do Ar (PM2.5, PM10) e Gases de Efeito Estufa (CH₄, CO₂, CO) |
 | **INPE BDQueimadas** | Focos de Incêndio (Satélites MODIS/GOES-16) |
 | **ANA HidroWeb** | Cotas Fluviométricas (Nível dos Rios em metros) |
 | **CEMADEN** | Alertas de Enxurrada e Deslizamentos |
+| **SEEG 14.0 (Observatório do Clima)** | Inventário Histórico Municipal de Emissões de Gases de Efeito Estufa (2019–2023) |
+| **Climate TRACE v6** | Maiores Ativos e Instalações Emissoras Georreferenciadas no Brasil |
 
 ### Endpoints Consumidos
 
 ```
 GET  /api/dashboard/{municipio}       → DashboardDTO (alertas reais + previsões consolidadas)
 GET  /api/cache/{municipio}           → WeatherReading (leitura fresca em cache Redis)
+GET  /api/emissoes/ranking            → Ranking municipal de emissões SEEG (por gás e UF)
+GET  /api/emissoes/estados            → Total de emissões consolidadas por UF
+GET  /api/emissoes/municipio/{nome}   → Série histórica e quebra setorial de emissões
+GET  /api/emissoes/fontes             → Top instalações emissoras Climate TRACE
+POST /api/v1/ai/ask                   → Assistente IA (Gota) RAG com contexto integrado
 POST /api/scheduler/trigger           → Forçar ingestão de telemetria nos satélites
 POST /api/scheduler/trigger/{cidade}  → Coleta sob demanda para uma capital específica
 ```
@@ -88,9 +95,18 @@ Ao clicar em qualquer capital, abre o **painel de telemetria** (Drawer lateral n
 - Cota hídrica do rio da ANA (barra de progresso até cota de emergência)
 - Clima em tempo real (temperatura, umidade, chuva acumulada)
 - Qualidade do ar (PM2.5 e PM10 vs padrão CONAMA)
+- **Gases de Efeito Estufa**: Concentração atmosférica de Metano (CH₄), Dióxido de Carbono (CO₂) e Monóxido de Carbono (CO) do modelo Copernicus CAMS
 - Focos de queimadas ativos (INPE MODIS)
 - Histórico recente de alertas da capital selecionada
 - Exportação de boletim operacional em JSON
+
+**Camadas de Dados no Mapa:**
+- 🌊 Nível dos Rios (ANA HidroWeb)
+- 🔥 Focos de Queimadas (INPE BDQueimadas)
+- 🦟 Risco de Dengue (Analytics)
+- 🌫️ Qualidade do Ar (PM2.5 / CONAMA)
+- 💨 **Gases (CH₄ / CO₂)**: Concentração atmosférica de metano nas 27 capitais por quintis relativos de cor (Copernicus CAMS)
+- 🏭 **Grandes Emissores**: Top 200 instalações pontuais de alta emissão no Brasil com ícones por setor e raio proporcional ao volume (Climate TRACE v6)
 
 ### Aba 2 — Matriz Geral de Alertas
 Tabela técnica densa com os 10 tipos de alerta gerados pelo `alert-service` do backend:
@@ -99,12 +115,50 @@ Tabela técnica densa com os 10 tipos de alerta gerados pelo `alert-service` do 
 Filtros por tipo de evento, busca textual e seletor por capital monitorada.
 
 ### Aba 3 — Comparativo de Previsões e Riscos (Próximos 3 Dias)
-Matriz comparativa das 10 capitais com os dados do `analytics-service`:
+Matriz comparativa das capitais com os dados do `analytics-service`:
 - Temperatura prevista (°C), Precipitação (mm), Umidade (%)
 - **Score de Risco de Incêndio (0–100)** com escala semântica de cores
 - **Score de Risco de Dengue (0–100)** com escala semântica de cores
 - Cards de destaque: Capital com maior risco de incêndio, maior risco de dengue e maior precipitação prevista
 - Expandir linha para ver projeção dia a dia (D+1, D+2, D+3)
+
+### Aba 4 — Emissões e Gases de Efeito Estufa (SEEG)
+Módulo completo de transparência de emissões territoriais brasileiras:
+- Seletor por gás (`CO₂e`, `Metano - CH₄`, `CO₂`, `N₂O`) e filtro por Estado (UF) ou Brasil consolidado
+- Ranking horizontal dos 10 municípios que mais emitem com cálculo percentual
+- Destaque explicativo do setor dominante (ex: *"No Pará, a maior parte das emissões provém de Mudança de Uso da Terra e Florestas"* ou *"No Mato Grosso, predomina a Agropecuária"*)
+- Série temporal histórica dos últimos 5 anos por município com distribuição setorial detalhada
+- Rodapé e atribuição com link canônico para o SEEG / Observatório do Clima
+
+### Aba 5 — Notícias Oficiais Sanitizadas
+Feed de notícias ambientais oficiais e verificadas (Agência Brasil, G1 Meio Ambiente, etc.) com categorização automática e expurgo semântico de ruído.
+
+### 🤖 Assistente Virtual "Gota" (IA RAG)
+Assistente operacional especializada em meio ambiente alimentada por Google Gemini com RAG em tempo real:
+- Consulta contexto do clima, cotas de rios, alertas vigentes e notícias locais
+- **Módulo de Emissões Integrado**: Responde sobre rankings de emissões municipais (SEEG), grandes fontes industriais/agropecuárias (Climate TRACE) e concentração atmosférica em tempo real (Copernicus CAMS)
+- Diferenciação epistemológica obrigatória: a IA explicita a diferença entre *concentração no ar hoje* (CAMS) e *emissão anual na fonte* (SEEG / Climate TRACE), sempre citando fontes e anos de referência.
+
+---
+
+## 🌍 Gases e Emissões de Efeito Estufa
+
+O EcoWatch Brasil adota uma abordagem multi-escala para monitorar e explicar a dinâmica dos Gases de Efeito Estufa (GEE) no território nacional:
+
+| Camada / Dimensão | Fonte Oficial | Escopo & Variáveis | Frequência de Atualização | Licença de Uso |
+|---|---|---|---|---|
+| **Concentração Atmosférica (Tempo Quase-Real)** | **Copernicus CAMS** (via Open-Meteo Air Quality API) | CH₄ (Metano em $\mu g/m^3$), CO₂ (Dióxido de Carbono em ppm), CO ($\mu g/m^3$) nas 27 capitais | Horária / Atualização diária contínua | [Open-Meteo Non-Commercial / Copernicus CAMS License](https://open-meteo.com/en/terms) |
+| **Inventário Municipal de Emissões** | **SEEG 14.0** (Observatório do Clima) | Emissões brutas em toneladas ($t$) dos últimos 5 anos (2019-2023) por município e UF para CO₂e, CH₄, CO₂ e N₂O, divididos pelos 5 setores econômicos | Anual (publicação oficial pelo Observatório do Clima) | [Creative Commons Attribution-ShareAlike 4.0 (CC BY-SA 4.0)](https://seeg.eco.br) |
+| **Grandes Emissores Pontuais** | **Climate TRACE v6** | Top 200 instalações pontuais no Brasil com coordenadas georreferenciadas, setor (pecuária, aterros sanitários, usinas, refinarias, mineração) e emissões anuais de CO₂e e CH₄ | Mensal (sincronização no backend com defasagem de ~60 dias dos satélites) | [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://climatetrace.org/data) |
+
+### 🔍 Diferenças e Limitações Metodológicas
+
+1. **Concentração no Ar ≠ Emissão da Cidade:**
+   - A concentração atmosférica (Open-Meteo / Copernicus CAMS) mede a quantidade de gás na coluna de ar naquele instante. Fatores meteorológicos (ventos, relevo, correntes de convecção) transportam plumas gasosas por milhares de quilômetros. Uma capital pode apresentar alta concentração atmosférica devido a incêndios em outros estados ou países vizinhos, sem que seja o ponto de emissão original.
+2. **SEEG (Inventário Territorial Municipal):**
+   - Reflete o volume total de emissões antrópicas atribuído às atividades territoriais daquele município ao longo de um ano completo (ano-base 2023 no SEEG 14.0).
+3. **Climate TRACE (Instalações e Ativos Rastreados):**
+   - Focado em fontes pontuais individuais mensuradas por sensoriamento remoto e aprendizado de máquina. Não substitui o inventário total municipal, mas identifica instalações de grande porte (como aterros e termelétricas).
 
 ---
 
