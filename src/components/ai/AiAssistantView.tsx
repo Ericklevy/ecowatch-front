@@ -17,7 +17,8 @@ import {
   CalendarDays,
   Maximize2,
   X,
-  Trash2
+  Trash2,
+  Factory
 } from 'lucide-react';
 import { Mascote } from './Mascote';
 import { fetchAiStatus } from '../../services/api';
@@ -28,6 +29,8 @@ import { Markdown } from './Markdown';
 
 const QUICK_PROMPTS = [
   { label: '🌡️ Clima em Cuiabá', prompt: 'Como estão os alertas e a previsão para Cuiabá nos próximos dias?', categoria: 'ALL' },
+  { label: '💨 Emissões no Pará', prompt: 'Qual cidade do Pará mais emite metano segundo o SEEG e quais as maiores fontes?', categoria: 'ALL' },
+  { label: '🏭 Metano em Manaus', prompt: 'Como está o metano em Manaus e qual setor mais emite na cidade?', categoria: 'ALL' },
   { label: '🌊 Rios no RS', prompt: 'Qual é a situação dos rios e das cotas de alerta em Porto Alegre?', categoria: 'FLOOD' },
   { label: '🔥 Queimadas', prompt: 'O que os órgãos oficiais relatam sobre focos de calor no Pantanal e na Amazônia?', categoria: 'FIRE' },
   { label: '⛈️ Chuvas fortes', prompt: 'Onde há previsão recente de chuvas intensas e atuação da Defesa Civil?', categoria: 'RAIN' },
@@ -37,6 +40,7 @@ const QUICK_PROMPTS = [
 
 const CATEGORIAS = [
   { valor: 'ALL', rotulo: 'Todos' },
+  { valor: 'EMISSIONS', rotulo: '💨 Gases' },
   { valor: 'FLOOD', rotulo: '🌊 Rios' },
   { valor: 'FIRE', rotulo: '🔥 Fogo' },
   { valor: 'RAIN', rotulo: '⛈️ Chuva' },
@@ -63,6 +67,7 @@ interface AiAssistantViewProps {
 
 const sugestoesDaCidade = (c: CityInfo) => [
   { label: `🌡️ Previsão em ${c.nome}`, prompt: `Como estão os alertas e a previsão para ${c.nome} nos próximos dias?`, categoria: 'ALL' },
+  { label: `💨 Gases em ${c.nome}`, prompt: `Como está o metano e quais as principais fontes de emissão em ${c.nome}?`, categoria: 'ALL' },
   { label: '🔥 Risco de fogo', prompt: `Qual é o risco de incêndio em ${c.nome} amanhã?`, categoria: 'FIRE' },
   { label: '🦟 Dengue', prompt: `Como está o risco de dengue em ${c.nome}?`, categoria: 'DENGUE' },
   { label: '⛈️ Chuva forte', prompt: `Vai chover forte em ${c.nome} esta semana?`, categoria: 'RAIN' }
@@ -113,6 +118,7 @@ export const AiAssistantView: React.FC<AiAssistantViewProps> = ({ compact = fals
       case 'RAIN': return <CloudRain className="w-3.5 h-3.5 text-nominal" />;
       case 'DENGUE': return <Bug className="w-3.5 h-3.5 text-warning" />;
       case 'DEFORESTATION': return <Trees className="w-3.5 h-3.5 text-emerald-400" />;
+      case 'EMISSIONS': return <Factory className="w-3.5 h-3.5 text-amber-400" />;
       default: return <ShieldAlert className="w-3.5 h-3.5 text-zinc-300" />;
     }
   };
