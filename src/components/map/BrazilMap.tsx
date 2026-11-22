@@ -3,7 +3,8 @@ import { MapContainer, TileLayer, Marker, Tooltip, Polyline, useMap } from 'reac
 import L from 'leaflet';
 import { Layers, Compass } from 'lucide-react';
 import { CityInfo, WeatherReading } from '../../types';
-import { MONITORED_CITIES, MOCK_FORECASTS, ALL_BRAZIL_CITY } from '../../data/mockData';
+import { MONITORED_CITIES, ALL_BRAZIL_CITY } from '../../data/mockData';
+import { usePrevisoes, PrevisoesPorCidade } from '../../services/forecasts';
 import { MAJOR_RIVERS, ACTIVE_FIRE_HOTSPOTS, FireHotspot } from '../../data/geoData';
 
 // ─── Ícone de marcador personalizado para Capitais (Radar Satelital) ──────────
@@ -121,8 +122,8 @@ const getDengueMeta = (score: number) => {
   return { color: '#10b981', stroke: '#34d399', label: 'Baixo / Moderado', radius: 16, fillOpacity: 0.12 };
 };
 
-const getCityDengueScore = (citySlug: string, reading?: WeatherReading): number => {
-  const forecast = MOCK_FORECASTS[citySlug]?.[0];
+const getCityDengueScore = (citySlug: string, reading: WeatherReading | undefined, previsoes: PrevisoesPorCidade): number => {
+  const forecast = previsoes[citySlug]?.[0];
   if (forecast && typeof forecast.riscoDengue === 'number') {
     return forecast.riscoDengue;
   }
@@ -224,6 +225,7 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
   isDrawerOpen
 }) => {
   const [selectedTimeOffset, setSelectedTimeOffset] = useState<number>(0); // 0 = Agora, 1 = D+1, 2 = D+2, 3 = D+3
+  const { dados: previsoes } = usePrevisoes(); // previsões reais (backend ou Open-Meteo)
   const [showRivers, setShowRivers] = useState(false);
   const [showFires, setShowFires] = useState(false);
   const [showAirQuality, setShowAirQuality] = useState(false);
@@ -497,12 +499,12 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
         {MONITORED_CITIES.map(city => {
           const reading = readings[city.slug];
           const isSelected = selectedCity.slug === city.slug;
-          const dengueScore = getCityDengueScore(city.slug, reading);
+          const dengueScore = getCityDengueScore(city.slug, reading, previsoes);
           const dengueMeta = getDengueMeta(dengueScore);
 
           // Integração com a Timeline Windy
           const isLive = selectedTimeOffset === 0;
-          const forecast = !isLive ? MOCK_FORECASTS[city.slug]?.[selectedTimeOffset - 1] : null;
+          const forecast = !isLive ? previsoes[city.slug]?.[selectedTimeOffset - 1] : null;
 
           const displayTemp = isLive 
             ? reading?.temperatura 

@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { Flame, Bug, CloudRain, Calendar, TrendingUp, ChevronRight } from 'lucide-react';
-import { MONITORED_CITIES, MOCK_FORECASTS } from '../../data/mockData';
+import { MONITORED_CITIES } from '../../data/mockData';
+import { usePrevisoes } from '../../services/forecasts';
 import { PrevisaoDTO } from '../../types';
 import { Sparkline } from '../common/Sparkline';
 import { AnimatedCounter } from '../common/AnimatedCounter';
@@ -8,35 +9,23 @@ import { AnimatedCounter } from '../common/AnimatedCounter';
 export const ForecastView: React.FC = () => {
   const [selectedCitySlug, setSelectedCitySlug] = useState<string | null>(null);
 
-  // ── Gera datas dinâmicas para o mês atual (Outubro de 2026 em diante) ──
-  const dynamicForecasts = useMemo(() => {
-    const today = new Date();
-    const result: Record<string, PrevisaoDTO[]> = {};
+  // Previsões reais (backend ou Open-Meteo direto)
+  const { dados: dynamicForecasts, fonte } = usePrevisoes();
 
-    MONITORED_CITIES.forEach(city => {
-      const base = MOCK_FORECASTS[city.slug] || [
-        { municipio: city.nome, dataPrevisao: '', temperaturaPrevista: 30, precipitacaoPrevista: 0, umidadePrevista: 45, riscoIncendio: 40, riscoDengue: 30 },
-        { municipio: city.nome, dataPrevisao: '', temperaturaPrevista: 31, precipitacaoPrevista: 0, umidadePrevista: 42, riscoIncendio: 45, riscoDengue: 30 },
-        { municipio: city.nome, dataPrevisao: '', temperaturaPrevista: 30.5, precipitacaoPrevista: 0, umidadePrevista: 43, riscoIncendio: 42, riscoDengue: 30 }
-      ];
-
-      result[city.slug] = base.map((item, idx) => {
-        const targetDate = new Date(today);
-        targetDate.setDate(targetDate.getDate() + (idx + 1));
-        const yyyy = targetDate.getFullYear();
-        const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
-        const dd = String(targetDate.getDate()).padStart(2, '0');
-        const iso = `${yyyy}-${mm}-${dd}`;
-
-        return {
-          ...item,
-          dataPrevisao: iso
-        };
-      });
-    });
-
-    return result;
-  }, []);
+  // Destaques de D+1: maior risco de fogo, de dengue e maior chuva
+  const destaques = useMemo(() => {
+    const itens = MONITORED_CITIES
+      .map(cidade => ({ cidade, lista: dynamicForecasts[cidade.slug] || [] }))
+      .filter(x => x.lista.length > 0)
+      .map(x => ({ ...x, d1: x.lista[0] }));
+    if (itens.length === 0) return null;
+    const maior = (f: (p: PrevisaoDTO) => number) => itens.reduce((m, x) => (f(x.d1) > f(m.d1) ? x : m));
+    return {
+      fogo: maior(p => p.riscoIncendio),
+      dengue: maior(p => p.riscoDengue),
+      chuva: maior(p => p.precipitacaoPrevista)
+    };
+  }, [dynamicForecasts]);
 
   // Janela Preditiva no cabeçalho
   const predictionWindow = useMemo(() => {
@@ -86,7 +75,7 @@ export const ForecastView: React.FC = () => {
             <span>Previsões e Riscos // Próximos 3 Dias</span>
           </h2>
           <p className="text-xs font-mono text-zinc-400 mt-0.5">
-            Modelos analíticos de previsão climática e vetores de risco (analytics-service)
+            {fonte === 'carregando' ? 'Carregando…' : 'Previsão diária da Open-Meteo para as 27 capitais · riscos de incêndio e dengue estimados por temperatura, umidade e chuva'}
           </p>
         </div>
 
@@ -96,113 +85,60 @@ export const ForecastView: React.FC = () => {
         </div>
       </div>
 
-      {/* 3 Cards de Destaque Operacional (Bento Grid Architecture com Sparklines) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Card 1: Risco de Incêndio */}
-        <div className="p-4.5 rounded-2xl bento-card card-interactive hover:border-critical/50 transition-all shadow-lg flex flex-col justify-between relative overflow-hidden">
-          <div>
-            <div className="flex items-center justify-between text-xs font-sans text-zinc-400 mb-2">
-              <span className="uppercase font-semibold text-critical flex items-center gap-1.5 tracking-wider">
-                <Flame className="w-4 h-4 animate-breathing-glow" />
-                <span>Maior Chance de Fogo na Vegetação</span>
-              </span>
-            </div>
-            <div className="flex items-baseline justify-between mt-1">
+      {/* 3 cards de destaque calculados a partir das previsões reais de D+1 */}
+      {fonte === 'carregando' && (
+        <div className="p-6 rounded-2xl bento-card text-sm text-zinc-400 text-center">Carregando as previsões da Open-Meteo…</div>
+      )}
+      {fonte === 'indisponivel' && (
+        <div className="p-6 rounded-2xl bento-card text-sm text-warning text-center">
+          Não consegui buscar as previsões agora. Tente atualizar a página em alguns minutos.
+        </div>
+      )}
+      {destaques && (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {[
+            { titulo: 'Maior Chance de Fogo na Vegetação', Icone: Flame, cor: 'text-critical', hover: 'hover:border-critical/50', barra: 'from-orange-500 to-critical', linha: '#ff1744',
+              item: destaques.fogo, valor: destaques.fogo.d1.riscoIncendio, dec: 0, unidade: '/100',
+              serie: destaques.fogo.lista.map(p => p.riscoIncendio), pct: destaques.fogo.d1.riscoIncendio,
+              nota: `Umidade ${Math.round(destaques.fogo.d1.umidadePrevista)}% · máx. ${destaques.fogo.d1.temperaturaPrevista.toFixed(1)}°C · chuva ${destaques.fogo.d1.precipitacaoPrevista.toFixed(1)} mm` },
+            { titulo: 'Maior Risco de Dengue', Icone: Bug, cor: 'text-warning', hover: 'hover:border-warning/50', barra: 'from-amber-500 to-warning', linha: '#ffd600',
+              item: destaques.dengue, valor: destaques.dengue.d1.riscoDengue, dec: 0, unidade: '/100',
+              serie: destaques.dengue.lista.map(p => p.riscoDengue), pct: destaques.dengue.d1.riscoDengue,
+              nota: `Máx. ${destaques.dengue.d1.temperaturaPrevista.toFixed(1)}°C · umidade ${Math.round(destaques.dengue.d1.umidadePrevista)}% · chuva ${destaques.dengue.d1.precipitacaoPrevista.toFixed(1)} mm` },
+            { titulo: 'Maior Volume de Chuva', Icone: CloudRain, cor: 'text-hydro', hover: 'hover:border-hydro/50', barra: 'from-cyan-500 to-hydro', linha: '#00e5ff',
+              item: destaques.chuva, valor: destaques.chuva.d1.precipitacaoPrevista, dec: 1, unidade: 'mm previstos',
+              serie: destaques.chuva.lista.map(p => p.precipitacaoPrevista), pct: Math.min(100, destaques.chuva.d1.precipitacaoPrevista * 2),
+              nota: destaques.chuva.d1.precipitacaoPrevista >= 30 ? 'Atenção para alagamentos e enxurradas' : 'Sem volume extremo previsto' }
+          ].map(c => (
+            <div key={c.titulo} className={`p-4.5 rounded-2xl bento-card card-interactive ${c.hover} transition-all shadow-lg flex flex-col justify-between relative overflow-hidden`}>
               <div>
-                <div className="text-xl font-bold font-sans text-white">Brasília (DF)</div>
-                <div className="flex items-baseline gap-2 mt-0.5">
-                  <AnimatedCounter
-                    value={91}
-                    decimals={0}
-                    className="text-3xl font-extrabold font-mono text-critical"
-                  />
-                  <span className="text-xs font-mono text-zinc-400">/100 (Score Crítico)</span>
+                <div className="flex items-center justify-between text-xs font-sans text-zinc-400 mb-2">
+                  <span className={`uppercase font-semibold ${c.cor} flex items-center gap-1.5 tracking-wider`}>
+                    <c.Icone className="w-4 h-4 animate-breathing-glow" />
+                    <span>{c.titulo}</span>
+                  </span>
+                </div>
+                <div className="flex items-baseline justify-between mt-1">
+                  <div>
+                    <div className="text-xl font-bold font-sans text-white">{c.item.cidade.nome} ({c.item.cidade.estado})</div>
+                    <div className="flex items-baseline gap-2 mt-0.5">
+                      <AnimatedCounter value={c.valor} decimals={c.dec} className={`text-3xl font-extrabold font-mono ${c.cor}`} />
+                      <span className="text-xs font-mono text-zinc-400">{c.unidade}</span>
+                    </div>
+                  </div>
+                  <div className="w-20 h-8">
+                    <Sparkline data={c.serie} color={c.linha} height={32} />
+                  </div>
+                </div>
+                <div className="w-full bg-surface-base h-2 rounded-full overflow-hidden mt-3.5 border border-border-subtle/50">
+                  <div className={`h-full bg-gradient-to-r ${c.barra} rounded-full transition-all duration-1000`} style={{ width: `${Math.max(3, c.pct)}%` }} />
                 </div>
               </div>
-              <div className="w-20 h-8">
-                <Sparkline data={[84, 88, 91]} color="#ff1744" height={32} />
-              </div>
+              <p className="text-[11px] font-sans text-zinc-400 mt-3 pt-2 border-t border-white/5 leading-relaxed">{c.nota}</p>
             </div>
-            {/* Barra de Progresso Visual */}
-            <div className="w-full bg-surface-base h-2 rounded-full overflow-hidden mt-3.5 border border-border-subtle/50">
-              <div className="h-full bg-gradient-to-r from-orange-500 to-critical rounded-full transition-all duration-1000" style={{ width: '91%' }} />
-            </div>
-          </div>
-          <p className="text-[11px] font-sans text-zinc-400 mt-3 pt-2 border-t border-white/5 leading-relaxed">
-            Projeção por ar seco (12%), calor (38°C) e estiagem no Cerrado · Facilita faíscas
-          </p>
+          ))}
         </div>
-
-        {/* Card 2: Risco de Dengue */}
-        <div className="p-4.5 rounded-2xl bento-card card-interactive hover:border-warning/50 transition-all shadow-lg flex flex-col justify-between relative overflow-hidden">
-          <div>
-            <div className="flex items-center justify-between text-xs font-sans text-zinc-400 mb-2">
-              <span className="uppercase font-semibold text-warning flex items-center gap-1.5 tracking-wider">
-                <Bug className="w-4 h-4 animate-breathing-glow" />
-                <span>Maior Risco de Dengue</span>
-              </span>
-            </div>
-            <div className="flex items-baseline justify-between mt-1">
-              <div>
-                <div className="text-xl font-bold font-sans text-white">Rio de Janeiro (RJ)</div>
-                <div className="flex items-baseline gap-2 mt-0.5">
-                  <AnimatedCounter
-                    value={78}
-                    decimals={0}
-                    className="text-3xl font-extrabold font-mono text-warning"
-                  />
-                  <span className="text-xs font-mono text-zinc-400">/100 (Score Elevado)</span>
-                </div>
-              </div>
-              <div className="w-20 h-8">
-                <Sparkline data={[68, 74, 78]} color="#ffd600" height={32} />
-              </div>
-            </div>
-            {/* Barra de Progresso Visual */}
-            <div className="w-full bg-surface-base h-2 rounded-full overflow-hidden mt-3.5 border border-border-subtle/50">
-              <div className="h-full bg-gradient-to-r from-amber-500 to-warning rounded-full transition-all duration-1000" style={{ width: '78%' }} />
-            </div>
-          </div>
-          <p className="text-[11px] font-sans text-zinc-400 mt-3 pt-2 border-t border-white/5 leading-relaxed">
-            Chuva 45.2mm acumulada · Umidade 89% · Temp 31.8°C
-          </p>
-        </div>
-
-        {/* Card 3: Maior Precipitação */}
-        <div className="p-4.5 rounded-2xl bento-card card-interactive hover:border-hydro/50 transition-all shadow-lg flex flex-col justify-between relative overflow-hidden">
-          <div>
-            <div className="flex items-center justify-between text-xs font-sans text-zinc-400 mb-2">
-              <span className="uppercase font-semibold text-hydro flex items-center gap-1.5 tracking-wider">
-                <CloudRain className="w-4 h-4 animate-breathing-glow" />
-                <span>Maior Volume de Chuva</span>
-              </span>
-            </div>
-            <div className="flex items-baseline justify-between mt-1">
-              <div>
-                <div className="text-xl font-bold font-sans text-white">Salvador (BA)</div>
-                <div className="flex items-baseline gap-2 mt-0.5">
-                  <AnimatedCounter
-                    value={52.3}
-                    decimals={1}
-                    className="text-3xl font-extrabold font-mono text-hydro"
-                  />
-                  <span className="text-xs font-mono text-zinc-400">mm previstos</span>
-                </div>
-              </div>
-              <div className="w-20 h-8">
-                <Sparkline data={[14, 52.3, 22]} color="#00e5ff" height={32} />
-              </div>
-            </div>
-            {/* Barra de Progresso Visual */}
-            <div className="w-full bg-surface-base h-2 rounded-full overflow-hidden mt-3.5 border border-border-subtle/50">
-              <div className="h-full bg-gradient-to-r from-cyan-500 to-hydro rounded-full transition-all duration-1000" style={{ width: '65%' }} />
-            </div>
-          </div>
-          <p className="text-[11px] font-sans text-zinc-400 mt-3 pt-2 border-t border-white/5 leading-relaxed">
-            Alerta para enxurradas e transbordamento fluvial
-          </p>
-        </div>
-      </div>
+      )}
 
       {/* Matriz Comparativa das 27 Capitais */}
       <div className="border border-border-subtle rounded-md bg-surface-panel overflow-hidden shadow-xl">

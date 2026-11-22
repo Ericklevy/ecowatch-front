@@ -4,7 +4,7 @@ import { MOCK_NEWS } from '../data/newsData';
 import { sanitizeNewsList } from '../utils/newsSanitizer';
 
 // ── Endpoints do Backend (injetados via variáveis de ambiente ou URL de produção na Azure) ──
-const READ_MODEL_URL =
+export const READ_MODEL_URL =
   import.meta.env.VITE_READ_MODEL_URL ||
   'https://read-model-service.wittytree-8ba02066.brazilsouth.azurecontainerapps.io';
 
@@ -16,13 +16,18 @@ const INGESTION_SERVICE_URL =
   import.meta.env.VITE_INGESTION_SERVICE_URL ||
   'https://data-ingestion.wittytree-8ba02066.brazilsouth.azurecontainerapps.io';
 
+// Se o cache do alert-service falhar uma vez (404/timeout), não tenta de novo nesta visita:
+// antes cada uma das 27 capitais esperava até 2 s antes de buscar na Open-Meteo.
+let cacheBackendIndisponivel = false;
+
 export async function fetchCityWeather(citySlug: string, forceLive: boolean = false): Promise<WeatherReading> {
   // 1. Tenta buscar do backend (alert-service Redis cache na Azure), a menos que forceLive=true
-  if (!forceLive && ALERT_SERVICE_URL) {
+  if (!forceLive && ALERT_SERVICE_URL && !cacheBackendIndisponivel) {
     try {
       const res = await fetch(`${ALERT_SERVICE_URL}/api/cache/${encodeURIComponent(citySlug)}`, {
-        signal: AbortSignal.timeout(2000)
+        signal: AbortSignal.timeout(1500)
       });
+      if (!res.ok) cacheBackendIndisponivel = true;
       if (res.ok) {
         const cached: WeatherReading = await res.json();
         // Só aproveita o cache se tiver menos de 45 minutos para garantir temperatura condizente
@@ -33,7 +38,9 @@ export async function fetchCityWeather(citySlug: string, forceLive: boolean = fa
           }
         }
       }
-    } catch { /* fallback para satélite direto */ }
+    } catch {
+      cacheBackendIndisponivel = true; /* fallback para satélite direto */
+    }
   }
 
   // 2. Busca direto da Open-Meteo ao vivo (garante graus atualizados para o horário exato sem cache)
