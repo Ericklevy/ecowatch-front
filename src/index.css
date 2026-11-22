@@ -240,3 +240,15 @@
 /* Linhas roláveis sem barra visível (chips de categoria) */
 .scrollbar-none { scrollbar-width: none; }
 .scrollbar-none::-webkit-scrollbar { display: none; }
+
+/* ── Gota, mascote da IA ── */
+@keyframes gotaFlutua { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes gotaPisca { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+@keyframes gotaPensa { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+@keyframes gotaAbre { from { opacity: 0; transform: scale(0.92) translateY(8px); } to { opacity: 1; transform: none; } }
+.gota-flutua { animation: gotaFlutua 3s ease-in-out infinite; }
+.gota-pensa { animation: gotaPensa 0.9s ease-in-out infinite; }
+.gota-olho { transform-box: fill-box; transform-origin: center; animation: gotaPisca 4.5s infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .gota-flutua, .gota-pensa, .gota-olho { animation: none; }
+}
