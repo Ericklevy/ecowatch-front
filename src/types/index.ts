@@ -82,3 +82,34 @@ export interface NewsItem {
   estado?: string;
 }
 
+export interface RagSourceItem {
+  id: number;
+  titulo: string;
+  resumo: string;
+  fonte: string;
+  url: string;
+  dataHora: string;
+  categoria: 'FIRE' | 'FLOOD' | 'RAIN' | 'DENGUE' | 'DEFORESTATION' | 'GENERAL';
+  municipio?: string;
+  estado?: string;
+  similaridade?: number;
+}
+
+export interface AiAskResponse {
+  pergunta: string;
+  resposta: string;
+  fontes: RagSourceItem[];
+  totalFontesEncontradas: number;
+  modelo: string;
+  tempoRespostaMs: number;
+}
+
+export interface AiStatusResponse {
+  pgvectorAtivo: boolean;
+  totalNoticias: number;
+  totalEmbeddings: number;
+  geminiConfigurado: boolean;
+  modeloPadrao: string;
+}
+
+

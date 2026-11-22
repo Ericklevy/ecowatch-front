@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { TopBar, ActiveTab } from './components/layout/TopBar';
 import { StatusBar } from './components/layout/StatusBar';
-import { Map, AlertTriangle, TrendingUp, FileText, Newspaper, Info } from 'lucide-react';
+import { Map, AlertTriangle, TrendingUp, FileText, Newspaper, Info, Sparkles } from 'lucide-react';
 import { BrazilMap } from './components/map/BrazilMap';
 import { TelemetryDrawer } from './components/map/TelemetryDrawer';
 import { AlertsView } from './components/alerts/AlertsView';
 import { ForecastView } from './components/forecast/ForecastView';
 import { ReportsView } from './components/reports/ReportsView';
 import { NewsView } from './components/news/NewsView';
+import { AiAssistantView } from './components/ai/AiAssistantView';
 import { GlossaryView } from './components/glossary/GlossaryView';
 import { AboutView } from './components/about/AboutView';
 import { LandingPage } from './components/landing/LandingPage';
@@ -191,6 +192,7 @@ export const App: React.FC = () => {
         {activeTab === 'forecast' && <ForecastView />}
         {activeTab === 'reports' && <ReportsView />}
         {activeTab === 'news' && <NewsView />}
+        {activeTab === 'ai' && <AiAssistantView />}
         {activeTab === 'glossary' && <GlossaryView />}
         {activeTab === 'about' && <AboutView />}
       </main>
@@ -258,6 +260,18 @@ export const App: React.FC = () => {
             <Newspaper className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <span className="text-[10px] font-mono">Notícias</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('ai')}
+          className={`flex flex-col items-center justify-center gap-0.5 flex-1 py-1 transition-all cursor-pointer ${
+            activeTab === 'ai' ? 'text-hydro font-bold' : 'text-zinc-400 hover:text-zinc-200'
+          }`}
+        >
+          <div className={`p-1 rounded-xl transition-all ${activeTab === 'ai' ? 'bg-hydro/20 text-hydro shadow-sm' : ''}`}>
+            <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" />
+          </div>
+          <span className="text-[10px] font-mono">IA</span>
         </button>
 
         <button
