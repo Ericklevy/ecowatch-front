@@ -13,7 +13,8 @@ import {
   Newspaper,
   ExternalLink,
   Satellite,
-  ShieldCheck
+  ShieldCheck,
+  Wind
 } from 'lucide-react';
 import { CityInfo, WeatherReading, AlertDTO, formatAlertTypeName, NewsItem } from '../../types';
 import { triggerCitySync, fetchCityWeather, fetchCityDashboard, fetchNews } from '../../services/api';
@@ -450,6 +451,47 @@ export const TelemetryDrawer: React.FC<TelemetryDrawerProps> = ({
               <span className="text-[11px] font-mono text-zinc-400">focos ativos</span>
             </div>
           </div>
+        </div>
+
+        {/* Bloco 3b: Gases de Efeito Estufa (CAMS/Copernicus via Open-Meteo) */}
+        <div className="p-3.5 rounded-xl bento-card border border-border-subtle space-y-2">
+          <div className="flex items-center justify-between text-xs font-sans text-zinc-300">
+            <span className="flex items-center gap-1.5 uppercase font-medium tracking-wider text-[11px] font-mono text-zinc-300">
+              <Wind className="w-3.5 h-3.5 text-emerald-400 animate-breathing-glow" />
+              <span>Gases de efeito estufa</span>
+            </span>
+            <span className="text-[10px] font-mono text-zinc-500">CAMS / Copernicus</span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-2 pt-1 font-mono">
+            <div className="p-2 rounded bg-surface-base/80 border border-border-subtle/60 flex flex-col justify-between">
+              <span className="text-[10px] text-zinc-400">Metano (CH₄)</span>
+              <span className="text-sm font-bold text-white mt-1">
+                {reading.metano != null ? `${reading.metano.toFixed(0)}` : <span className="text-zinc-500 font-normal text-xs">sem dado</span>}
+              </span>
+              <span className="text-[9px] text-zinc-500">{reading.metano != null ? 'µg/m³' : ''}</span>
+            </div>
+
+            <div className="p-2 rounded bg-surface-base/80 border border-border-subtle/60 flex flex-col justify-between">
+              <span className="text-[10px] text-zinc-400">Dióxido (CO₂)</span>
+              <span className="text-sm font-bold text-white mt-1">
+                {reading.co2 != null ? `${reading.co2.toFixed(0)}` : <span className="text-zinc-500 font-normal text-xs">sem dado</span>}
+              </span>
+              <span className="text-[9px] text-zinc-500">{reading.co2 != null ? 'ppm' : ''}</span>
+            </div>
+
+            <div className="p-2 rounded bg-surface-base/80 border border-border-subtle/60 flex flex-col justify-between">
+              <span className="text-[10px] text-zinc-400">Monóxido (CO)</span>
+              <span className="text-sm font-bold text-white mt-1">
+                {reading.co != null ? `${reading.co.toFixed(0)}` : <span className="text-zinc-500 font-normal text-xs">sem dado</span>}
+              </span>
+              <span className="text-[9px] text-zinc-500">{reading.co != null ? 'µg/m³' : ''}</span>
+            </div>
+          </div>
+
+          <p className="text-[11px] text-zinc-400 font-sans leading-relaxed pt-1 border-t border-border-subtle/50">
+            Concentração no ar (modelo CAMS/Copernicus, resolução regional). Não indica quem emite.
+          </p>
         </div>
 
         {/* Bloco NASA VEDA: Rastreabilidade Governamental & Confiança do Dado */}

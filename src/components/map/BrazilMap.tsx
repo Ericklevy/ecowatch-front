@@ -122,6 +122,57 @@ const getDengueMeta = (score: number) => {
   return { color: '#10b981', stroke: '#34d399', label: 'Baixo / Moderado', radius: 16, fillOpacity: 0.12 };
 };
 
+// ─── Quintis de Metano para Comparação Relativa entre as Capitais ──────────
+export interface GasMeta {
+  color: string;
+  stroke: string;
+  label: string;
+}
+
+const getMethaneQuintileMeta = (methane: number | null | undefined, allValues: number[]): GasMeta => {
+  if (methane == null || isNaN(methane)) {
+    return { color: '#71717a', stroke: '#a1a1aa', label: 'Sem dado' };
+  }
+  if (allValues.length < 5) {
+    return { color: '#10b981', stroke: '#34d399', label: 'Nominal' };
+  }
+  const sorted = [...allValues].sort((a, b) => a - b);
+  const q1 = sorted[Math.floor(sorted.length * 0.2)];
+  const q2 = sorted[Math.floor(sorted.length * 0.4)];
+  const q3 = sorted[Math.floor(sorted.length * 0.6)];
+  const q4 = sorted[Math.floor(sorted.length * 0.8)];
+
+  if (methane <= q1) return { color: '#10b981', stroke: '#34d399', label: '1º Quintil (Muito Baixo)' };
+  if (methane <= q2) return { color: '#84cc16', stroke: '#a3e635', label: '2º Quintil (Baixo)' };
+  if (methane <= q3) return { color: '#eab308', stroke: '#fde047', label: '3º Quintil (Médio)' };
+  if (methane <= q4) return { color: '#f97316', stroke: '#fb923c', label: '4º Quintil (Elevado)' };
+  return { color: '#ef4444', stroke: '#f87171', label: '5º Quintil (Mais Alto)' };
+};
+
+// ─── Ícone Diferenciado: Marcador de Gases de Efeito Estufa (CH₄ / CO₂ / CO) ───
+const createGasMarkerIcon = (reading: WeatherReading | undefined, gasMeta: GasMeta) => {
+  const ch4Text = reading?.metano != null ? `${reading.metano.toFixed(0)}` : 'S/D';
+  const html = `
+    <div class="relative flex flex-col items-center select-none pointer-events-auto cursor-pointer group">
+      <!-- Halo atmosférico de dispersão gasosa -->
+      <div class="w-12 h-12 rounded-full -translate-x-1/2 -translate-y-1/2 absolute pointer-events-none" 
+           style="background: radial-gradient(circle, ${gasMeta.color}45 0%, ${gasMeta.color}15 55%, transparent 75%); filter: blur(2px);"></div>
+      <!-- Pílula informativa estilizada -->
+      <div class="relative -translate-x-1/2 px-1.5 py-0.5 rounded-full bg-surface-panel/95 border text-[9px] font-mono font-bold shadow-lg backdrop-blur-md flex items-center gap-1 group-hover:scale-110 transition-transform"
+           style="border-color: ${gasMeta.color}90; color: #f4f4f5;">
+        <span class="w-1.5 h-1.5 rounded-full" style="background-color: ${gasMeta.color}"></span>
+        <span>CH₄: ${ch4Text}</span>
+      </div>
+    </div>
+  `;
+  return L.divIcon({
+    html,
+    className: 'custom-gas-marker',
+    iconSize: [64, 24],
+    iconAnchor: [32, -12]
+  });
+};
+
 const getCityDengueScore = (citySlug: string, reading: WeatherReading | undefined, previsoes: PrevisoesPorCidade): number => {
   const forecast = previsoes[citySlug]?.[0];
   if (forecast && typeof forecast.riscoDengue === 'number') {
@@ -230,9 +281,15 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
   const [showFires, setShowFires] = useState(false);
   const [showAirQuality, setShowAirQuality] = useState(false);
   const [showDengueRisk, setShowDengueRisk] = useState(false);
+  const [showGases, setShowGases] = useState(false);
   const [isLayersOpen, setIsLayersOpen] = useState(false);
 
-  const activeLayersCount = (showRivers ? 1 : 0) + (showFires ? 1 : 0) + (showDengueRisk ? 1 : 0) + (showAirQuality ? 1 : 0);
+  // Valores de metano para cálculo de quintis comparativos entre as capitais
+  const allMethaneValues = Object.values(readings)
+    .map(r => r.metano)
+    .filter((v): v is number => typeof v === 'number' && !isNaN(v));
+
+  const activeLayersCount = (showRivers ? 1 : 0) + (showFires ? 1 : 0) + (showDengueRisk ? 1 : 0) + (showAirQuality ? 1 : 0) + (showGases ? 1 : 0);
 
   return (
     <div className="relative w-full h-full flex-1 overflow-hidden bg-surface-base">
@@ -376,6 +433,20 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
                 className="accent-nominal cursor-pointer rounded"
               />
             </label>
+
+            {/* Gases de Efeito Estufa (CH₄ / CO₂ / CO) */}
+            <label className="flex items-center justify-between text-zinc-300 cursor-pointer hover:text-white" title="Concentração atmosférica de Metano (CH₄), CO₂ e CO (Copernicus CAMS)">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                <span>Gases (CH₄ / CO₂)</span>
+              </span>
+              <input
+                type="checkbox"
+                checked={showGases}
+                onChange={e => setShowGases(e.target.checked)}
+                className="accent-emerald-400 cursor-pointer rounded"
+              />
+            </label>
           </div>
 
           <div className="mt-3 pt-2 border-t border-border-subtle/80 flex items-center justify-between text-[10px] font-mono text-zinc-500">
@@ -501,6 +572,7 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
           const isSelected = selectedCity.slug === city.slug;
           const dengueScore = getCityDengueScore(city.slug, reading, previsoes);
           const dengueMeta = getDengueMeta(dengueScore);
+          const gasMeta = getMethaneQuintileMeta(reading?.metano, allMethaneValues);
 
           // Integração com a Timeline Windy
           const isLive = selectedTimeOffset === 0;
@@ -535,6 +607,41 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
                   icon={createAirQualityIcon(reading.pm25)}
                   interactive={false}
                 />
+              )}
+
+              {/* Marcador da Camada de Gases de Efeito Estufa (CH₄ / CO₂ / CO) */}
+              {showGases && (
+                <Marker
+                  position={[city.lat, city.lng]}
+                  icon={createGasMarkerIcon(reading, gasMeta)}
+                  eventHandlers={{
+                    click: () => onSelectCity(city)
+                  }}
+                >
+                  <Tooltip direction="top" offset={[0, -18]} className="custom-gas-tooltip">
+                    <div className="font-mono text-xs p-1 space-y-1">
+                      <div className="font-bold text-emerald-400 flex items-center gap-1">
+                        <span>💨</span>
+                        <span>Gases de Efeito Estufa // {city.nome} ({city.estado})</span>
+                      </div>
+                      <div className="text-[10px] text-zinc-300 space-y-0.5 pt-0.5 border-t border-border-subtle">
+                        <div>
+                          CH₄ (Metano): <span className="font-bold text-white">{reading?.metano != null ? `${reading.metano.toFixed(0)} µg/m³` : 'sem dado'}</span>
+                          {reading?.metano != null && <span className="text-[9px] ml-1" style={{ color: gasMeta.stroke }}>({gasMeta.label})</span>}
+                        </div>
+                        <div>
+                          CO₂ (Dióxido de Carbono): <span className="font-bold text-white">{reading?.co2 != null ? `${reading.co2.toFixed(0)} ppm` : 'sem dado'}</span>
+                        </div>
+                        <div>
+                          CO (Monóxido de Carbono): <span className="font-bold text-white">{reading?.co != null ? `${reading.co.toFixed(0)} µg/m³` : 'sem dado'}</span>
+                        </div>
+                      </div>
+                      <div className="text-[9px] text-zinc-400 pt-0.5 border-t border-border-subtle/50">
+                        Modelo CAMS/Copernicus (resolução regional)
+                      </div>
+                    </div>
+                  </Tooltip>
+                </Marker>
               )}
 
               {/* Badge Satélite de Risco de Dengue (Mosquito 🦟) */}
@@ -607,6 +714,11 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
                           PM2.5: {reading.pm25.toFixed(1)} µg/m³
                         </div>
                       )}
+                      {showGases && (
+                        <div className="pt-0.5" style={{ color: gasMeta.stroke }}>
+                          💨 CH₄: {reading?.metano != null ? `${reading.metano.toFixed(0)} µg/m³` : 'sem dado'} · CO₂: {reading?.co2 != null ? `${reading.co2.toFixed(0)} ppm` : 'sem dado'}
+                        </div>
+                      )}
                       {reading && reading.focosIncendio > 0 && isLive && (
                         <div className="text-critical font-medium">⚠ {reading.focosIncendio} focos de queimada</div>
                       )}
@@ -653,10 +765,30 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
             <span className="text-[12px] leading-none">🌫️</span>
             <span className="text-zinc-300">Qualidade Ar (Pluma PM2.5)</span>
           </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] leading-none">💨</span>
+            <span className="text-zinc-300">Gases CH₄ / CO₂ (CAMS Quintis)</span>
+          </div>
         </div>
 
+        {showGases && (
+          <div className="pt-1.5 mt-0.5 border-t border-white/10 space-y-1">
+            <div className="text-[10px] text-zinc-400 flex justify-between">
+              <span>Metano (CH₄) Relativo:</span>
+            </div>
+            <div className="flex items-center gap-1 text-[9px] text-zinc-400">
+              <span className="w-2.5 h-2.5 rounded-sm bg-emerald-500" title="1º Quintil (Muito Baixo)"></span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-lime-500" title="2º Quintil (Baixo)"></span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-yellow-500" title="3º Quintil (Médio)"></span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-orange-500" title="4º Quintil (Elevado)"></span>
+              <span className="w-2.5 h-2.5 rounded-sm bg-red-500" title="5º Quintil (Mais Alto)"></span>
+              <span className="ml-1 text-[8px] text-zinc-400">Q1 → Q5</span>
+            </div>
+          </div>
+        )}
+
         <div className="pt-1.5 mt-0.5 border-t border-white/5 text-[9px] text-zinc-400 font-sans">
-          📡 Sensores: INPE · ANA · Open-Meteo · NASA
+          📡 Sensores: INPE · ANA · Open-Meteo · Copernicus · NASA
         </div>
       </div>
     </div>

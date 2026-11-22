@@ -56,7 +56,7 @@ export async function fetchCityWeather(citySlug: string, forceLive: boolean = fa
           signal: AbortSignal.timeout(4000),
           cache: 'no-store'
         }),
-        fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${city.lat}&longitude=${city.lng}&current=pm10,pm2_5&_cb=${cb}`, {
+        fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${city.lat}&longitude=${city.lng}&current=pm10,pm2_5,methane,carbon_dioxide,carbon_monoxide&_cb=${cb}`, {
           signal: AbortSignal.timeout(4000),
           cache: 'no-store'
         }).catch(() => null)
@@ -80,7 +80,10 @@ export async function fetchCityWeather(citySlug: string, forceLive: boolean = fa
           pm10: typeof aqCurrent.pm10 === 'number' ? aqCurrent.pm10 : baseMock.pm10,
           focosIncendio: baseMock.focosIncendio,
           nivelRio: baseMock.nivelRio,
-          alertaEnxurrada: baseMock.alertaEnxurrada
+          alertaEnxurrada: baseMock.alertaEnxurrada,
+          metano: typeof aqCurrent.methane === 'number' ? aqCurrent.methane : null,
+          co2: typeof aqCurrent.carbon_dioxide === 'number' ? aqCurrent.carbon_dioxide : null,
+          co: typeof aqCurrent.carbon_monoxide === 'number' ? aqCurrent.carbon_monoxide : null
         };
       }
     } catch { /* fallback silencioso */ }

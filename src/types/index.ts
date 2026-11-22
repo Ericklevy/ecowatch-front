@@ -10,6 +10,9 @@ export interface WeatherReading {
   focosIncendio: number;
   nivelRio: number;
   alertaEnxurrada: boolean;
+  metano?: number | null;
+  co2?: number | null;
+  co?: number | null;
 }
 
 export interface AlertDTO {
