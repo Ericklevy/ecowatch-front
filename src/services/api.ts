@@ -9,7 +9,8 @@ import {
   AiHistoricoItem,
   RankingEmissaoItem,
   EmissaoEstadoItem,
-  MunicipioEmissaoDetalhe
+  MunicipioEmissaoDetalhe,
+  FonteEmissaoItem
 } from '../types';
 import { MOCK_WEATHER_READINGS, MOCK_ALERTS, MOCK_FORECASTS, MONITORED_CITIES } from '../data/mockData';
 import { MOCK_NEWS } from '../data/newsData';
@@ -411,4 +412,28 @@ export async function fetchEmissoesMunicipio(
   }
   return null;
 }
+
+export async function fetchFontesEmissao(
+  gas: string = 'CH4',
+  setor?: string,
+  limite: number = 100
+): Promise<FonteEmissaoItem[]> {
+  if (READ_MODEL_URL) {
+    try {
+      const p = new URLSearchParams();
+      p.set('gas', gas);
+      if (setor && setor !== 'ALL') p.set('setor', setor);
+      p.set('limite', String(limite));
+
+      const res = await fetch(`${READ_MODEL_URL}/api/emissoes/fontes?${p.toString()}`, {
+        signal: AbortSignal.timeout(8000)
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch { /* fallback */ }
+  }
+  return [];
+}
+
 

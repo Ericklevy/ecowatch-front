@@ -162,5 +162,20 @@ export interface MunicipioEmissaoDetalhe {
   }[];
 }
 
+export interface FonteEmissaoItem {
+  assetId: number;
+  nome: string;
+  setor: string;
+  subSetor?: string | null;
+  setorRotulo: string;
+  latitude: number;
+  longitude: number;
+  gas: string;
+  emissaoAnualT: number;
+  ano: number;
+  credito: string;
+}
+
+
 
 

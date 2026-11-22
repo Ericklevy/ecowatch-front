@@ -2,10 +2,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Tooltip, Polyline, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { Layers, Compass } from 'lucide-react';
-import { CityInfo, WeatherReading } from '../../types';
+import { CityInfo, WeatherReading, FonteEmissaoItem } from '../../types';
 import { MONITORED_CITIES, ALL_BRAZIL_CITY } from '../../data/mockData';
 import { usePrevisoes, PrevisoesPorCidade } from '../../services/forecasts';
 import { MAJOR_RIVERS, ACTIVE_FIRE_HOTSPOTS, FireHotspot } from '../../data/geoData';
+import { fetchFontesEmissao } from '../../services/api';
 
 // ─── Ícone de marcador personalizado para Capitais (Radar Satelital) ──────────
 const createCityIcon = (city: CityInfo, isSelected: boolean) => {
@@ -173,6 +174,55 @@ const createGasMarkerIcon = (reading: WeatherReading | undefined, gasMeta: GasMe
   });
 };
 
+// ─── Metadados e Ícone: Grandes Emissores Pontuais (Climate TRACE) ────────────
+const getEmitterSectorMeta = (setor: string, subSetor?: string | null) => {
+  const s = (setor + ' ' + (subSetor || '')).toLowerCase();
+  if (s.includes('waste') || s.includes('aterro') || s.includes('resíduo') || s.includes('disposal')) {
+    return { icon: '🗑️', color: '#f59e0b', stroke: '#fbbf24', label: 'Resíduos / Aterro Sanitário' };
+  }
+  if (s.includes('power') || s.includes('electricity') || s.includes('energia') || s.includes('terme')) {
+    return { icon: '⚡', color: '#ef4444', stroke: '#f87171', label: 'Geração de Energia / Termelétrica' };
+  }
+  if (s.includes('oil') || s.includes('petróleo') || s.includes('gás') || s.includes('refin') || s.includes('fossil')) {
+    return { icon: '🛢️', color: '#06b6d4', stroke: '#22d3ee', label: 'Petróleo & Gás Natural' };
+  }
+  if (s.includes('mining') || s.includes('mineral') || s.includes('mina') || s.includes('bauxite') || s.includes('iron')) {
+    return { icon: '⛏️', color: '#94a3b8', stroke: '#cbd5e1', label: 'Mineração e Extração' };
+  }
+  if (s.includes('agri') || s.includes('cattle') || s.includes('pecuária') || s.includes('bovino') || s.includes('enteric')) {
+    return { icon: '🐂', color: '#10b981', stroke: '#34d399', label: 'Pecuária / Agropecuária' };
+  }
+  if (s.includes('steel') || s.includes('metal') || s.includes('indústria') || s.includes('manufacturing') || s.includes('aluminum')) {
+    return { icon: '🏭', color: '#a855f7', stroke: '#c084fc', label: 'Indústria & Metalurgia' };
+  }
+  if (s.includes('fire') || s.includes('forest') || s.includes('queimada')) {
+    return { icon: '🔥', color: '#f97316', stroke: '#fb923c', label: 'Uso da Terra / Fogo' };
+  }
+  return { icon: '🏭', color: '#6366f1', stroke: '#818cf8', label: 'Fonte Emissora' };
+};
+
+const createEmitterIcon = (fonte: FonteEmissaoItem) => {
+  const meta = getEmitterSectorMeta(fonte.setor, fonte.subSetor);
+  const size = fonte.emissaoAnualT > 5000000 ? 30 : fonte.emissaoAnualT > 1000000 ? 26 : fonte.emissaoAnualT > 100000 ? 22 : 18;
+  const iconSize = Math.round(size * 0.55);
+
+  const html = `
+    <div class="relative flex items-center justify-center select-none cursor-pointer group" style="width: ${size}px; height: ${size}px;">
+      <div class="absolute inset-0 rounded-full animate-ping opacity-25 pointer-events-none" style="background-color: ${meta.color};"></div>
+      <div class="relative w-full h-full rounded-full flex items-center justify-center border shadow-lg backdrop-blur-sm group-hover:scale-125 transition-transform"
+           style="background-color: rgba(15, 23, 42, 0.92); border-color: ${meta.color}; box-shadow: 0 0 8px ${meta.color}80;">
+        <span style="font-size: ${iconSize}px; line-height: 1;">${meta.icon}</span>
+      </div>
+    </div>
+  `;
+  return L.divIcon({
+    html,
+    className: 'custom-emitter-marker',
+    iconSize: [size, size],
+    iconAnchor: [size / 2, size / 2]
+  });
+};
+
 const getCityDengueScore = (citySlug: string, reading: WeatherReading | undefined, previsoes: PrevisoesPorCidade): number => {
   const forecast = previsoes[citySlug]?.[0];
   if (forecast && typeof forecast.riscoDengue === 'number') {
@@ -282,14 +332,36 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
   const [showAirQuality, setShowAirQuality] = useState(false);
   const [showDengueRisk, setShowDengueRisk] = useState(false);
   const [showGases, setShowGases] = useState(false);
+  const [showEmitters, setShowEmitters] = useState(false);
+  const [fontesEmissao, setFontesEmissao] = useState<FonteEmissaoItem[]>([]);
+  const [loadingFontes, setLoadingFontes] = useState(false);
   const [isLayersOpen, setIsLayersOpen] = useState(false);
+
+  useEffect(() => {
+    if (showEmitters && fontesEmissao.length === 0 && !loadingFontes) {
+      setLoadingFontes(true);
+      fetchFontesEmissao('CH4', undefined, 100)
+        .then(data => {
+          if (data && data.length > 0) {
+            setFontesEmissao(data);
+          }
+        })
+        .finally(() => setLoadingFontes(false));
+    }
+  }, [showEmitters, fontesEmissao.length, loadingFontes]);
 
   // Valores de metano para cálculo de quintis comparativos entre as capitais
   const allMethaneValues = Object.values(readings)
     .map(r => r.metano)
     .filter((v): v is number => typeof v === 'number' && !isNaN(v));
 
-  const activeLayersCount = (showRivers ? 1 : 0) + (showFires ? 1 : 0) + (showDengueRisk ? 1 : 0) + (showAirQuality ? 1 : 0) + (showGases ? 1 : 0);
+  const activeLayersCount =
+    (showRivers ? 1 : 0) +
+    (showFires ? 1 : 0) +
+    (showDengueRisk ? 1 : 0) +
+    (showAirQuality ? 1 : 0) +
+    (showGases ? 1 : 0) +
+    (showEmitters ? 1 : 0);
 
   return (
     <div className="relative w-full h-full flex-1 overflow-hidden bg-surface-base">
@@ -445,6 +517,20 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
                 checked={showGases}
                 onChange={e => setShowGases(e.target.checked)}
                 className="accent-emerald-400 cursor-pointer rounded"
+              />
+            </label>
+
+            {/* Grandes Emissores Pontuais (Climate TRACE) */}
+            <label className="flex items-center justify-between text-zinc-300 cursor-pointer hover:text-white" title="Fontes industriais, usinas, aterros e pecuária com maior emissão (Climate TRACE)">
+              <span className="flex items-center gap-1.5">
+                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                <span>Grandes Emissores (Climate TRACE)</span>
+              </span>
+              <input
+                type="checkbox"
+                checked={showEmitters}
+                onChange={e => setShowEmitters(e.target.checked)}
+                className="accent-amber-400 cursor-pointer rounded"
               />
             </label>
           </div>
@@ -730,6 +816,50 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
             </React.Fragment>
           );
         })}
+
+        {/* Camada de Grandes Emissores Pontuais — Climate TRACE */}
+        {showEmitters && fontesEmissao.map(fonte => {
+          const meta = getEmitterSectorMeta(fonte.setor, fonte.subSetor);
+          return (
+            <Marker
+              key={`emitter-${fonte.assetId}-${fonte.gas}`}
+              position={[fonte.latitude, fonte.longitude]}
+              icon={createEmitterIcon(fonte)}
+            >
+              <Tooltip direction="top" offset={[0, -14]} className="custom-gas-tooltip">
+                <div className="font-mono text-xs p-1 space-y-1 max-w-[270px]">
+                  <div className="font-bold text-amber-300 flex items-center gap-1.5">
+                    <span>{meta.icon}</span>
+                    <span className="truncate">{fonte.nome}</span>
+                  </div>
+                  <div className="text-[10px] text-zinc-300 space-y-0.5 pt-0.5 border-t border-border-subtle">
+                    <div>
+                      Setor: <span className="font-semibold text-white">{fonte.setorRotulo}</span>
+                    </div>
+                    {fonte.subSetor && (
+                      <div>
+                        Atividade: <span className="text-zinc-400">{fonte.subSetor.replace(/_/g, ' ')}</span>
+                      </div>
+                    )}
+                    <div>
+                      Emissão anual ({fonte.gas}):{' '}
+                      <span className="font-bold text-white">
+                        {fonte.emissaoAnualT.toLocaleString('pt-BR', { maximumFractionDigits: 0 })} t/ano
+                      </span>
+                    </div>
+                    <div>
+                      Ano de referência: <span className="font-semibold text-zinc-200">{fonte.ano}</span>
+                    </div>
+                  </div>
+                  <div className="text-[9px] text-zinc-400 pt-0.5 border-t border-border-subtle/50 flex items-center justify-between">
+                    <span>{fonte.credito || 'Climate TRACE (CC BY 4.0)'}</span>
+                    <span className="text-amber-400 font-bold">TOP FONTE</span>
+                  </div>
+                </div>
+              </Tooltip>
+            </Marker>
+          );
+        })}
       </MapContainer>
 
       {/* ── Legenda Flutuante de Severidade & Sensores (Bottom Right) ── */}
@@ -769,6 +899,10 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
             <span className="text-[12px] leading-none">💨</span>
             <span className="text-zinc-300">Gases CH₄ / CO₂ (CAMS Quintis)</span>
           </div>
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] leading-none">🏭</span>
+            <span className="text-zinc-300">Grandes Emissores (Climate TRACE)</span>
+          </div>
         </div>
 
         {showGases && (
@@ -787,8 +921,24 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
           </div>
         )}
 
+        {showEmitters && (
+          <div className="pt-1.5 mt-0.5 border-t border-white/10 space-y-1">
+            <div className="text-[10px] text-zinc-400 flex justify-between">
+              <span>Fontes por Setor (Climate TRACE):</span>
+            </div>
+            <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px] text-zinc-300">
+              <span className="flex items-center gap-1">⚡ Usinas / Termo</span>
+              <span className="flex items-center gap-1">🗑️ Aterros / Lixo</span>
+              <span className="flex items-center gap-1">🏭 Indústria / Metais</span>
+              <span className="flex items-center gap-1">🛢️ Petróleo & Gás</span>
+              <span className="flex items-center gap-1">⛏️ Mineração</span>
+              <span className="flex items-center gap-1">🐂 Pecuária</span>
+            </div>
+          </div>
+        )}
+
         <div className="pt-1.5 mt-0.5 border-t border-white/5 text-[9px] text-zinc-400 font-sans">
-          📡 Sensores: INPE · ANA · Open-Meteo · Copernicus · NASA
+          📡 Sensores: INPE · ANA · Open-Meteo · Copernicus · Climate TRACE
         </div>
       </div>
     </div>
