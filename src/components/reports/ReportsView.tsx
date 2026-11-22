@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   FileText,
   Download,
@@ -12,13 +12,14 @@ import {
   Flame,
   Wind
 } from 'lucide-react';
-import { MONITORED_CITIES, MOCK_ALERTS } from '../../data/mockData';
-import { formatAlertTypeName } from '../../types';
+import { MONITORED_CITIES } from '../../data/mockData';
+import { formatAlertTypeName, AlertDTO } from '../../types';
+import { fetchAllAlerts } from '../../services/api';
+import { carregarHistorico, Historico, usePrevisoes } from '../../services/forecasts';
 import {
   normalizeCityName,
   humanizePrecipitation,
   humanizeAirQuality,
-  humanizeRiverLevel,
   humanizeFireRisk
 } from '../../utils/humanFormatters';
 import { Sparkline } from '../common/Sparkline';
@@ -32,100 +33,63 @@ export const ReportsView: React.FC = () => {
     return MONITORED_CITIES.find(c => c.slug === selectedCitySlug) || MONITORED_CITIES[0];
   }, [selectedCitySlug]);
 
-  // Alertas filtrados pela cidade usando normalização consistente
+  // Dados reais: alertas do backend, histórico da Open-Meteo e previsão de amanhã
+  const [todosAlertas, setTodosAlertas] = useState<AlertDTO[]>([]);
+  const [historico, setHistorico] = useState<Historico | null | 'carregando'>('carregando');
+  const { dados: previsoes } = usePrevisoes();
+
+  useEffect(() => {
+    fetchAllAlerts().then(a => setTodosAlertas(Array.isArray(a) ? a : [])).catch(() => setTodosAlertas([]));
+  }, []);
+
+  useEffect(() => {
+    let vivo = true;
+    setHistorico('carregando');
+    carregarHistorico(selectedCity.lat, selectedCity.lng, selectedPeriod).then(h => vivo && setHistorico(h));
+    return () => { vivo = false; };
+  }, [selectedCity, selectedPeriod]);
+
+  // Alertas reais da cidade dentro do período escolhido
   const cityAlerts = useMemo(() => {
     const cityNorm = normalizeCityName(selectedCity.nome);
-    return MOCK_ALERTS.filter(a => {
+    const limite = Date.now() - selectedPeriod * 24 * 3600 * 1000;
+    return todosAlertas.filter(a => {
       const alertNorm = normalizeCityName(a.municipio);
-      return alertNorm === cityNorm || alertNorm.includes(cityNorm) || cityNorm.includes(alertNorm);
+      const naCidade = alertNorm === cityNorm || alertNorm.includes(cityNorm) || cityNorm.includes(alertNorm);
+      return naCidade && new Date(a.dataHoraAlerta).getTime() >= limite;
     });
-  }, [selectedCity]);
+  }, [selectedCity, selectedPeriod, todosAlertas]);
 
-  // KPIs consolidados e calibrados para a realidade climática da capital e da janela temporal
+  // KPIs com dados reais (Open-Meteo: chuva, temperatura e PM2.5 dos últimos dias; alertas do EcoWatch)
   const kpis = useMemo(() => {
-    const isCapitalWithRiver = !!selectedCity.rioNome;
+    const h = historico && historico !== 'carregando' ? historico : null;
     const alertCount = cityAlerts.length;
     const criticalCount = cityAlerts.filter(a => a.tipoAlerta.includes('FLOOD') || a.tipoAlerta.includes('FIRE')).length;
-
-    // Multiplicador da janela temporal (7 dias = 1x, 15 dias = ~2.1x, 30 dias = ~4.2x)
-    const factor = selectedPeriod / 7;
-
-    // Calibrações específicas por capital e bioma
-    let chuvaBase = 0.0;
-    let pm25Base = 18.0;
-    let focosBase = 1;
-    let tempMedia = '27.4°C';
-    let tempMax = '34.8°C';
-    let tempMin = '19.2°C';
-    let nivelRio = 0;
-
-    if (selectedCity.slug === 'brasilia') {
-      // Seca histórica e queimadas no Cerrado (Gama, Parque Nacional, entorno)
-      chuvaBase = selectedPeriod === 30 ? 1.5 : 0.0;
-      pm25Base = 28.4;
-      focosBase = Math.round(14 * (selectedPeriod / 7));
-      tempMedia = '28.2°C';
-      tempMax = '35.6°C';
-      tempMin = '18.0°C';
-      nivelRio = 0;
-    } else if (selectedCity.slug === 'porto alegre') {
-      // Bacia do Guaíba - cheia recente e chuvas no Sul
-      chuvaBase = Math.round(68.4 * factor);
-      pm25Base = 12.0;
-      focosBase = Math.round(1 * factor);
-      tempMedia = '21.5°C';
-      tempMax = '26.0°C';
-      tempMin = '16.0°C';
-      nivelRio = 2.18; // Cota de alerta do Guaíba é 2.0m
-    } else if (selectedCity.slug === 'manaus') {
-      // Rio Negro e calor úmido amazônico
-      chuvaBase = Math.round(14.2 * factor);
-      pm25Base = 38.5; // fumaça sazonal
-      focosBase = Math.round(18 * factor);
-      tempMedia = '32.8°C';
-      tempMax = '37.0°C';
-      tempMin = '25.0°C';
-      nivelRio = 12.85; // Cota de emergência é 29m, vazante acentuada
-    } else if (selectedCity.slug === 'cuiaba') {
-      // Calor escaldante no Centro-Oeste
-      chuvaBase = 0.0;
-      pm25Base = 44.0;
-      focosBase = Math.round(24 * factor);
-      tempMedia = '34.5°C';
-      tempMax = '40.2°C';
-      tempMin = '23.0°C';
-      nivelRio = 1.10;
-    } else {
-      // Demais capitais
-      chuvaBase = isCapitalWithRiver ? Math.round(25.0 * factor) : 0.0;
-      pm25Base = 19.5;
-      focosBase = alertCount > 0 ? Math.round(5 * factor) : 1;
-      nivelRio = selectedCity.cotaAlerta ? selectedCity.cotaAlerta * 0.85 : 0;
-    }
-
-    const chuvaObj = humanizePrecipitation(chuvaBase);
-    const arObj = humanizeAirQuality(pm25Base);
-    const rioObj = isCapitalWithRiver
-      ? humanizeRiverLevel(nivelRio, selectedCity.cotaAlerta, selectedCity.cotaEmergencia, selectedCity.rioNome)
-      : null;
-    const fogoObj = humanizeFireRisk(selectedCity.slug === 'brasilia' || selectedCity.slug === 'cuiaba' ? 88 : 35);
-
+    const alertasFogo = cityAlerts.filter(a => a.tipoAlerta.includes('FIRE')).length;
+    const chuvaBase = h ? h.chuvaTotal : 0;
+    const pm25Base = h?.pm25Medio ?? 0;
+    const amanha = previsoes[selectedCity.slug]?.[0];
+    const fmt = (v?: number) => (v === undefined || !isFinite(v) ? '—' : `${v.toFixed(1)}°C`);
     return {
+      temDados: !!h,
       totalAlertas: alertCount,
       alertasCriticos: criticalCount,
-      tempMedia,
-      tempMax,
-      tempMin,
+      tempMedia: fmt(h?.tempMedia),
+      tempMax: fmt(h?.tempMax),
+      tempMin: fmt(h?.tempMin),
+      tempMediaNum: h && isFinite(h.tempMedia) ? h.tempMedia : 0,
+      serieTemp: h ? [h.tempMin, h.tempMedia, h.tempMax].filter(isFinite) : [0, 0],
       chuvaBase,
-      chuvaObj,
+      serieChuva: h && h.chuvaDiaria.length ? h.chuvaDiaria : [0, 0],
+      chuvaObj: humanizePrecipitation(chuvaBase),
       pm25Base,
-      arObj,
-      nivelRio,
-      rioObj,
-      fogoObj,
-      focosIncendioPeriodo: focosBase
+      seriePm25: h && h.pm25Diario.length ? h.pm25Diario : [0, 0],
+      arObj: humanizeAirQuality(pm25Base),
+      fogoObj: humanizeFireRisk(amanha ? amanha.riscoIncendio : 0),
+      riscoFogoAmanha: amanha?.riscoIncendio,
+      focosIncendioPeriodo: alertasFogo
     };
-  }, [selectedCity, cityAlerts, selectedPeriod]);
+  }, [historico, cityAlerts, previsoes, selectedCity]);
 
   /**
    * Sanitiza valores de células CSV prevenindo Formula Injection (CWE-1236).
@@ -298,6 +262,12 @@ export const ReportsView: React.FC = () => {
         {/* ── Cards de Indicadores Consolidados (KPIs Humanizados & Bento Architecture) ── */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
           
+          {historico === 'carregando' && (
+            <div className="col-span-full text-xs text-zinc-400 font-mono">Carregando o histórico real da Open-Meteo…</div>
+          )}
+          {historico === null && (
+            <div className="col-span-full text-xs text-warning font-mono">Não consegui buscar o histórico agora; os valores abaixo podem aparecer zerados.</div>
+          )}
           {/* Card 1: Chuva Acumulada no Período */}
           <div className="p-4 rounded-xl bento-card card-interactive space-y-2.5 flex flex-col justify-between shadow-sm relative overflow-hidden">
             <div className="space-y-1.5">
@@ -314,7 +284,7 @@ export const ReportsView: React.FC = () => {
                 />
                 <div className="w-20 h-6">
                   <Sparkline 
-                    data={kpis.chuvaBase === 0 ? [0, 0, 0, 0, 0] : [kpis.chuvaBase * 0.1, kpis.chuvaBase * 0.25, kpis.chuvaBase * 0.05, kpis.chuvaBase * 0.45, kpis.chuvaBase]} 
+                    data={kpis.serieChuva} 
                     color="#00e5ff" 
                     height={24} 
                   />
@@ -329,40 +299,25 @@ export const ReportsView: React.FC = () => {
             </p>
           </div>
 
-          {/* Card 2: Cota do Rio / Nível das Águas */}
+          {/* Card 2: Temperatura no período (Open-Meteo) */}
           <div className="p-4 rounded-xl bento-card card-interactive space-y-2.5 flex flex-col justify-between shadow-sm relative overflow-hidden">
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs text-zinc-400 font-sans font-medium">
-                <span className="tracking-wide">Nível do Rio ({selectedCity.rioNome || 'Bacia'})</span>
+                <span className="tracking-wide">Temperatura Média</span>
                 <Droplets className="w-4 h-4 text-nominal animate-breathing-glow" />
               </div>
               <div className="flex items-baseline justify-between">
-                {selectedCity.rioNome ? (
-                  <AnimatedCounter
-                    value={kpis.nivelRio}
-                    decimals={2}
-                    suffix="m"
-                    className="text-2xl font-bold font-mono text-zinc-100"
-                  />
-                ) : (
-                  <div className="text-2xl font-bold font-mono text-zinc-100 tnum">Estável</div>
-                )}
-                {selectedCity.rioNome && (
-                  <div className="w-20 h-6">
-                    <Sparkline 
-                      data={[kpis.nivelRio * 0.94, kpis.nivelRio * 0.97, kpis.nivelRio * 0.95, kpis.nivelRio * 0.99, kpis.nivelRio]} 
-                      color="#00e676" 
-                      height={24} 
-                    />
-                  </div>
-                )}
+                <AnimatedCounter value={kpis.tempMediaNum} decimals={1} suffix="°C" className="text-2xl font-bold font-mono text-zinc-100" />
+                <div className="w-20 h-6">
+                  <Sparkline data={kpis.serieTemp} color="#00e676" height={24} />
+                </div>
               </div>
               <div className="text-[11px] font-sans font-semibold text-zinc-300">
-                {kpis.rioObj ? kpis.rioObj.label : 'Sem risco de enchente'}
+                Mín. {kpis.tempMin} · Máx. {kpis.tempMax}
               </div>
             </div>
             <p className="text-[11px] text-zinc-400 font-sans leading-relaxed pt-2 border-t border-white/5">
-              💡 {kpis.rioObj ? kpis.rioObj.explanation : 'Região sem rio com cota de transbordamento monitorada pela ANA.'}
+              💡 Média das temperaturas diárias dos últimos {selectedPeriod} dias (Open-Meteo).
             </p>
           </div>
 
@@ -382,7 +337,7 @@ export const ReportsView: React.FC = () => {
                 />
                 <div className="w-20 h-6">
                   <Sparkline 
-                    data={[kpis.pm25Base * 0.85, kpis.pm25Base * 0.95, kpis.pm25Base * 1.08, kpis.pm25Base * 0.92, kpis.pm25Base]} 
+                    data={kpis.seriePm25} 
                     color="#ffd600" 
                     height={24} 
                   />
@@ -401,26 +356,26 @@ export const ReportsView: React.FC = () => {
           <div className="p-4 rounded-xl bento-card card-interactive space-y-2.5 flex flex-col justify-between shadow-sm relative overflow-hidden">
             <div className="space-y-1.5">
               <div className="flex items-center justify-between text-xs text-zinc-400 font-sans font-medium">
-                <span className="tracking-wide">Focos no Período</span>
+                <span className="tracking-wide">Alertas de Fogo no Período</span>
                 <Flame className={`w-4 h-4 animate-breathing-glow ${kpis.focosIncendioPeriodo > 5 ? 'text-critical' : 'text-nominal'}`} />
               </div>
               <div className="flex items-baseline justify-between">
                 <AnimatedCounter
                   value={kpis.focosIncendioPeriodo}
                   decimals={0}
-                  suffix=" focos"
+                  suffix=" alertas"
                   className="text-2xl font-bold font-mono text-zinc-100"
                 />
                 <div className="w-20 h-6">
                   <Sparkline 
-                    data={[Math.max(0, kpis.focosIncendioPeriodo - 4), Math.max(1, kpis.focosIncendioPeriodo - 2), Math.max(1, kpis.focosIncendioPeriodo - 1), kpis.focosIncendioPeriodo]} 
+                    data={[0, kpis.focosIncendioPeriodo]} 
                     color={kpis.focosIncendioPeriodo > 5 ? '#ff1744' : '#00e676'} 
                     height={24} 
                   />
                 </div>
               </div>
               <div className="text-[11px] font-sans font-semibold text-critical">
-                {kpis.fogoObj.label}
+                {kpis.riscoFogoAmanha !== undefined ? `Amanhã: ${kpis.fogoObj.label}` : kpis.fogoObj.label}
               </div>
             </div>
             <p className="text-[11px] text-zinc-400 font-sans leading-relaxed pt-2 border-t border-white/5">
@@ -448,21 +403,13 @@ export const ReportsView: React.FC = () => {
             </p>
 
             <p>
-              {selectedCity.rioNome ? (
+              {kpis.totalAlertas > 0 ? (
                 <span>
-                  Em relação aos recursos hídricos, a estação hidrológica do <strong>{selectedCity.rioNome}</strong> registrou marca de <strong>{kpis.nivelRio.toFixed(2)}m</strong>. 
-                  {kpis.rioObj?.status === 'emergency' ? (
-                    <span className="text-critical font-bold"> Situação de emergência confirmada com invasão de vias públicas e áreas habitadas pela água.</span>
-                  ) : kpis.rioObj?.status === 'alert' ? (
-                    <span className="text-warning font-semibold"> O nível atingiu a cota de atenção ({selectedCity.cotaAlerta}m); a água se aproxima da margem das vias ribeirinhas e exige vigilância contínua das equipes da Defesa Civil.</span>
-                  ) : (
-                    <span> O fluxo hídrico permanece contido na calha, sem risco iminente de inundação para a população urbana.</span>
-                  )}
+                  O EcoWatch registrou <strong>{kpis.totalAlertas} alerta(s)</strong> para a capital no período
+                  {kpis.alertasCriticos > 0 ? <span className="text-critical font-semibold">, sendo {kpis.alertasCriticos} de enchente ou fogo</span> : null}. Veja a lista completa abaixo.
                 </span>
               ) : (
-                <span>
-                  O município não possui registro de grandes rios em estágio crítico de extravasamento, registrando escoamento pluvial urbano compatível com a capacidade dos córregos locais.
-                </span>
+                <span>Nenhum alerta foi registrado pelo EcoWatch para a capital neste período.</span>
               )}
             </p>
 
