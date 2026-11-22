@@ -3,10 +3,18 @@ import { MOCK_WEATHER_READINGS, MOCK_ALERTS, MOCK_FORECASTS, MONITORED_CITIES } 
 import { MOCK_NEWS } from '../data/newsData';
 import { sanitizeNewsList } from '../utils/newsSanitizer';
 
-// ── Endpoints do Backend (injetados via variáveis de ambiente da Vercel/.env) ──
-const READ_MODEL_URL        = import.meta.env.VITE_READ_MODEL_URL        || '';
-const ALERT_SERVICE_URL     = import.meta.env.VITE_ALERT_SERVICE_URL     || '';
-const INGESTION_SERVICE_URL = import.meta.env.VITE_INGESTION_SERVICE_URL || '';
+// ── Endpoints do Backend (injetados via variáveis de ambiente ou URL de produção na Azure) ──
+const READ_MODEL_URL =
+  import.meta.env.VITE_READ_MODEL_URL ||
+  'https://read-model-service.wittytree-8ba02066.brazilsouth.azurecontainerapps.io';
+
+const ALERT_SERVICE_URL =
+  import.meta.env.VITE_ALERT_SERVICE_URL ||
+  'https://alert-service.wittytree-8ba02066.brazilsouth.azurecontainerapps.io';
+
+const INGESTION_SERVICE_URL =
+  import.meta.env.VITE_INGESTION_SERVICE_URL ||
+  'https://data-ingestion.wittytree-8ba02066.brazilsouth.azurecontainerapps.io';
 
 export async function fetchCityWeather(citySlug: string, forceLive: boolean = false): Promise<WeatherReading> {
   // 1. Tenta buscar do backend (alert-service Redis cache na Azure), a menos que forceLive=true
