@@ -236,3 +236,7 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* Linhas roláveis sem barra visível (chips de categoria) */
+.scrollbar-none { scrollbar-width: none; }
+.scrollbar-none::-webkit-scrollbar { display: none; }
