@@ -32,6 +32,25 @@ const INGESTION_SERVICE_URL =
 // Se o cache do alert-service falhar repetidamente, registra timestamp para tentar novamente após 5 min
 let lastCacheFailureTime = 0;
 
+// ── Leitura manual (botão "Atualizar dados") persistida no navegador ──────
+// Mantém a última atualização feita pelo usuário após recarregar a página.
+const CHAVE_LEITURA_MANUAL = (slug: string) => `ecowatch:leitura-manual:${slug}`;
+
+export function salvarLeituraManual(citySlug: string, reading: WeatherReading): void {
+  try {
+    localStorage.setItem(CHAVE_LEITURA_MANUAL(citySlug), JSON.stringify(reading));
+  } catch { /* navegador sem storage */ }
+}
+
+export function lerLeituraManual(citySlug: string): WeatherReading | null {
+  try {
+    const raw = localStorage.getItem(CHAVE_LEITURA_MANUAL(citySlug));
+    return raw ? (JSON.parse(raw) as WeatherReading) : null;
+  } catch {
+    return null;
+  }
+}
+
 export async function fetchCityWeather(citySlug: string, forceLive: boolean = false): Promise<WeatherReading> {
   const isCacheSuspended = Date.now() - lastCacheFailureTime < 300_000; // 5 min retry
 
