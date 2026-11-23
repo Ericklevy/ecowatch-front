@@ -175,10 +175,57 @@ const createGasMarkerIcon = (reading: WeatherReading | undefined, gasMeta: GasMe
 };
 
 // ─── Metadados e Ícone: Grandes Emissores Pontuais (Climate TRACE) ────────────
+export const formatarNomeEmissor = (nome?: string | null, setor?: string | null, subSetor?: string | null): string => {
+  if (!nome || !nome.trim()) return 'Fonte Emissora';
+  let n = nome.trim();
+  const s = ((setor || '') + ' ' + (subSetor || '')).toLowerCase();
+
+  if (n.includes('OtherBasins') || n.includes('OtherResources') || n.includes('Brazil_OtherBasins')) {
+    return 'Bacias Petrolíferas (Estimativa Agregada de Petróleo e Gás)';
+  }
+
+  if (n.endsWith(' Municipality') || n.includes(' Municipality')) {
+    const mun = n.replace(/\s*Municipality/gi, '').trim();
+    if (s.includes('enteric') || s.includes('cattle') || s.includes('pecuária')) {
+      return `Município de ${mun} (Pecuária)`;
+    }
+    if (s.includes('rice') || s.includes('arroz')) {
+      return `Município de ${mun} (Cultivo de Arroz)`;
+    }
+    if (s.includes('clearing') || s.includes('desmatamento')) {
+      return `Município de ${mun} (Desmatamento)`;
+    }
+    if (s.includes('fire') || s.includes('queimada')) {
+      return `Município de ${mun} (Queimadas)`;
+    }
+    return `Município de ${mun}`;
+  }
+
+  if (n.endsWith(' Main Dam')) return 'Represa de ' + n.replace(' Main Dam', '').trim();
+  if (n.endsWith(' Dam')) return 'Represa de ' + n.replace(' Dam', '').trim();
+  if (n.endsWith(' Controlled Landfill')) return 'Aterro Controlado ' + n.replace(' Controlled Landfill', '').trim();
+  if (n.endsWith(' Landfill')) return 'Aterro Sanitário ' + n.replace(' Landfill', '').trim();
+  if (n.includes('Public Solid Waste Landfill')) return n.replace('Public Solid Waste Landfill', 'Aterro Sanitário Público').trim();
+  if (n.includes('Waste Disposal Center')) return n.replace('Waste Disposal Center', 'Centro de Tratamento de Resíduos').trim();
+  if (n.endsWith(' steel plant')) return 'Siderúrgica ' + n.replace(' steel plant', '').trim();
+  if (n.endsWith(' Coal Mine')) return 'Mina de Carvão ' + n.replace(' Coal Mine', '').trim();
+
+  return n;
+};
+
 const getEmitterSectorMeta = (setor: string, subSetor?: string | null) => {
   const s = (setor + ' ' + (subSetor || '')).toLowerCase();
-  if (s.includes('waste') || s.includes('aterro') || s.includes('resíduo') || s.includes('disposal')) {
+  if (s.includes('waste') || s.includes('aterro') || s.includes('resíduo') || s.includes('disposal') || s.includes('lixão')) {
     return { icon: '🗑️', color: '#f59e0b', stroke: '#fbbf24', label: 'Resíduos / Aterro Sanitário' };
+  }
+  if (s.includes('water-reservoir') || s.includes('represa') || s.includes('hidrelétrica') || s.includes('hydro')) {
+    return { icon: '💧', color: '#0ea5e9', stroke: '#38bdf8', label: 'Represa / Hidrelétrica' };
+  }
+  if (s.includes('rice') || s.includes('arroz')) {
+    return { icon: '🌾', color: '#84cc16', stroke: '#a3e635', label: 'Cultivo de Arroz' };
+  }
+  if (s.includes('agri') || s.includes('cattle') || s.includes('pecuária') || s.includes('bovino') || s.includes('enteric')) {
+    return { icon: '🐂', color: '#10b981', stroke: '#34d399', label: 'Pecuária / Agropecuária' };
   }
   if (s.includes('power') || s.includes('electricity') || s.includes('energia') || s.includes('terme')) {
     return { icon: '⚡', color: '#ef4444', stroke: '#f87171', label: 'Geração de Energia / Termelétrica' };
@@ -186,16 +233,13 @@ const getEmitterSectorMeta = (setor: string, subSetor?: string | null) => {
   if (s.includes('oil') || s.includes('petróleo') || s.includes('gás') || s.includes('refin') || s.includes('fossil')) {
     return { icon: '🛢️', color: '#06b6d4', stroke: '#22d3ee', label: 'Petróleo & Gás Natural' };
   }
-  if (s.includes('mining') || s.includes('mineral') || s.includes('mina') || s.includes('bauxite') || s.includes('iron')) {
+  if (s.includes('mining') || s.includes('mineral') || s.includes('mina') || s.includes('bauxite') || s.includes('coal')) {
     return { icon: '⛏️', color: '#94a3b8', stroke: '#cbd5e1', label: 'Mineração e Extração' };
   }
-  if (s.includes('agri') || s.includes('cattle') || s.includes('pecuária') || s.includes('bovino') || s.includes('enteric')) {
-    return { icon: '🐂', color: '#10b981', stroke: '#34d399', label: 'Pecuária / Agropecuária' };
-  }
-  if (s.includes('steel') || s.includes('metal') || s.includes('indústria') || s.includes('manufacturing') || s.includes('aluminum')) {
+  if (s.includes('steel') || s.includes('metal') || s.includes('indústria') || s.includes('manufacturing') || s.includes('aluminum') || s.includes('siderurgia') || s.includes('iron')) {
     return { icon: '🏭', color: '#a855f7', stroke: '#c084fc', label: 'Indústria & Metalurgia' };
   }
-  if (s.includes('fire') || s.includes('forest') || s.includes('queimada')) {
+  if (s.includes('fire') || s.includes('forest') || s.includes('queimada') || s.includes('desmatamento') || s.includes('clearing')) {
     return { icon: '🔥', color: '#f97316', stroke: '#fb923c', label: 'Uso da Terra / Fogo' };
   }
   return { icon: '🏭', color: '#6366f1', stroke: '#818cf8', label: 'Fonte Emissora' };
@@ -830,7 +874,7 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
                 <div className="font-mono text-xs p-1 space-y-1 max-w-[270px]">
                   <div className="font-bold text-amber-300 flex items-center gap-1.5">
                     <span>{meta.icon}</span>
-                    <span className="truncate">{fonte.nome}</span>
+                    <span className="truncate">{formatarNomeEmissor(fonte.nome, fonte.setor, fonte.subSetor)}</span>
                   </div>
                   <div className="text-[10px] text-zinc-300 space-y-0.5 pt-0.5 border-t border-border-subtle">
                     <div>
@@ -927,12 +971,14 @@ export const BrazilMap: React.FC<BrazilMapProps> = ({
               <span>Fontes por Setor (Climate TRACE):</span>
             </div>
             <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px] text-zinc-300">
-              <span className="flex items-center gap-1">⚡ Usinas / Termo</span>
+              <span className="flex items-center gap-1">⚡ Termelétricas</span>
+              <span className="flex items-center gap-1">💧 Represas / Hidro</span>
               <span className="flex items-center gap-1">🗑️ Aterros / Lixo</span>
               <span className="flex items-center gap-1">🏭 Indústria / Metais</span>
+              <span className="flex items-center gap-1">🐂 Pecuária Bovina</span>
+              <span className="flex items-center gap-1">🌾 Cultivo de Arroz</span>
+              <span className="flex items-center gap-1">🔥 Queimadas / Fogo</span>
               <span className="flex items-center gap-1">🛢️ Petróleo & Gás</span>
-              <span className="flex items-center gap-1">⛏️ Mineração</span>
-              <span className="flex items-center gap-1">🐂 Pecuária</span>
             </div>
           </div>
         )}

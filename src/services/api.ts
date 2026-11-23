@@ -29,49 +29,48 @@ const INGESTION_SERVICE_URL =
   import.meta.env.VITE_INGESTION_SERVICE_URL ||
   'https://data-ingestion.wittytree-8ba02066.brazilsouth.azurecontainerapps.io';
 
-// Se o cache do alert-service falhar uma vez (404/timeout), não tenta de novo nesta visita:
-// antes cada uma das 27 capitais esperava até 2 s antes de buscar na Open-Meteo.
-let cacheBackendIndisponivel = false;
+// Se o cache do alert-service falhar repetidamente, registra timestamp para tentar novamente após 5 min
+let lastCacheFailureTime = 0;
 
 export async function fetchCityWeather(citySlug: string, forceLive: boolean = false): Promise<WeatherReading> {
+  const isCacheSuspended = Date.now() - lastCacheFailureTime < 300_000; // 5 min retry
+
   // 1. Tenta buscar do backend (alert-service Redis cache na Azure), a menos que forceLive=true
-  if (!forceLive && ALERT_SERVICE_URL && !cacheBackendIndisponivel) {
+  if (!forceLive && ALERT_SERVICE_URL && !isCacheSuspended) {
     try {
       const res = await fetch(`${ALERT_SERVICE_URL}/api/cache/${encodeURIComponent(citySlug)}`, {
-        signal: AbortSignal.timeout(1500)
+        signal: AbortSignal.timeout(2500)
       });
-      if (!res.ok) cacheBackendIndisponivel = true;
-      if (res.ok) {
+      if (!res.ok) {
+        if (res.status >= 500) lastCacheFailureTime = Date.now();
+      } else {
         const cached: WeatherReading = await res.json();
-        // Só aproveita o cache se tiver menos de 45 minutos para garantir temperatura condizente
+        // Aproveita o cache oficial do ciclo de ingestão (até 8 horas de validade, alinhado aos ciclos 3x/dia)
         if (cached && cached.timestamp) {
           const ageMinutes = (Date.now() - new Date(cached.timestamp).getTime()) / 60000;
-          if (ageMinutes < 45) {
+          if (ageMinutes < 480) {
             return cached;
           }
         }
       }
     } catch {
-      cacheBackendIndisponivel = true; /* fallback para satélite direto */
+      lastCacheFailureTime = Date.now();
     }
   }
 
-  // 2. Busca direto da Open-Meteo ao vivo (garante graus atualizados para o horário exato sem cache)
+  // 2. Busca direto da Open-Meteo ao vivo (respeitando cache HTTP para não disparar 429 rate limit)
   const city = MONITORED_CITIES.find(c => 
     c.slug.toLowerCase() === citySlug.toLowerCase() || 
     c.nome.toLowerCase() === citySlug.toLowerCase()
   );
   if (city) {
     try {
-      const cb = Date.now();
       const [weatherRes, aqRes] = await Promise.all([
-        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lng}&current=temperature_2m,relative_humidity_2m,precipitation&timezone=America/Sao_Paulo&_cb=${cb}`, {
-          signal: AbortSignal.timeout(4000),
-          cache: 'no-store'
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${city.lat}&longitude=${city.lng}&current=temperature_2m,relative_humidity_2m,precipitation&timezone=America/Sao_Paulo`, {
+          signal: AbortSignal.timeout(5000)
         }),
-        fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${city.lat}&longitude=${city.lng}&current=pm10,pm2_5,methane,carbon_dioxide,carbon_monoxide&_cb=${cb}`, {
-          signal: AbortSignal.timeout(4000),
-          cache: 'no-store'
+        fetch(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${city.lat}&longitude=${city.lng}&current=pm10,pm2_5,methane,carbon_dioxide,carbon_monoxide`, {
+          signal: AbortSignal.timeout(5000)
         }).catch(() => null)
       ]);
 
@@ -234,7 +233,7 @@ export async function fetchNews(params?: FetchNewsParams): Promise<{ items: News
 
       const queryStr = searchParams.toString() ? `?${searchParams.toString()}` : '';
       const res = await fetch(`${READ_MODEL_URL}/api/v1/news${queryStr}`, {
-        signal: AbortSignal.timeout(6000)
+        signal: AbortSignal.timeout(20000)
       });
 
       if (res.ok) {

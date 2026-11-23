@@ -252,3 +252,42 @@
 @media (prefers-reduced-motion: reduce) {
   .gota-flutua, .gota-pensa, .gota-olho { animation: none; }
 }
+
+/* ── Estilos de Impressão e Exportação para PDF ── */
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+  }
+  
+  /* Ocultar navegação, botões de ação e modais na impressão */
+  header, nav, [role="banner"], [role="contentinfo"], .fixed, button, input {
+    display: none !important;
+  }
+  
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+    background: #ffffff !important;
+  }
+
+  /* Cards e painéis limpos com borda cinza clara */
+  div[class*="bg-surface"], div[class*="bg-zinc-900"], div[class*="bg-black"], article {
+    background: #ffffff !important;
+    border: 1px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* Textos contrastantes e legíveis */
+  h1, h2, h3, h4, p, span, td, th {
+    color: #0f172a !important;
+    text-shadow: none !important;
+  }
+  
+  .text-zinc-400, .text-zinc-500 {
+    color: #475569 !important;
+  }
+}

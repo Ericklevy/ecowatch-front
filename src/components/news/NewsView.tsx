@@ -133,7 +133,7 @@ export const NewsView: React.FC = () => {
           <div className="flex items-center gap-2 flex-wrap">
             <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded bg-hydro/10 border border-hydro/20 text-xs font-mono text-hydro w-fit">
               <Radio className="w-3.5 h-3.5 animate-pulse text-hydro" />
-              <span>Fontes Oficiais: Agência Brasil · G1 · Agência Gov</span>
+              <span>Fontes Oficiais: Agência Brasil · G1 Meio Ambiente</span>
             </div>
 
             <button
