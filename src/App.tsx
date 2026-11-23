@@ -18,7 +18,17 @@ import { LiveStatusTicker } from './components/layout/LiveStatusTicker';
 import { CommandPalette } from './components/common/CommandPalette';
 import { MONITORED_CITIES, MOCK_WEATHER_READINGS, MOCK_ALERTS } from './data/mockData';
 import { CityInfo, WeatherReading, AlertDTO } from './types';
-import { fetchCityWeather, fetchCityDashboard, fetchAllAlerts } from './services/api';
+import { fetchCityWeather, fetchCityDashboard, fetchAllAlerts, salvarLeituraManual, lerLeituraManual } from './services/api';
+
+// Escolhe a leitura mais recente entre a manual (salva no navegador) e a vinda do backend/satélite
+const escolherLeitura = (slug: string, doServidor: WeatherReading): WeatherReading => {
+  const manual = lerLeituraManual(slug);
+  if (manual && manual.timestamp && doServidor.timestamp &&
+      new Date(manual.timestamp).getTime() > new Date(doServidor.timestamp).getTime()) {
+    return manual;
+  }
+  return doServidor;
+};
 
 export const App: React.FC = () => {
   const [currentView, setCurrentView] = useState<'landing' | 'console'>('landing');
@@ -26,7 +36,14 @@ export const App: React.FC = () => {
   const [selectedCity, setSelectedCity] = useState<CityInfo>(MONITORED_CITIES[0]); // Padrão: Manaus
   // Inicia aberto apenas em telas médias/grandes (desktop). No celular inicia fechado para deixar a tela limpa.
   const [isDrawerOpen, setIsDrawerOpen] = useState(() => typeof window !== 'undefined' && window.innerWidth >= 768);
-  const [readings, setReadings] = useState<Record<string, WeatherReading>>(MOCK_WEATHER_READINGS);
+  const [readings, setReadings] = useState<Record<string, WeatherReading>>(() => {
+    const inicial = { ...MOCK_WEATHER_READINGS };
+    MONITORED_CITIES.forEach(city => {
+      const manual = lerLeituraManual(city.slug);
+      if (manual) inicial[city.slug] = manual;
+    });
+    return inicial;
+  });
   const [cityAlerts, setCityAlerts] = useState<AlertDTO[]>([]);
   const [unreadAlertsCount, setUnreadAlertsCount] = useState<number>(3);
   const [isBackendOnline, setIsBackendOnline] = useState(false);
@@ -57,7 +74,7 @@ export const App: React.FC = () => {
     results.forEach((res, index) => {
       const city = MONITORED_CITIES[index];
       if (res.status === 'fulfilled' && res.value) {
-        const reading = res.value;
+        const reading = escolherLeitura(city.slug, res.value);
         if (reading.timestamp !== MOCK_WEATHER_READINGS[city.slug]?.timestamp) {
           anyOnline = true;
         }
@@ -182,6 +199,7 @@ export const App: React.FC = () => {
                 alerts={cityAlerts}
                 onClose={() => setIsDrawerOpen(false)}
                 onDataRefreshed={(newReading, newAlerts) => {
+                  salvarLeituraManual(selectedCity.slug, newReading);
                   setReadings(prev => ({ ...prev, [selectedCity.slug]: newReading }));
                   setCityAlerts(newAlerts);
                   setLastUpdate(new Date());
