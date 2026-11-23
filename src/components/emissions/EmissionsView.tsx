@@ -277,8 +277,13 @@ export const EmissionsView: React.FC = () => {
               </div>
             ) : visualizacao === 'municipios' ? (
               ranking.length === 0 ? (
-                <div className="p-12 text-center rounded-2xl bg-surface-card border border-border-subtle text-zinc-400 text-xs">
-                  Sem dados registrados para este filtro.
+                <div className="p-12 text-center rounded-2xl bg-surface-card border border-border-subtle text-zinc-400 text-xs space-y-2">
+                  <p className="font-semibold text-zinc-300">Nenhum dado encontrado para este recorte.</p>
+                  <p className="text-[11px] text-zinc-500">
+                    {selectedUf !== 'ALL'
+                      ? `Não foram registradas emissões de ${selectedGas} para municípios de ${selectedUf} no SEEG.`
+                      : `Não foram registradas emissões de ${selectedGas} para o recorte selecionado.`}
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-2.5">
@@ -350,40 +355,46 @@ export const EmissionsView: React.FC = () => {
               )
             ) : (
               /* Visualização de Estados (UF) */
-              <div className="space-y-2.5">
-                {estados.map((item, index) => {
-                  const pctBar = maxEmissao > 0 ? (item.emissaoTotal / maxEmissao) * 100 : 0;
-                  return (
-                    <div
-                      key={item.uf}
-                      className="p-3.5 rounded-xl bg-surface-card border border-border-subtle hover:border-emerald-500/40 transition-all"
-                    >
-                      <div className="flex items-center justify-between gap-3 mb-2">
-                        <div className="flex items-center gap-2">
-                          <span className="w-5 h-5 rounded-full bg-surface-base border border-border-subtle text-[11px] font-mono font-bold text-zinc-400 flex items-center justify-center shrink-0">
-                            {index + 1}
-                          </span>
-                          <span className="text-sm font-semibold text-zinc-100">
-                            {item.uf}
-                          </span>
-                          <span className="text-xs text-zinc-400">
-                            · Principal: <strong className="text-zinc-200">{item.setorPrincipal}</strong> ({item.percentualSetorPrincipal}%)
-                          </span>
+              estados.length === 0 ? (
+                <div className="p-12 text-center rounded-2xl bg-surface-card border border-border-subtle text-zinc-400 text-xs">
+                  Sem dados registrados para este gás em nível estadual.
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {estados.map((item, index) => {
+                    const pctBar = maxEmissao > 0 ? (item.emissaoTotal / maxEmissao) * 100 : 0;
+                    return (
+                      <div
+                        key={item.uf}
+                        className="p-3.5 rounded-xl bg-surface-card border border-border-subtle hover:border-emerald-500/40 transition-all"
+                      >
+                        <div className="flex items-center justify-between gap-3 mb-2">
+                          <div className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-full bg-surface-base border border-border-subtle text-[11px] font-mono font-bold text-zinc-400 flex items-center justify-center shrink-0">
+                              {index + 1}
+                            </span>
+                            <span className="text-sm font-semibold text-zinc-100">
+                              {item.uf}
+                            </span>
+                            <span className="text-xs text-zinc-400">
+                              · Principal: <strong className="text-zinc-200">{item.setorPrincipal}</strong> ({item.percentualSetorPrincipal}%)
+                            </span>
+                          </div>
+                          <div className="text-sm font-bold text-zinc-100 font-mono">
+                            {formatNumero(item.emissaoTotal)}
+                          </div>
                         </div>
-                        <div className="text-sm font-bold text-zinc-100 font-mono">
-                          {formatNumero(item.emissaoTotal)}
+                        <div className="w-full h-2 rounded-full bg-surface-base overflow-hidden">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-hydro"
+                            style={{ width: `${Math.max(pctBar, 2)}%` }}
+                          />
                         </div>
                       </div>
-                      <div className="w-full h-2 rounded-full bg-surface-base overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-hydro"
-                          style={{ width: `${Math.max(pctBar, 2)}%` }}
-                        />
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
+                    );
+                  })}
+                </div>
+              )
             )}
           </div>
 
@@ -437,6 +448,10 @@ export const EmissionsView: React.FC = () => {
                       ))}
                     </div>
                   </div>
+                </div>
+              ) : selectedMunicipio ? (
+                <div className="py-8 text-center text-xs text-amber-400/90 leading-relaxed bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
+                  Sem dados registrados de {selectedGas} para <strong>{selectedMunicipio}</strong> no SEEG. Experimente selecionar CO₂e ou outro gás.
                 </div>
               ) : (
                 <div className="py-8 text-center text-xs text-zinc-400 leading-relaxed">
