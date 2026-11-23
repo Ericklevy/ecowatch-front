@@ -53,9 +53,10 @@ export function lerLeituraManual(citySlug: string): WeatherReading | null {
 
 export async function fetchCityWeather(citySlug: string, forceLive: boolean = false): Promise<WeatherReading> {
   const isCacheSuspended = Date.now() - lastCacheFailureTime < 300_000; // 5 min retry
+  let cachedData: WeatherReading | null = null;
 
-  // 1. Tenta buscar do backend (alert-service Redis cache na Azure), a menos que forceLive=true
-  if (!forceLive && ALERT_SERVICE_URL && !isCacheSuspended) {
+  // 1. Tenta buscar do backend (alert-service Redis cache na Azure)
+  if (ALERT_SERVICE_URL && !isCacheSuspended) {
     try {
       const res = await fetch(`${ALERT_SERVICE_URL}/api/cache/${encodeURIComponent(citySlug)}`, {
         signal: AbortSignal.timeout(2500)
@@ -63,12 +64,12 @@ export async function fetchCityWeather(citySlug: string, forceLive: boolean = fa
       if (!res.ok) {
         if (res.status >= 500) lastCacheFailureTime = Date.now();
       } else {
-        const cached: WeatherReading = await res.json();
-        // Aproveita o cache oficial do ciclo de ingestão (até 8 horas de validade, alinhado aos ciclos 3x/dia)
-        if (cached && cached.timestamp) {
-          const ageMinutes = (Date.now() - new Date(cached.timestamp).getTime()) / 60000;
+        cachedData = await res.json();
+        // Se não for forçado ao vivo, aproveita o cache oficial do ciclo de ingestão (até 8 horas de validade)
+        if (!forceLive && cachedData && cachedData.timestamp) {
+          const ageMinutes = (Date.now() - new Date(cachedData.timestamp).getTime()) / 60000;
           if (ageMinutes < 480) {
-            return cached;
+            return cachedData;
           }
         }
       }
@@ -98,20 +99,20 @@ export async function fetchCityWeather(citySlug: string, forceLive: boolean = fa
         const aqData = aqRes && aqRes.ok ? await aqRes.json() : null;
         const current = data.current || {};
         const aqCurrent = aqData?.current || {};
-        const baseMock = MOCK_WEATHER_READINGS[city.slug] || MOCK_WEATHER_READINGS[citySlug] || MOCK_WEATHER_READINGS['manaus'];
+        const baseRef = cachedData || MOCK_WEATHER_READINGS[city.slug] || MOCK_WEATHER_READINGS[citySlug] || MOCK_WEATHER_READINGS['manaus'];
 
         return {
           municipio: city.nome,
           estado: city.estado,
-          temperatura: typeof current.temperature_2m === 'number' ? current.temperature_2m : baseMock.temperatura,
-          umidade: typeof current.relative_humidity_2m === 'number' ? current.relative_humidity_2m : baseMock.umidade,
-          precipitacao: typeof current.precipitation === 'number' ? current.precipitation : baseMock.precipitacao,
+          temperatura: typeof current.temperature_2m === 'number' ? current.temperature_2m : baseRef.temperatura,
+          umidade: typeof current.relative_humidity_2m === 'number' ? current.relative_humidity_2m : baseRef.umidade,
+          precipitacao: typeof current.precipitation === 'number' ? current.precipitation : baseRef.precipitacao,
           timestamp: new Date().toISOString(),
-          pm25: typeof aqCurrent.pm2_5 === 'number' ? aqCurrent.pm2_5 : baseMock.pm25,
-          pm10: typeof aqCurrent.pm10 === 'number' ? aqCurrent.pm10 : baseMock.pm10,
-          focosIncendio: baseMock.focosIncendio,
-          nivelRio: baseMock.nivelRio,
-          alertaEnxurrada: baseMock.alertaEnxurrada,
+          pm25: typeof aqCurrent.pm2_5 === 'number' ? aqCurrent.pm2_5 : baseRef.pm25,
+          pm10: typeof aqCurrent.pm10 === 'number' ? aqCurrent.pm10 : baseRef.pm10,
+          focosIncendio: typeof baseRef.focosIncendio === 'number' ? baseRef.focosIncendio : 0,
+          nivelRio: typeof baseRef.nivelRio === 'number' ? baseRef.nivelRio : 0,
+          alertaEnxurrada: typeof baseRef.alertaEnxurrada === 'boolean' ? baseRef.alertaEnxurrada : false,
           metano: typeof aqCurrent.methane === 'number' ? aqCurrent.methane : null,
           co2: typeof aqCurrent.carbon_dioxide === 'number' ? aqCurrent.carbon_dioxide : null,
           co: typeof aqCurrent.carbon_monoxide === 'number' ? aqCurrent.carbon_monoxide : null
@@ -120,7 +121,7 @@ export async function fetchCityWeather(citySlug: string, forceLive: boolean = fa
     } catch { /* fallback silencioso */ }
   }
 
-  return MOCK_WEATHER_READINGS[citySlug] || MOCK_WEATHER_READINGS['manaus'];
+  return cachedData || MOCK_WEATHER_READINGS[citySlug] || MOCK_WEATHER_READINGS['manaus'];
 }
 
 export async function fetchCityDashboard(citySlug: string): Promise<DashboardDTO> {
