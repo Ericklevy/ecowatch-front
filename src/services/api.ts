@@ -35,6 +35,7 @@ let lastCacheFailureTime = 0;
 // ── Leitura manual (botão "Atualizar dados") persistida no navegador ──────
 // Mantém a última atualização feita pelo usuário após recarregar a página.
 const CHAVE_LEITURA_MANUAL = (slug: string) => `ecowatch:leitura-manual:${slug}`;
+const CHAVE_ULTIMA_LEITURA = (slug: string) => `ecowatch:ultima-leitura:${slug}`;
 
 export function salvarLeituraManual(citySlug: string, reading: WeatherReading): void {
   try {
@@ -45,6 +46,21 @@ export function salvarLeituraManual(citySlug: string, reading: WeatherReading): 
 export function lerLeituraManual(citySlug: string): WeatherReading | null {
   try {
     const raw = localStorage.getItem(CHAVE_LEITURA_MANUAL(citySlug));
+    return raw ? (JSON.parse(raw) as WeatherReading) : null;
+  } catch {
+    return null;
+  }
+}
+
+export function salvarUltimaLeitura(citySlug: string, reading: WeatherReading): void {
+  try {
+    localStorage.setItem(CHAVE_ULTIMA_LEITURA(citySlug), JSON.stringify(reading));
+  } catch { /* navegador sem storage */ }
+}
+
+export function lerUltimaLeituraSalva(citySlug: string): WeatherReading | null {
+  try {
+    const raw = localStorage.getItem(CHAVE_ULTIMA_LEITURA(citySlug));
     return raw ? (JSON.parse(raw) as WeatherReading) : null;
   } catch {
     return null;
@@ -69,6 +85,7 @@ export async function fetchCityWeather(citySlug: string, forceLive: boolean = fa
         if (!forceLive && cachedData && cachedData.timestamp) {
           const ageMinutes = (Date.now() - new Date(cachedData.timestamp).getTime()) / 60000;
           if (ageMinutes < 480) {
+            salvarUltimaLeitura(citySlug, cachedData);
             return cachedData;
           }
         }
@@ -101,7 +118,7 @@ export async function fetchCityWeather(citySlug: string, forceLive: boolean = fa
         const aqCurrent = aqData?.current || {};
         const baseRef = cachedData || MOCK_WEATHER_READINGS[city.slug] || MOCK_WEATHER_READINGS[citySlug] || MOCK_WEATHER_READINGS['manaus'];
 
-        return {
+        const liveReading: WeatherReading = {
           municipio: city.nome,
           estado: city.estado,
           temperatura: typeof current.temperature_2m === 'number' ? current.temperature_2m : baseRef.temperatura,
@@ -117,6 +134,8 @@ export async function fetchCityWeather(citySlug: string, forceLive: boolean = fa
           co2: typeof aqCurrent.carbon_dioxide === 'number' ? aqCurrent.carbon_dioxide : null,
           co: typeof aqCurrent.carbon_monoxide === 'number' ? aqCurrent.carbon_monoxide : null
         };
+        salvarUltimaLeitura(citySlug, liveReading);
+        return liveReading;
       }
     } catch { /* fallback silencioso */ }
   }

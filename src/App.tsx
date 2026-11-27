@@ -18,7 +18,7 @@ import { LiveStatusTicker } from './components/layout/LiveStatusTicker';
 import { CommandPalette } from './components/common/CommandPalette';
 import { MONITORED_CITIES, MOCK_WEATHER_READINGS, MOCK_ALERTS } from './data/mockData';
 import { CityInfo, WeatherReading, AlertDTO } from './types';
-import { fetchCityWeather, fetchCityDashboard, fetchAllAlerts, salvarLeituraManual, lerLeituraManual } from './services/api';
+import { fetchCityWeather, fetchCityDashboard, fetchAllAlerts, salvarLeituraManual, lerLeituraManual, lerUltimaLeituraSalva } from './services/api';
 
 // Escolhe a leitura mais recente entre a manual (salva no navegador) e a vinda do backend/satélite
 const escolherLeitura = (slug: string, doServidor: WeatherReading): WeatherReading => {
@@ -39,8 +39,8 @@ export const App: React.FC = () => {
   const [readings, setReadings] = useState<Record<string, WeatherReading>>(() => {
     const inicial = { ...MOCK_WEATHER_READINGS };
     MONITORED_CITIES.forEach(city => {
-      const manual = lerLeituraManual(city.slug);
-      if (manual) inicial[city.slug] = manual;
+      const salva = lerLeituraManual(city.slug) || lerUltimaLeituraSalva(city.slug);
+      if (salva) inicial[city.slug] = salva;
     });
     return inicial;
   });
@@ -82,31 +82,26 @@ export const App: React.FC = () => {
       }
     });
 
-    // Fallback: verifica se o read-model-service (Swagger/Dashboard) está respondendo
-    if (!anyOnline) {
-      try {
-        const dashboard = await fetchCityDashboard('brasilia');
-        if (dashboard && dashboard.alertas && dashboard.alertas.length > 0) {
-          anyOnline = true;
-        }
-      } catch {
-        // Offline
-      }
-    }
+    // Atualiza a tela imediatamente com o clima obtido, sem esperar cold start de alertas
+    setReadings(updatedReadings);
+    setIsBackendOnline(anyOnline);
+    setLastUpdate(new Date());
 
-    // Busca todos os alertas para atualizar contador global
+    // Busca todos os alertas para atualizar contador global em paralelo/segundo plano
     try {
-      const allAlerts = await fetchAllAlerts();
+      const [allAlerts, fallbackDash] = await Promise.all([
+        fetchAllAlerts().catch(() => null),
+        !anyOnline ? fetchCityDashboard('brasilia').catch(() => null) : Promise.resolve(null)
+      ]);
       if (allAlerts && allAlerts.length > 0) {
         setUnreadAlertsCount(allAlerts.length);
+      }
+      if (!anyOnline && fallbackDash?.alertas && fallbackDash.alertas.length > 0) {
+        setIsBackendOnline(true);
       }
     } catch {
       // Fallback mantém valor anterior
     }
-
-    setReadings(updatedReadings);
-    setIsBackendOnline(anyOnline);
-    setLastUpdate(new Date());
   };
 
   // ── Carregamento inicial e timer periódico de 60s ─────────────────────────
