@@ -28,8 +28,8 @@ O backend é uma arquitetura de microsserviços em **Java 21 + Spring Boot 3** c
 
 | Fonte | Dados |
 |---|---|
-| **NASA POWER** | Temperatura, Radiação Solar, Umidade |
-| **Open-Meteo / Copernicus CAMS** | Clima Base, Qualidade do Ar (PM2.5, PM10) e Gases de Efeito Estufa (CH₄, CO₂, CO) |
+| **Open-Meteo / Copernicus CAMS** | Clima Base em Tempo Real (`@Primary`), Qualidade do Ar (PM2.5, PM10) e Gases de Efeito Estufa (CH₄, CO₂, CO) |
+| **NASA POWER** | Fallback climatológico (Temperatura, Radiação Solar, Umidade) |
 | **INPE BDQueimadas** | Focos de Incêndio (Satélites MODIS/GOES-16) |
 | **ANA HidroWeb** | Cotas Fluviométricas (Nível dos Rios em metros) |
 | **CEMADEN** | Alertas de Enxurrada e Deslizamentos |
@@ -74,9 +74,9 @@ O projeto adota um modelo arquitetural moderno focado em **eficiência de custos
 ```
 
 ### Por que essa divisão de papéis?
-1. **FinOps (Economia Inteligente de Nuvem):** Se 1.000 usuários acessarem o mapa simultaneamente para ver a temperatura local, as requisições de visualização são resolvidas diretamente pelo navegador com a Open-Meteo, sem consumir CPU, RAM ou limites do Supabase/Azure. Isso reduz o custo de infraestrutura de R$ 300/mês para **quase zero**.
-2. **Autoridade Central de Dados:** O Backend em Java/Spring Boot nunca é ignorado: ele permanece como a autoridade máxima para **auditoria, regras críticas de desastre, persistência histórica e mensageria assíncrona**.
-3. **Resiliência (Tolerância a Falhas):** O frontend implementa uma hierarquia de fallback: tenta o cache Redis na Azure; se o container estiver iniciando ou o cache frio, busca imediatamente a telemetria ao vivo; garantindo que o usuário nunca veja dados corrompidos ou telas quebradas.
+1. **FinOps (Economia Inteligente de Nuvem):** O backend roda em **Azure Container Apps** com *scale-to-zero* (`minReplicas = 0`) e imagens hospedadas gratuitamente no **GitHub Container Registry (`ghcr.io`)**, operando a **R$ 0,00/mês**. Além disso, o frontend aproveita o cache oficial do Redis por até **8 horas** (alinhado aos ciclos de ingestão 3x/dia), evitando requisições redundantes e bloqueios `429`.
+2. **Autoridade Central de Dados:** O Backend em Java/Spring Boot permanece como a autoridade máxima para **auditoria, regras críticas de desastre, persistência histórica e mensageria assíncrona**, sincronizando o clima em tempo real via Open-Meteo como fonte primária.
+3. **Resiliência (Tolerância a Falhas):** O frontend implementa uma hierarquia de fallback: tenta o cache Redis na Azure; se o container estiver iniciando ou o cache expirado, busca a telemetria ao vivo preservando os dados de sensores do backend (INPE/ANA), garantindo que o usuário nunca veja telas quebradas.
 
 ---
 
